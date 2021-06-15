@@ -222,7 +222,7 @@ tgt_pkt_capture_smu_event(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	vdev_priv->rx_vht_sgi = param->rx_vht_sgi;
+	vdev_priv->rx_avg_rssi = param->rx_avg_rssi;
 
 	pkt_capture_vdev_put_ref(vdev);
 

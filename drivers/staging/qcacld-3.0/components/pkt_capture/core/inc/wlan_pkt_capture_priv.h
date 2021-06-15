@@ -64,7 +64,7 @@ struct pkt_capture_cb_context {
  * @tx_nss: nss of tx data packets received from ppdu stats
  * @last_freq: Last connected freq
  * @curr_freq: current connected freq
- * @rx_vht_sgi: guard interval of vht rx packet
+ * @rx_avg_rssi: avg rssi of rx data packets
  */
 struct pkt_capture_vdev_priv {
 	struct wlan_objmgr_vdev *vdev;
@@ -77,7 +77,7 @@ struct pkt_capture_vdev_priv {
 	uint8_t tx_nss;
 	qdf_freq_t last_freq;
 	qdf_freq_t curr_freq;
-	uint8_t rx_vht_sgi;
+	int32_t rx_avg_rssi;
 };
 
 /**
