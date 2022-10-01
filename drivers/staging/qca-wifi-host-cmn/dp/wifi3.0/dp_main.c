@@ -2691,7 +2691,8 @@ static void dp_soc_interrupt_detach(struct cdp_soc_t *txrx_soc)
 	}
 
 	qdf_mem_set(&soc->mon_intr_id_lmac_map,
-		    REG_BAND_UNKNOWN * sizeof(int), DP_MON_INVALID_LMAC_ID);
+		    sizeof(soc->mon_intr_id_lmac_map),
+		    DP_MON_INVALID_LMAC_ID);
 }
 
 #define AVG_MAX_MPDUS_PER_TID 128
@@ -9025,6 +9026,14 @@ static QDF_STATUS dp_get_pdev_param(struct cdp_soc_t *cdp_soc, uint8_t pdev_id,
 		val->cdp_pdev_param_fltr_ucast =
 					dp_pdev_get_filter_ucast_data(pdev);
 		break;
+	case CDP_MONITOR_CHANNEL:
+		val->cdp_pdev_param_monitor_chan =
+			((struct dp_pdev *)pdev)->mon_chan_num;
+		break;
+	case CDP_MONITOR_FREQUENCY:
+		val->cdp_pdev_param_mon_freq =
+			((struct dp_pdev *)pdev)->mon_chan_freq;
+		break;
 	default:
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -11501,6 +11510,11 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_update_peer_pkt_capture_params =
 		 dp_peer_update_pkt_capture_params,
 #endif /* WLAN_TX_PKT_CAPTURE_ENH || WLAN_RX_PKT_CAPTURE_ENH */
+#ifdef WLAN_FEATURE_TSF_UPLINK_DELAY
+	.txrx_set_delta_tsf = dp_set_delta_tsf,
+	.txrx_set_tsf_ul_delay_report = dp_set_tsf_ul_delay_report,
+	.txrx_get_uplink_delay = dp_get_uplink_delay,
+#endif
 };
 
 static struct cdp_me_ops dp_ops_me = {
