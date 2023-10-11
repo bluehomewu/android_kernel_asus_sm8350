@@ -324,59 +324,85 @@ QDF_STATUS reg_get_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 }
 
 #ifdef CONFIG_REG_CLIENT
+#ifdef CONFIG_BAND_6GHZ
 QDF_STATUS
 reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
+			       struct wlan_objmgr_pdev *pdev,
 			       uint8_t *ap_ctry, uint8_t *sta_ctry,
 			       enum reg_6g_ap_type *pwr_type_6g,
 			       bool *ctry_code_match,
 			       enum reg_6g_ap_type ap_pwr_type)
 {
-	*pwr_type_6g = REG_INDOOR_AP;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 
-	if (qdf_mem_cmp(ap_ctry, sta_ctry, REG_ALPHA2_LEN)) {
-		reg_debug("Country IE:%c%c, STA country:%c%c", ap_ctry[0],
-			  ap_ctry[1], sta_ctry[0], sta_ctry[1]);
-		*ctry_code_match = false;
+	*pwr_type_6g = ap_pwr_type;
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!pdev_priv_obj) {
+		reg_err("pdev priv obj null");
+		return QDF_STATUS_E_FAILURE;
+	}
 
-		/**
-		 * Do not return if Wi-Fi safe mode or RF test mode is
-		 * enabled, rather STA should operate in LPI mode.
-		 * wlan_cm_get_check_6ghz_security API returns true if
-		 * neither Safe mode nor RF test mode are enabled.
-		 */
-		if (wlan_reg_is_us(sta_ctry) &&
-		    wlan_cm_get_check_6ghz_security(psoc)) {
-			reg_err("US VLP not in place yet, connection not allowed");
-			return QDF_STATUS_E_NOSUPPORT;
-		}
+	reg_debug("STA country: %c%c, AP country: %c%c, AP power type: %d",
+		  sta_ctry[0], sta_ctry[1], ap_ctry[0], ap_ctry[1],
+		  ap_pwr_type);
 
-		if (wlan_reg_is_etsi(sta_ctry) &&
-		    ap_pwr_type != REG_MAX_AP_TYPE) {
-			if (!(wlan_reg_is_us(ap_ctry) &&
-			      ap_pwr_type == REG_INDOOR_AP)) {
-				reg_debug("STA ctry:%c%c, doesn't match with AP ctry, switch to VLP",
-					  sta_ctry[0], sta_ctry[1]);
-				*pwr_type_6g = REG_VERY_LOW_POWER_AP;
+	if (!qdf_mem_cmp(ap_ctry, sta_ctry, REG_ALPHA2_LEN)) {
+		*ctry_code_match = true;
+		if (ap_pwr_type == REG_VERY_LOW_POWER_AP) {
+			if (!pdev_priv_obj->reg_rules.num_of_6g_client_reg_rules[ap_pwr_type]) {
+				reg_err("VLP not supported, can't connect");
+				return QDF_STATUS_E_NOSUPPORT;
 			}
 		}
+		return QDF_STATUS_SUCCESS;
+	}
 
-		if (wlan_reg_is_us(ap_ctry) && ap_pwr_type == REG_INDOOR_AP) {
-			reg_debug("AP ctry:%c%c, AP power type:%d, allow STA IN LPI",
-				  ap_ctry[0], ap_ctry[1], ap_pwr_type);
-			*pwr_type_6g = REG_INDOOR_AP;
+	*ctry_code_match = false;
+	/*
+	 * If reg_info=0 not included, STA should operate in VLP mode.
+	 * If STA country doesn't support VLP, do not return if Wi-Fi
+	 * safe mode or RF test mode or enable relaxed connection policy,
+	 * rather STA should operate in LPI mode.
+	 * wlan_cm_get_check_6ghz_security API returns true if
+	 * neither Safe mode nor RF test mode are enabled.
+	 */
+	if (ap_pwr_type != REG_INDOOR_AP) {
+		if (wlan_reg_ctry_support_vlp(sta_ctry))
+			*pwr_type_6g = REG_VERY_LOW_POWER_AP;
+		if (!wlan_reg_ctry_support_vlp(sta_ctry) &&
+		    wlan_cm_get_check_6ghz_security(psoc)) {
+			reg_err("VLP not supported, can't connect");
+			return QDF_STATUS_E_NOSUPPORT;
 		}
+	}
 
-		if (wlan_reg_is_us(ap_ctry) && ap_pwr_type == REG_INDOOR_AP) {
-			reg_debug("AP ctry:%c%c, AP power type:%d, allow STA IN LPI",
-				  ap_ctry[0], ap_ctry[1], ap_pwr_type);
-			*pwr_type_6g = REG_INDOOR_AP;
-		}
-	} else {
-		*ctry_code_match = true;
+	if (wlan_reg_ctry_support_vlp(sta_ctry) &&
+	    wlan_reg_ctry_support_vlp(ap_ctry) &&
+	    ap_pwr_type == REG_INDOOR_AP) {
+		reg_debug("STA ctry doesn't match with AP ctry, switch to VLP");
+		*pwr_type_6g = REG_VERY_LOW_POWER_AP;
+	}
+
+	if (!wlan_reg_ctry_support_vlp(ap_ctry) &&
+	    ap_pwr_type == REG_INDOOR_AP) {
+		reg_debug("VLP not supported by AP, allow STA IN LPI");
+		*pwr_type_6g = REG_INDOOR_AP;
 	}
 
 	return QDF_STATUS_SUCCESS;
 }
+#else
+QDF_STATUS
+reg_get_6g_power_type_for_ctry(struct wlan_objmgr_psoc *psoc,
+			       struct wlan_objmgr_pdev *pdev,
+			       uint8_t *ap_ctry, uint8_t *sta_ctry,
+			       enum reg_6g_ap_type *pwr_type_6g,
+			       bool *ctry_code_match,
+			       enum reg_6g_ap_type ap_pwr_type)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif
 
 #ifdef CONFIG_CHAN_NUM_API
