@@ -2332,7 +2332,7 @@ extern bool checkForNewBoard(uint8_t );
 #define Picasso_IMX686_Camera_ID 0x6B
 #define OIS_GYRO_GAIN_RECAL ""FACTORYDIR"ois_gyro_gain_cali.txt"
 #define OIS_STATUS_INITIALIZE 255
-void update_OIS_gyro_gain_XY() {
+void update_OIS_gyro_gain_XY(void) {
 	static uint8_t updated_OIS_gyro_gain=OIS_STATUS_INITIALIZE;
 	if ( updated_OIS_gyro_gain==OIS_STATUS_INITIALIZE && g_ois_mode!=OIS_STATUS_INITIALIZE) {
 		pr_info("OIS recal gyro gain apply patch\n");
