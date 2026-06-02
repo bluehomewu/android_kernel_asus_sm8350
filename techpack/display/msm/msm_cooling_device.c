@@ -85,6 +85,7 @@ struct sde_cdev *backlight_cdev_register(struct device *dev,
 		pr_err("cooling device register failed\n");
 		return (void *)disp_cdev->cdev;
 	}
+
 	BLOCKING_INIT_NOTIFIER_HEAD(&disp_cdev->notifier_head);
 	blocking_notifier_chain_register(&disp_cdev->notifier_head, n);
 

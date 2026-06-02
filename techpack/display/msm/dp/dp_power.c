@@ -511,7 +511,11 @@ static int dp_power_config_gpios(struct dp_power_private *power, bool flip,
 	} else {
 		for (i = 0; i < mp->num_gpio; i++) {
 			if (gpio_is_valid(config[i].gpio)) {
-				gpio_set_value(config[i].gpio, 0);
+				/* ASUS BSP Display, aux-en default is high +++ */
+				if (dp_power_find_gpio(config[i].gpio_name, "aux-en"))
+					gpio_set_value(config[i].gpio, 0);
+				else
+					gpio_set_value(config[i].gpio, 0);
 				gpio_free(config[i].gpio);
 			}
 		}
