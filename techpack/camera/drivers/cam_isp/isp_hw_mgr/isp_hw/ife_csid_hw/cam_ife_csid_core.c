@@ -4654,6 +4654,8 @@ static int cam_ife_csid_process_cmd(void *hw_priv,
 
 }
 
+extern uint8_t g_cam_csi_check;  //ASUS_BSP Bryant "Add for camera csi debug"
+
 static int cam_csid_get_evt_payload(
 	struct cam_ife_csid_hw *csid_hw,
 	struct cam_csid_evt_payload **evt_payload)
@@ -4868,6 +4870,7 @@ static int cam_csid_handle_hw_err_irq(
 	return rc;
 }
 
+
 irqreturn_t cam_ife_csid_irq(int irq_num, void *data)
 {
 	struct cam_ife_csid_hw                         *csid_hw;
@@ -5015,6 +5018,7 @@ irqreturn_t cam_ife_csid_irq(int irq_num, void *data)
 				csid_hw->hw_intf->hw_idx,
 				soc_info->applied_src_clk_rate);
 			fatal_err_detected = true;
+			g_cam_csi_check = CSID_LAN0_OVERFLOW;
 			goto handle_fatal_error;
 		}
 		if (irq_status[CAM_IFE_CSID_IRQ_REG_RX] &
@@ -5024,6 +5028,7 @@ irqreturn_t cam_ife_csid_irq(int irq_num, void *data)
 				csid_hw->hw_intf->hw_idx,
 				soc_info->applied_src_clk_rate);
 			fatal_err_detected = true;
+			g_cam_csi_check = CSID_LAN1_OVERFLOW;
 			goto handle_fatal_error;
 		}
 		if (irq_status[CAM_IFE_CSID_IRQ_REG_RX] &
@@ -5033,6 +5038,7 @@ irqreturn_t cam_ife_csid_irq(int irq_num, void *data)
 				csid_hw->hw_intf->hw_idx,
 				soc_info->applied_src_clk_rate);
 			fatal_err_detected = true;
+			g_cam_csi_check = CSID_LAN2_OVERFLOW;
 			goto handle_fatal_error;
 		}
 		if (irq_status[CAM_IFE_CSID_IRQ_REG_RX] &
@@ -5042,6 +5048,7 @@ irqreturn_t cam_ife_csid_irq(int irq_num, void *data)
 				csid_hw->hw_intf->hw_idx,
 				soc_info->applied_src_clk_rate);
 			fatal_err_detected = true;
+			g_cam_csi_check = CSID_LAN3_OVERFLOW;
 			goto handle_fatal_error;
 		}
 		if (irq_status[CAM_IFE_CSID_IRQ_REG_RX] &
@@ -5051,6 +5058,7 @@ irqreturn_t cam_ife_csid_irq(int irq_num, void *data)
 				csid_hw->hw_intf->hw_idx);
 			fatal_err_detected = true;
 			event_type |= CAM_ISP_HW_ERROR_CSID_OVERFLOW;
+			g_cam_csi_check = CSID_TG_OVERFLOW;
 			goto handle_fatal_error;
 		}
 		if ((irq_status[CAM_IFE_CSID_IRQ_REG_RX] &
@@ -5076,6 +5084,7 @@ irqreturn_t cam_ife_csid_irq(int irq_num, void *data)
 				"CSID:%d CPHY_PH_CRC CPHY: Pkt Hdr CRC mismatch",
 				csid_hw->hw_intf->hw_idx);
 			fatal_err_detected = true;
+			g_cam_csi_check = CSID_CPHY_PH_CRC;
 			goto handle_fatal_error;
 		}
 		if (irq_status[CAM_IFE_CSID_IRQ_REG_RX] &
@@ -5083,6 +5092,7 @@ irqreturn_t cam_ife_csid_irq(int irq_num, void *data)
 			CAM_ERR_RATE_LIMIT(CAM_ISP,
 				"CSID:%d ERROR_CRC CPHY: Long pkt payload CRC mismatch",
 				csid_hw->hw_intf->hw_idx);
+			g_cam_csi_check = CSID_ERROR_CRC;
 			csid_hw->error_irq_count++;
 			non_fatal_detected = true;
 		}
@@ -5092,6 +5102,7 @@ irqreturn_t cam_ife_csid_irq(int irq_num, void *data)
 				"CSID:%d ERROR_ECC: Dphy pkt hdr errors unrecoverable",
 				csid_hw->hw_intf->hw_idx);
 			fatal_err_detected = true;
+			g_cam_csi_check = CSID_ERROR_ECC;
 			goto handle_fatal_error;
 		}
 		if (irq_status[CAM_IFE_CSID_IRQ_REG_RX] &
