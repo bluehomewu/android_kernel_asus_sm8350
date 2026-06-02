@@ -73,6 +73,7 @@
 #define A_PRINTF(args ...) \
 	QDF_TRACE_ERROR(QDF_MODULE_ID_QDF, args)
 #define A_SNPRINTF(buf, len, args ...)   snprintf(buf, len, args)
+#define A_OFFSETOF(type, field)   offsetof(type, field)
 
 /*
  * Timer Functions
