@@ -6087,6 +6087,21 @@ static int cnss_pci_enumerate(struct cnss_plat_data *plat_priv, u32 rc_num)
 		}
 	}
 
+	plat_priv->rc_num = rc_num;
+
+	/* Always set initial target PCIe link speed to Gen2 for QCA6490 device
+	 * since there may be link issues if it boots up with Gen3 link speed.
+	 * Device is able to change it later at any time. It will be rejected
+	 * if requested speed is higher than the one specified in PCIe DT.
+	 */
+	if (plat_priv->device_id == QCA6490_DEVICE_ID) {
+		ret = msm_pcie_set_target_link_speed(rc_num,
+						     PCI_EXP_LNKSTA_CLS_5_0GB);
+		if (ret)
+			cnss_pr_err("Failed to set target PCIe link speed to Gen2, err = %d\n",
+				    ret);
+	}
+
 	cnss_pr_dbg("Trying to enumerate with PCIe RC%x\n", rc_num);
 retry:
 	ret = _cnss_pci_enumerate(plat_priv, rc_num);

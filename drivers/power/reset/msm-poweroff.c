@@ -28,6 +28,10 @@
 #include <soc/qcom/watchdog.h>
 #include <soc/qcom/minidump.h>
 
+#ifdef CONFIG_MACH_ASUS
+#include <linux/asusdebug.h>
+#endif
+
 #define EMERGENCY_DLOAD_MAGIC1    0x322A4F99
 #define EMERGENCY_DLOAD_MAGIC2    0xC67E4350
 #define EMERGENCY_DLOAD_MAGIC3    0x77777777
@@ -422,6 +426,13 @@ static void msm_restart_prepare(const char *cmd)
 				(cmd != NULL && cmd[0] != '\0'));
 	}
 
+#ifdef CONFIG_MACH_ASUS
+	// Normal restart. Clean the printk buffer magic
+	if (!in_panic) {
+		clean_printk_buffer_magic();
+	}
+#endif
+
 	if (force_warm_reboot)
 		pr_info("Forcing a warm reset of the system\n");
 
@@ -512,6 +523,13 @@ static int do_msm_restart(struct notifier_block *unused, unsigned long action,
 static void do_msm_poweroff(void)
 {
 	pr_notice("Powering off the SoC\n");
+
+#ifdef CONFIG_MACH_ASUS
+	// Normal power off. Clean the printk buffer magic
+	clean_printk_buffer_magic();
+	printk(KERN_CRIT "Clean asus_global...\n");
+	flush_cache_all();
+#endif
 
 	set_dload_mode(0);
 	qpnp_pon_system_pwr_off(PON_POWER_OFF_SHUTDOWN);

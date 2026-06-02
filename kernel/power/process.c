@@ -6,6 +6,12 @@
  * Originally from swsusp.
  */
 
+#ifdef CONFIG_MACH_ASUS
+//[PM_debug +++]
+//add debug message header
+#define pr_fmt(fmt) "PM: " fmt
+//[PM_debug ---]
+#endif
 
 #undef DEBUG
 
@@ -109,8 +115,13 @@ static int try_to_freeze_tasks(bool user_only)
 			read_unlock(&tasklist_lock);
 		}
 	} else {
+#ifdef CONFIG_MACH_ASUS
+		pr_info("(elapsed %d.%03d seconds) ", elapsed_msecs / 1000,
+			elapsed_msecs % 1000);
+#else
 		pr_cont("(elapsed %d.%03d seconds) ", elapsed_msecs / 1000,
 			elapsed_msecs % 1000);
+#endif
 	}
 
 	return todo ? -EBUSY : 0;
@@ -143,7 +154,11 @@ int freeze_processes(void)
 	error = try_to_freeze_tasks(true);
 	if (!error) {
 		__usermodehelper_set_disable_depth(UMH_DISABLED);
+#ifdef CONFIG_MACH_ASUS
+		pr_info("done.");
+#else
 		pr_cont("done.");
+#endif
 	}
 	pr_cont("\n");
 	BUG_ON(in_atomic());
@@ -179,7 +194,11 @@ int freeze_kernel_threads(void)
 	pm_nosig_freezing = true;
 	error = try_to_freeze_tasks(false);
 	if (!error)
+#ifdef CONFIG_MACH_ASUS
+		pr_info("done.");
+#else
 		pr_cont("done.");
+#endif
 
 	pr_cont("\n");
 	BUG_ON(in_atomic());
@@ -223,7 +242,11 @@ void thaw_processes(void)
 	usermodehelper_enable();
 
 	schedule();
+#ifdef CONFIG_MACH_ASUS
+	pr_info("done.\n");
+#else
 	pr_cont("done.\n");
+#endif
 	trace_suspend_resume(TPS("thaw_processes"), 0, false);
 }
 
@@ -244,5 +267,9 @@ void thaw_kernel_threads(void)
 	read_unlock(&tasklist_lock);
 
 	schedule();
+#ifdef CONFIG_MACH_ASUS
+	pr_info("done.\n");
+#else
 	pr_cont("done.\n");
+#endif
 }

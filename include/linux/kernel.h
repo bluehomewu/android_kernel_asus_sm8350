@@ -19,6 +19,11 @@
 #include <uapi/linux/kernel.h>
 #include <asm/div64.h>
 
+#ifdef CONFIG_MACH_ASUS
+#include <linux/asusdebug.h>
+#include <linux/asus_hwid.h>
+#endif //#ifdef CONFIG_MACH_ASUS
+
 #define STACK_MAGIC	0xdeadbeef
 
 /**

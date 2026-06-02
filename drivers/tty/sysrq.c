@@ -141,7 +141,8 @@ static void sysrq_handle_crash(int key)
 
 	trace_android_vh_sysrq_crash(current);
 
-	panic("sysrq triggered crash\n");
+	//panic("sysrq triggered crash\n");
+    printk("sysrq triggered crash\n");
 }
 static struct sysrq_key_op sysrq_crash_op = {
 	.handler	= sysrq_handle_crash,

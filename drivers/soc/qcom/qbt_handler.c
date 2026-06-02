@@ -38,6 +38,7 @@
 #define QBT_INPUT_DEV_NAME "qbt_key_input"
 #define QBT_INPUT_DEV_VERSION 0x0100
 #define QBT_TOUCH_FD_VERSION 2
+#define QFP_KEY_INPUT_EARLYWAKEUP KEY_F22
 
 struct finger_detect_gpio {
 	int gpio;
@@ -910,6 +911,8 @@ static int qbt_create_input_device(struct qbt_drvdata *drvdata)
 		BIT_MASK(KEY_VOLUMEDOWN);
 	drvdata->in_dev->keybit[BIT_WORD(KEY_POWER)] |=
 		BIT_MASK(KEY_POWER);
+	drvdata->in_dev->keybit[BIT_WORD(KEY_F22)] |=
+		BIT_MASK(KEY_F22);
 
 	input_set_abs_params(drvdata->in_dev, ABS_X,
 			     0,
@@ -930,6 +933,7 @@ static int qbt_create_input_device(struct qbt_drvdata *drvdata)
 end:
 	if (rc)
 		input_free_device(drvdata->in_dev);
+
 	return rc;
 }
 
@@ -952,6 +956,15 @@ static void qbt_gpio_report_event(struct qbt_drvdata *drvdata, int state)
 	pr_debug("gpio %d: report state %d current_time %lu uS\n",
 		drvdata->fd_gpio.gpio, state,
 		(unsigned long)ktime_to_us(ktime_get()));
+	
+	if(state == 1) {	
+		pr_debug("send fp early wakeup +++\n");
+		input_report_key(drvdata->in_dev, QFP_KEY_INPUT_EARLYWAKEUP, 1);
+		input_sync(drvdata->in_dev);
+		input_report_key(drvdata->in_dev, QFP_KEY_INPUT_EARLYWAKEUP, 0);
+		input_sync(drvdata->in_dev);
+		pr_debug("send fp early wakeup ---\n");
+	}
 
 	drvdata->fd_gpio.event_reported = 1;
 	drvdata->fd_gpio.last_gpio_state = state;

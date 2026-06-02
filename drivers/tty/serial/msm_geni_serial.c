@@ -1589,6 +1589,7 @@ static int stop_rx_sequencer(struct uart_port *uport)
 		 * before issuing the cancel command to resolve the race
 		 * btw cancel RX and completion interrupt.
 		 */
+
 		if (dma_rx_status) {
 			s_irq_status = geni_read_reg_nolog(uport->membase,
 							SE_GENI_S_IRQ_STATUS);
@@ -1642,6 +1643,7 @@ static int stop_rx_sequencer(struct uart_port *uport)
 		IPC_LOG_MSG(port->console_log,
 			    "%s cancel failed timeout:%d is_rx_active:%d 0x%x\n",
 			    __func__, timeout, is_rx_active, geni_status);
+
 		msm_geni_update_uart_error_code(port, UART_ERROR_RX_CANCEL_FAIL);
 		geni_se_dump_dbg_regs(&port->serial_rsc,
 				uport->membase, port->ipc_log_misc);
@@ -1674,6 +1676,7 @@ static int stop_rx_sequencer(struct uart_port *uport)
 			IPC_LOG_MSG(port->console_log,
 				"%s abort fail timeout:%d is_rx_active:%d 0x%x\n",
 				 __func__, timeout, is_rx_active, geni_status);
+
 			msm_geni_update_uart_error_code(port, UART_ERROR_RX_ABORT_FAIL);
 			geni_se_dump_dbg_regs(&port->serial_rsc,
 				uport->membase, port->ipc_log_misc);
@@ -2404,6 +2407,7 @@ static void msm_geni_serial_shutdown(struct uart_port *uport)
 			IPC_LOG_MSG(msm_port->ipc_log_misc,
 				"%s: Error %d pinctrl_select_state\n", __func__, ret);
 		}
+
 		/* Reset UART error to default during port_close() */
 		msm_port->uart_error = UART_ERROR_DEFAULT;
 	}
@@ -3492,6 +3496,8 @@ static int msm_geni_serial_probe(struct platform_device *pdev)
 	 */
 	if (dev_port->is_console)
 		geni_se_remove_earlycon_icc_vote(dev_port->wrapper_dev);
+	else
+		spin_lock_init(&dev_port->rx_lock);
 
 	if (strcmp(id->compatible, "qcom,msm-geni-console") == 0)
 		snprintf(boot_marker, sizeof(boot_marker),
@@ -3571,6 +3577,7 @@ static int msm_geni_serial_runtime_suspend(struct device *dev)
 			msm_geni_serial_allow_rx(port);
 		return -EBUSY;
 	}
+
 	/*
 	 * Stop Rx.
 	 * Disable Interrupt
@@ -3585,6 +3592,7 @@ static int msm_geni_serial_runtime_suspend(struct device *dev)
 		 */
 		if (port->wakeup_byte && port->wakeup_irq)
 			msm_geni_serial_allow_rx(port);
+
 		return -EBUSY;
 	}
 

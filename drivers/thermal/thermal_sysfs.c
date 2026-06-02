@@ -185,6 +185,46 @@ type_show(struct device *dev, struct device_attribute *attr, char *buf)
 	return sprintf(buf, "%s\n", tz->type);
 }
 
+#if defined ASUS_SAKE_PROJECT
+int g_camera_therma = 3000;
+#endif
+
+#if defined ASUS_VODKA_PROJECT
+int g_rear_cam_therm = 3000;
+#endif
+
+#if defined ASUS_SAKE_PROJECT || defined ASUS_VODKA_PROJECT
+static int g_virtual_therm = 30000;
+
+int get_virtual_therm(void)
+{
+	return g_virtual_therm;
+}
+static int 
+smooth_virtual_therm(int temperature_in)
+{
+	#define TEMP_HISTORY_TOTAL 5
+	static int temp_history[TEMP_HISTORY_TOTAL] = {0};
+	static int temp_index = 0;
+	int i, temp_total = 0;	
+	
+	temp_history[temp_index % TEMP_HISTORY_TOTAL] = temperature_in;
+	temp_index++;	
+	temp_total = 0;
+	for(i = 0; i < TEMP_HISTORY_TOTAL; i++)
+	{
+		temp_total += temp_history[i];
+	}
+	if(temp_index > TEMP_HISTORY_TOTAL)
+		temp_total = temp_total / TEMP_HISTORY_TOTAL;
+	else
+		temp_total = temp_total / temp_index;
+	//printk("virtual-therm = %d, average=%d", temperature_in, temp_total);
+	g_virtual_therm = temp_total;
+	return temp_total;	
+}
+#endif
+
 static ssize_t
 temp_show(struct device *dev, struct device_attribute *attr, char *buf)
 {
@@ -196,6 +236,19 @@ temp_show(struct device *dev, struct device_attribute *attr, char *buf)
 	if (ret)
 		return ret;
 
+#if defined ASUS_SAKE_PROJECT
+ 	if(strcmp( tz->type, "virtual-therm") == 0)
+	{
+		temperature = smooth_virtual_therm(g_camera_therma - 2000);
+	}
+#endif
+
+#if defined ASUS_VODKA_PROJECT
+ 	if(strcmp( tz->type, "virtual-therm") == 0)
+	{
+		temperature = smooth_virtual_therm(g_rear_cam_therm);
+	}
+#endif
 	return sprintf(buf, "%d\n", temperature);
 }
 

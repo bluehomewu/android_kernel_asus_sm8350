@@ -865,6 +865,9 @@ static int usb_audio_probe(struct usb_interface *intf,
 	usb_set_intfdata(intf, chip);
 	atomic_dec(&chip->active);
 	mutex_unlock(&register_mutex);
+#ifdef CONFIG_MACH_ASUS
+	pr_info("%s: [USB] usb sound card driver loaded !\n", __func__);
+#endif
 	return 0;
 
  __error:
@@ -1022,6 +1025,9 @@ static int usb_audio_suspend(struct usb_interface *intf, pm_message_t message)
 		snd_power_change_state(chip->card, SNDRV_CTL_POWER_D3hot);
 		chip->system_suspend = chip->num_suspended_intf;
 	}
+#ifdef CONFIG_MACH_ASUS
+	printk("[USB_PM] usb_audio_suspend, dev=%s\n", dev_name(&intf->dev));
+#endif
 
 	return 0;
 }
@@ -1075,6 +1081,9 @@ err_out:
 
 static int usb_audio_resume(struct usb_interface *intf)
 {
+#ifdef CONFIG_MACH_ASUS
+	printk("[USB_PM] usb_audio_resume, dev=%s\n", dev_name(&intf->dev));
+#endif
 	return __usb_audio_resume(intf, false);
 }
 
