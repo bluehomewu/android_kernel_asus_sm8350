@@ -451,21 +451,8 @@ lim_fill_sme_assoc_ind_params(
 	struct mac_context *mac_ctx,
 	tpLimMlmAssocInd assoc_ind, struct assoc_ind *sme_assoc_ind,
 	struct pe_session *session_entry, bool assoc_req_alloc);
-
-/**
- * lim_send_mlm_assoc_ind() - Sends assoc indication to SME
- * @mac_ctx: Global Mac context
- * @sta_ds: Station DPH hash entry
- * @session_entry: PE session entry
- *
- * This function sends either LIM_MLM_ASSOC_IND
- * or LIM_MLM_REASSOC_IND to SME.
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS lim_send_mlm_assoc_ind(struct mac_context *mac,
-				  tpDphHashNode sta,
-				  struct pe_session *pe_session);
+void lim_send_mlm_assoc_ind(struct mac_context *mac, tpDphHashNode sta,
+			    struct pe_session *pe_session);
 
 #define ASSOC_FRAME_LEN 0
 /**
@@ -1232,7 +1219,6 @@ typedef enum sHalBitVal         /* For Bit operations */
  * @addba_extn_present: ADDBA extension present flag
  * @amsdu_support: amsdu in ampdu support
  * @is_wep: protected bit in fc
- * @calc_buff_size: Calculated buf size from peer and self capabilities
  *
  * This function is called when ADDBA request is successful. ADDBA response is
  * setup by calling addba_response_setup API and frame is then sent out OTA.
@@ -1243,8 +1229,7 @@ QDF_STATUS lim_send_addba_response_frame(struct mac_context *mac_ctx,
 					 tSirMacAddr peer_mac, uint16_t tid,
 					 struct pe_session *session,
 					 uint8_t addba_extn_present,
-					 uint8_t amsdu_support, uint8_t is_wep,
-					 uint16_t calc_buff_size);
+					 uint8_t amsdu_support, uint8_t is_wep);
 
 /**
  * lim_send_delba_action_frame() - Send delba to peer
@@ -1298,15 +1283,6 @@ void lim_process_auth_failure_timeout(struct mac_context *mac_ctx);
  */
 void lim_process_assoc_failure_timeout(struct mac_context *mac_ctx,
 				       uint32_t msg_type);
-
-/**
- * lim_process_sae_auth_timeout() - This function is called to process sae
- * auth timeout
- * @mac_ctx: Pointer to Global MAC structure
- *
- * @Return: None
- */
-void lim_process_sae_auth_timeout(struct mac_context *mac_ctx);
 
 /**
  * lim_send_frame() - API to send frame

@@ -114,7 +114,8 @@ void lim_ft_cleanup(struct mac_context *mac, struct pe_session *pe_session)
  *------------------------------------------------------------------*/
 void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		struct pe_session *ft_session,
-		struct bss_description *bssDescription)
+		struct bss_description *bssDescription,
+		tpSirAssocRsp assoc_rsp)
 {
 	struct bss_params *pAddBssParams = NULL;
 	tAddStaParams *sta_ctx;
@@ -164,6 +165,26 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 #ifdef WLAN_FEATURE_11W
 	pAddBssParams->rmfEnabled = ft_session->limRmfEnabled;
 #endif
+	if (assoc_rsp &&
+	    ft_session->htCapability && pBeaconStruct->HTCaps.present &&
+	    assoc_rsp->HTCaps.present) {
+		/* Some AP have different HT ch width setting in
+		 * beacon/assoc resp. FW uses assoc response to decide
+		 * the bw of HT AP in Roaming sync.
+		 * Here overwrite beacon HT bw setting from assoc
+		 * resp frame to keep sync with FW.
+		 */
+		pBeaconStruct->HTCaps.supportedChannelWidthSet =
+			assoc_rsp->HTCaps.supportedChannelWidthSet;
+		if (pBeaconStruct->HTInfo.present &&
+		    assoc_rsp->HTInfo.present) {
+			pBeaconStruct->HTInfo.secondaryChannelOffset =
+			assoc_rsp->HTInfo.secondaryChannelOffset;
+			pBeaconStruct->HTInfo.recommendedTxWidthSet =
+			assoc_rsp->HTInfo.recommendedTxWidthSet;
+		}
+	}
+
 	/* Use the advertised capabilities from the received beacon/PR */
 	if (IS_DOT11_MODE_HT(ft_session->dot11mode) &&
 	    (pBeaconStruct->HTCaps.present)) {
@@ -188,18 +209,13 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 	ft_session->htSecondaryChannelOffset =
 		pBeaconStruct->HTInfo.secondaryChannelOffset;
 	sta_ctx = &pAddBssParams->staContext;
-	/*
-	 * in lim_extract_ap_capability function intersection of FW
-	 * advertised channel width and AP advertised channel
-	 * width has been taken into account for calculating
-	 * pe_session->ch_width
-	 */
-	pAddBssParams->ch_width = ft_session->ch_width;
-	sta_ctx->ch_width = ft_session->ch_width;
 
 	if (ft_session->vhtCapability &&
 	    ft_session->vhtCapabilityPresentInBeacon) {
 		pAddBssParams->vhtCapable = pBeaconStruct->VHTCaps.present;
+		if (pBeaconStruct->VHTOperation.chanWidth && chan_width_support)
+			pAddBssParams->ch_width =
+				pBeaconStruct->VHTOperation.chanWidth + 1;
 		vht_caps = &pBeaconStruct->VHTCaps;
 		lim_update_vhtcaps_assoc_resp(mac, pAddBssParams,
 					      vht_caps, ft_session);
@@ -208,6 +224,10 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		pe_debug("VHT caps are present in vendor specific IE");
 		pAddBssParams->vhtCapable =
 			pBeaconStruct->vendor_vht_ie.VHTCaps.present;
+		if (pBeaconStruct->vendor_vht_ie.VHTOperation.chanWidth &&
+		    chan_width_support)
+			pAddBssParams->ch_width =
+			pBeaconStruct->vendor_vht_ie.VHTOperation.chanWidth + 1;
 		vht_caps = &pBeaconStruct->vendor_vht_ie.VHTCaps;
 		lim_update_vhtcaps_assoc_resp(mac, pAddBssParams,
 					      vht_caps, ft_session);
@@ -221,8 +241,8 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		lim_add_bss_he_cfg(pAddBssParams, ft_session);
 	}
 
-	pe_debug("SIR_HAL_ADD_BSS_REQ with frequency: %d, width: %d",
-		 bssDescription->chan_freq, pAddBssParams->ch_width);
+	pe_debug("SIR_HAL_ADD_BSS_REQ with frequency: %d",
+		bssDescription->chan_freq);
 
 	/* Populate the STA-related parameters here */
 	/* Note that the STA here refers to the AP */
@@ -248,6 +268,14 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 		if (IS_DOT11_MODE_HT(ft_session->dot11mode) &&
 		    (pBeaconStruct->HTCaps.present)) {
 			pAddBssParams->staContext.htCapable = 1;
+			if (pBeaconStruct->HTCaps.supportedChannelWidthSet &&
+			    chan_width_support) {
+				pAddBssParams->staContext.ch_width = (uint8_t)
+					pBeaconStruct->HTInfo.recommendedTxWidthSet;
+			} else {
+				pAddBssParams->staContext.ch_width =
+					CH_WIDTH_20MHZ;
+			}
 			if (ft_session->vhtCapability &&
 			    IS_BSS_VHT_CAPABLE(pBeaconStruct->VHTCaps)) {
 				pAddBssParams->staContext.vhtCapable = 1;
@@ -265,6 +293,19 @@ void lim_ft_prepare_add_bss_req(struct mac_context *mac,
 				lim_intersect_ap_he_caps(ft_session,
 					pAddBssParams, pBeaconStruct, NULL);
 
+			if (pBeaconStruct->HTCaps.supportedChannelWidthSet &&
+			    chan_width_support) {
+				sta_ctx->ch_width = (uint8_t)
+					pBeaconStruct->HTInfo.recommendedTxWidthSet;
+				if (pAddBssParams->staContext.vhtCapable &&
+					pBeaconStruct->VHTOperation.chanWidth)
+					sta_ctx->ch_width =
+					pBeaconStruct->VHTOperation.chanWidth
+						+ 1;
+			} else {
+				pAddBssParams->staContext.ch_width =
+					CH_WIDTH_20MHZ;
+			}
 			pAddBssParams->staContext.mimoPS =
 				(tSirMacHTMIMOPowerSaveState) pBeaconStruct->HTCaps.
 				mimoPowerSave;
@@ -506,7 +547,8 @@ void lim_fill_ft_session(struct mac_context *mac,
 			 struct bss_description *pbssDescription,
 			 struct pe_session *ft_session,
 			 struct pe_session *pe_session,
-			 enum wlan_phymode bss_phymode)
+			 enum wlan_phymode bss_phymode,
+			 tpSirAssocRsp assoc_rsp)
 {
 	uint8_t currentBssUapsd;
 	uint8_t bss_chan_id;
@@ -514,8 +556,7 @@ void lim_fill_ft_session(struct mac_context *mac,
 	int8_t regMax;
 	tSchBeaconStruct *pBeaconStruct;
 	ePhyChanBondState cbEnabledMode;
-	struct vdev_mlme_obj *mlme_obj;
-	bool is_pwr_constraint;
+	struct lim_max_tx_pwr_attr tx_pwr_attr = {0};
 
 	pBeaconStruct = qdf_mem_malloc(sizeof(tSchBeaconStruct));
 	if (!pBeaconStruct)
@@ -571,6 +612,25 @@ void lim_fill_ft_session(struct mac_context *mac,
 	ft_session->htCapability =
 		(IS_DOT11_MODE_HT(ft_session->dot11mode)
 		 && pBeaconStruct->HTCaps.present);
+	if (assoc_rsp &&
+	    ft_session->htCapability && pBeaconStruct->HTCaps.present &&
+	    assoc_rsp->HTCaps.present) {
+		/* Some AP have different HT ch width setting in
+		 * beacon/assoc resp. FW uses assoc response to decide
+		 * the bw of HT AP in Roaming sync.
+		 * Here overwrite beacon HT bw setting from assoc
+		 * resp frame to keep sync with FW.
+		 */
+		pBeaconStruct->HTCaps.supportedChannelWidthSet =
+			assoc_rsp->HTCaps.supportedChannelWidthSet;
+		if (pBeaconStruct->HTInfo.present &&
+		    assoc_rsp->HTInfo.present) {
+			pBeaconStruct->HTInfo.secondaryChannelOffset =
+			assoc_rsp->HTInfo.secondaryChannelOffset;
+			pBeaconStruct->HTInfo.recommendedTxWidthSet =
+			assoc_rsp->HTInfo.recommendedTxWidthSet;
+		}
+	}
 
 	if (IS_DOT11_MODE_HE(ft_session->dot11mode) &&
 	    pBeaconStruct->he_cap.present)
@@ -678,23 +738,15 @@ void lim_fill_ft_session(struct mac_context *mac,
 		ft_session->shortSlotTimeSupported = true;
 	}
 
-	mlme_obj = wlan_vdev_mlme_get_cmpt_obj(pe_session->vdev);
-	if (!mlme_obj) {
-		pe_err("vdev component object is NULL");
-		qdf_mem_free(pBeaconStruct);
-		return;
-	}
-
 	regMax = wlan_reg_get_channel_reg_power_for_freq(
 		mac->pdev, ft_session->curr_op_freq);
 	localPowerConstraint = regMax;
 	lim_extract_ap_capability(mac, (uint8_t *) pbssDescription->ieFields,
+
 		lim_get_ielen_from_bss_description(pbssDescription),
 		&ft_session->limCurrentBssQosCaps,
 		&currentBssUapsd,
-		&localPowerConstraint, ft_session, &is_pwr_constraint);
-	if (is_pwr_constraint)
-		localPowerConstraint = regMax - localPowerConstraint;
+		&localPowerConstraint, ft_session);
 
 	ft_session->limReassocBssQosCaps =
 		ft_session->limCurrentBssQosCaps;
@@ -711,12 +763,12 @@ void lim_fill_ft_session(struct mac_context *mac,
 	ft_session->isFastRoamIniFeatureEnabled =
 		pe_session->isFastRoamIniFeatureEnabled;
 
-	mlme_obj->reg_tpc_obj.reg_max[0] = regMax;
-	mlme_obj->reg_tpc_obj.ap_constraint_power = localPowerConstraint;
-	mlme_obj->reg_tpc_obj.frequency[0] = ft_session->curr_op_freq;
+	tx_pwr_attr.reg_max = regMax;
+	tx_pwr_attr.ap_tx_power = localPowerConstraint;
+	tx_pwr_attr.frequency = ft_session->curr_op_freq;
 
 #ifdef FEATURE_WLAN_ESE
-	ft_session->maxTxPower = lim_get_max_tx_power(mac, mlme_obj);
+	ft_session->maxTxPower = lim_get_max_tx_power(mac, &tx_pwr_attr);
 #else
 	ft_session->maxTxPower = QDF_MIN(regMax, (localPowerConstraint));
 #endif

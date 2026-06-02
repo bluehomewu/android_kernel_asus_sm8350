@@ -518,9 +518,6 @@ typedef struct sAniSirLim {
 	tCacheParams protStaOverlapCache[LIM_PROT_STA_OVERLAP_CACHE_SIZE];
 	tCacheParams protStaCache[LIM_PROT_STA_CACHE_SIZE];
 
-	/* Peer RSSI value */
-	int8_t bss_rssi;
-
 	/* ASSOC RELATED END */
 
 	/* //////////////////////////////  HT RELATED           ////////////////////////////////////////// */
@@ -775,8 +772,6 @@ struct mac_context {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
 	void (*chan_info_cb)(struct scan_chan_info *chan_info);
-	void (*del_peers_ind_cb)(struct wlan_objmgr_psoc *psoc,
-				 uint8_t vdev_id);
 	enum  country_src reg_hint_src;
 	uint32_t rx_packet_drop_counter;
 	enum tx_ack_status auth_ack_status;
@@ -790,6 +785,7 @@ struct mac_context {
 	/* 11k Offload Support */
 	bool is_11k_offload_supported;
 	uint8_t reject_addba_req;
+	bool usr_cfg_ps_enable;
 	uint16_t usr_cfg_ba_buff_size;
 	bool is_usr_cfg_amsdu_enabled;
 	uint8_t no_ack_policy_cfg[QCA_WLAN_AC_ALL];

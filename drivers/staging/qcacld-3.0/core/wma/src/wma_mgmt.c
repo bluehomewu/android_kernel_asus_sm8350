@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -342,10 +342,6 @@ int wma_peer_sta_kickout_event_handler(void *handle, uint8_t *event,
 			 QDF_MAC_ADDR_REF(macaddr));
 		return -EINVAL;
 	}
-
-	if (!wma_is_vdev_valid(vdev_id))
-		return -EINVAL;
-
 	vdev = wma->interfaces[vdev_id].vdev;
 	if (!vdev) {
 		wma_err("Not able to find vdev for VDEV_%d", vdev_id);
@@ -1244,7 +1240,6 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	QDF_STATUS status;
 	struct mac_context *mac = wma->mac_context;
 	struct wlan_channel *des_chan;
-	int32_t keymgmt, uccipher, authmode;
 
 	cmd = qdf_mem_malloc(sizeof(struct peer_assoc_params));
 	if (!cmd) {
@@ -1516,14 +1511,13 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 		cmd->rx_mcs_set = params->supportedRates.vhtRxMCSMap;
 		cmd->tx_max_rate = params->supportedRates.vhtTxHighestDataRate;
 		cmd->tx_mcs_set = params->supportedRates.vhtTxMCSMap;
-		/*
-		 *  tx_mcs_set is intersection of self tx NSS and peer rx mcs map
-		 */
-		if (params->vhtSupportedRxNss)
+
+		if (params->vhtSupportedRxNss) {
 			cmd->peer_nss = params->vhtSupportedRxNss;
-		else
-			cmd->peer_nss = ((cmd->tx_mcs_set & VHT2x2MCSMASK)
-					== VHT2x2MCSMASK) ? 1 : 2;
+		} else {
+			cmd->peer_nss = ((cmd->rx_mcs_set & VHT2x2MCSMASK)
+					 == VHT2x2MCSMASK) ? 1 : 2;
+		}
 
 		if (params->vht_mcs_10_11_supp) {
 			WMI_SET_BITS(cmd->tx_mcs_set, 16, cmd->peer_nss,
@@ -1571,16 +1565,6 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 
 	/* Till conversion is not done in WMI we need to fill fw phy mode */
 	cmd->peer_phymode = wma_host_to_fw_phymode(phymode);
-
-	keymgmt = wlan_crypto_get_param(intr->vdev, WLAN_CRYPTO_PARAM_KEY_MGMT);
-	authmode = wlan_crypto_get_param(intr->vdev,
-					 WLAN_CRYPTO_PARAM_AUTH_MODE);
-	uccipher = wlan_crypto_get_param(intr->vdev,
-					 WLAN_CRYPTO_PARAM_UCAST_CIPHER);
-
-	cmd->akm = cm_crypto_authmode_to_wmi_authmode(authmode,
-						      keymgmt,
-						      uccipher);
 
 	status = wmi_unified_peer_assoc_send(wma->wmi_handle,
 					 cmd);
@@ -2405,6 +2389,7 @@ void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id, int32_t rssi)
 	wma_lost_link_info_handler(wma, vdev_id, rssi);
 }
 
+#ifdef ROAM_OFFLOAD_V1
 void wlan_cm_send_beacon_miss(uint8_t vdev_id, int32_t rssi)
 {
 	tp_wma_handle wma;
@@ -2417,7 +2402,7 @@ void wlan_cm_send_beacon_miss(uint8_t vdev_id, int32_t rssi)
 
 	wma_beacon_miss_handler(wma, vdev_id, rssi);
 }
-
+#endif
 /**
  * wma_get_status_str() - get string of tx status from firmware
  * @status: tx status

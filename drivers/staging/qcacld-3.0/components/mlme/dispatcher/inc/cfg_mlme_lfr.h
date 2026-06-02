@@ -2455,8 +2455,7 @@
  * ROAM_TRIGGER_REASON_STA_KICKOUT BIT 15
  * ROAM_TRIGGER_REASON_ESS_RSSI    BIT 16
  * ROAM_TRIGGER_REASON_WTC_BTM     BIT 17
- * ROAM_TRIGGER_REASON_PMK_TIMEOUT BIT 18
- * ROAM_TRIGGER_REASON_MAX         BIT 19
+ * ROAM_TRIGGER_REASON_MAX         BIT 18
  *
  * Related: none
  *
@@ -2470,7 +2469,7 @@
 			"roam_triggers", \
 			0, \
 			0xFFFFFFFF, \
-			0x7FFFF, \
+			0x3FFFF, \
 			CFG_VALUE_OR_DEFAULT, \
 			"Bitmap of roaming triggers")
 
@@ -2619,7 +2618,7 @@
  * sae_single_pmk_feature_enabled - Enable/disable sae single pmk feature.
  * @Min: 0
  * @Max: 1
- * @Default: 1
+ * @Default: 0
  *
  * This INI is to enable/disable SAE Roaming with same PMK/PMKID feature support
  *
@@ -2633,7 +2632,7 @@
  */
 #define CFG_SAE_SINGLE_PMK CFG_INI_BOOL( \
 		"sae_single_pmk_feature_enabled", \
-		true, \
+		false, \
 		"Enable/disable SAE Roaming with single PMK/PMKID")
 
 #define SAE_SINGLE_PMK_ALL CFG(CFG_SAE_SINGLE_PMK)

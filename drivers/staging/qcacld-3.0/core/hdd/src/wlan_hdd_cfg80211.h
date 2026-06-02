@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -270,13 +270,12 @@ typedef enum {
 #define WIFI_TDLS_EXTERNAL_CONTROL_SUPPORT	BIT(1)
 #define WIIF_TDLS_OFFCHANNEL_SUPPORT		BIT(2)
 
-#define CFG_NON_AGG_RETRY_MAX                  (64)
-#define CFG_AGG_RETRY_MAX                      (64)
+#define CFG_NON_AGG_RETRY_MAX                  (31)
+#define CFG_AGG_RETRY_MAX                      (31)
 #define CFG_CTRL_RETRY_MAX                     (31)
 #define CFG_PROPAGATION_DELAY_MAX              (63)
 #define CFG_PROPAGATION_DELAY_BASE             (64)
 #define CFG_AGG_RETRY_MIN                      (5)
-#define CFG_NON_AGG_RETRY_MIN                  (5)
 
 #define PCL_CHANNEL_SUPPORT_GO			BIT(0)
 #define PCL_CHANNEL_SUPPORT_CLI			BIT(1)
@@ -433,17 +432,8 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 					       uint32_t ch_freq);
 
-/**
- * hdd_select_cbmode() - select channel bonding mode
- * @adapter: Pointer to adapter
- * @oper_freq: Operating frequency (MHz)
- * @sec_ch_2g_freq: secondary channel freq
- * @ch_params: channel info struct to populate
- *
- * Return: none
- */
-void hdd_select_cbmode(struct hdd_adapter *adapter, qdf_freq_t oper_freq,
-		       qdf_freq_t sec_ch_2g_freq, struct ch_params *ch_params);
+void hdd_select_cbmode(struct hdd_adapter *adapter, uint32_t oper_freq,
+		       struct ch_params *ch_params);
 
 /**
  * wlan_hdd_is_ap_supports_immediate_power_save() - to find certain vendor APs
@@ -523,28 +513,6 @@ void wlan_hdd_cfg80211_unlink_bss(struct hdd_adapter *adapter,
 				  uint8_t ssid_len);
 
 void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter);
-
-#ifdef WLAN_CFR_ENABLE
-/*
- * hdd_cfr_data_send_nl_event() - send cfr data through nl event
- * @vdev_id: vdev id
- * @pid: process pid to which send data event unicast way
- * @data: pointer to the cfr data
- * @data_len: length of data
- *
- * Return: void
- */
-void hdd_cfr_data_send_nl_event(uint8_t vdev_id, uint32_t pid,
-				const void *data, uint32_t data_len);
-
-#define FEATURE_CFR_DATA_VENDOR_EVENTS                                  \
-[QCA_NL80211_VENDOR_SUBCMD_PEER_CFR_CAPTURE_CFG_INDEX] = {              \
-	.vendor_id = QCA_NL80211_VENDOR_ID,                             \
-	.subcmd = QCA_NL80211_VENDOR_SUBCMD_PEER_CFR_CAPTURE_CFG,       \
-},
-#else
-#define FEATURE_CFR_DATA_VENDOR_EVENTS
-#endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
@@ -815,10 +783,12 @@ int wlan_hdd_send_mode_change_event(void);
  * wlan_hdd_restore_channels() - Restore the channels which were cached
  * and disabled in wlan_hdd_disable_channels api.
  * @hdd_ctx: Pointer to the HDD context
+ * @notify_sap_event: Indicates if SAP event needs to be notified
  *
  * Return: 0 on success, Error code on failure
  */
-int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx);
+int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx,
+			      bool notify_sap_event);
 
 /*
  * wlan_hdd_send_sta_authorized_event: Function to send station authorized

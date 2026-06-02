@@ -1473,8 +1473,6 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 				       &session->dph.dphHashTable);
 	if (sta_ds && lim_is_session_he_capable(session))
 		he_cap = lim_is_sta_he_capable(sta_ds);
-	if (sta_ds && sta_ds->staType == STA_ENTRY_NDI_PEER)
-		he_cap = lim_is_session_he_capable(session);
 
 	if (he_cap)
 		buff_size = MAX_BA_BUFF_SIZE;
@@ -1510,7 +1508,7 @@ static void lim_process_addba_req(struct mac_context *mac_ctx, uint8_t *rx_pkt_i
 			session,
 			addba_req->addba_extn_element.present,
 			addba_req->addba_param_set.amsdu_supp,
-			mac_hdr->fc.wep, buff_size);
+			mac_hdr->fc.wep);
 		if (qdf_status != QDF_STATUS_SUCCESS) {
 			pe_err("Failed to send addba response frame");
 			cdp_addba_resp_tx_completion(

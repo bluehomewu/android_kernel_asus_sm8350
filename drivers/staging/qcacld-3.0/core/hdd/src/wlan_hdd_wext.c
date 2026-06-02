@@ -3635,7 +3635,7 @@ static int hdd_we_set_power(struct hdd_adapter *adapter, int value)
 	switch (value) {
 	case 1:
 		/* Enable PowerSave */
-		ucfg_mlme_set_user_ps(hdd_ctx->psoc, adapter->vdev_id, true);
+		sme_save_usr_ps_cfg(mac_handle, true);
 		sme_ps_enable_disable(mac_handle, adapter->vdev_id,
 				      SME_PS_ENABLE);
 		return 0;
@@ -3643,7 +3643,7 @@ static int hdd_we_set_power(struct hdd_adapter *adapter, int value)
 		/* Disable PowerSave */
 		sme_ps_enable_disable(mac_handle, adapter->vdev_id,
 				      SME_PS_DISABLE);
-		ucfg_mlme_set_user_ps(hdd_ctx->psoc, adapter->vdev_id, false);
+		sme_save_usr_ps_cfg(mac_handle, false);
 		return 0;
 	case 3:
 		/* Enable UASPD */
@@ -4013,7 +4013,7 @@ static int hdd_we_set_11n_rate(struct hdd_adapter *adapter, int rate_code)
 
 	hdd_debug("Rate code %d", rate_code);
 
-	if (rate_code != 0xffff) {
+	if (rate_code != 0xff) {
 		rix = RC_2_RATE_IDX(rate_code);
 		if (rate_code & 0x80) {
 			preamble = WMI_RATE_PREAMBLE_HT;
@@ -4066,7 +4066,7 @@ static int hdd_we_set_vht_rate(struct hdd_adapter *adapter, int rate_code)
 
 	hdd_debug("Rate code %d", rate_code);
 
-	if (rate_code != 0xffff) {
+	if (rate_code != 0xff) {
 		rix = RC_2_RATE_IDX_11AC(rate_code);
 		preamble = WMI_RATE_PREAMBLE_VHT;
 		nss = HT_RC_2_STREAMS_11AC(rate_code) - 1;
@@ -5360,7 +5360,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	}
 	case WE_GET_MAX_ASSOC:
 	{
-		if (ucfg_mlme_get_assoc_sta_limit(hdd_ctx->psoc, value) !=
+		if (ucfg_mlme_set_assoc_sta_limit(hdd_ctx->psoc, *value) !=
 		    QDF_STATUS_SUCCESS) {
 			hdd_err("CFG_ASSOC_STA_LIMIT failed");
 			ret = -EIO;
@@ -8387,17 +8387,8 @@ static int iw_get_statistics(struct net_device *dev,
 	if (errno)
 		return errno;
 
-	errno = wlan_hdd_qmi_get_sync_resume();
-	if (errno) {
-		hdd_err("qmi sync resume failed: %d", errno);
-		goto end;
-	}
-
 	errno = __iw_get_statistics(dev, info, wrqu, extra);
 
-	wlan_hdd_qmi_put_suspend();
-
-end:
 	osif_vdev_sync_op_stop(vdev_sync);
 
 	return errno;
