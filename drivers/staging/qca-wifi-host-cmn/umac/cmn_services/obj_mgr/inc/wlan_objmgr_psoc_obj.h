@@ -144,10 +144,6 @@
 #define WLAN_SOC_CEXT_MBSS_PARAM_IN_START   0x00800000
 /* Per channel scan config flags support */
 #define WLAN_SOC_CEXT_SCAN_PER_CH_CONFIG    0x01000000
-	/* CAPABILITY: csa offload in case of AP */
-#define WLAN_SOC_CEXT_CSA_TX_OFFLOAD      0x02000000
-	/* ext event supported by fw */
-#define WLAN_SOC_EXT_EVENT_SUPPORTED      0x04000000
 
 /* feature_flags */
 	/* CONF: ATH FF enabled */
