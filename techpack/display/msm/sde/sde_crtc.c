@@ -1,4 +1,5 @@
 /*
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  * Copyright (c) 2014-2021 The Linux Foundation. All rights reserved.
  * Copyright (C) 2013 Red Hat
  * Author: Rob Clark <robdclark@gmail.com>
@@ -41,6 +42,9 @@
 #include "sde_core_perf.h"
 #include "sde_trace.h"
 #include "sde_vm.h"
+
+/* ASUS BSP Display +++ */
+#include "../dsi/dsi_anakin.h"
 
 #define SDE_PSTATES_MAX (SDE_STAGE_MAX * 4)
 #define SDE_MULTIRECT_PLANE_MAX (SDE_STAGE_MAX * 2)
@@ -3477,6 +3481,7 @@ static void sde_crtc_destroy_state(struct drm_crtc *crtc,
 	struct sde_crtc_state *cstate;
 	struct drm_encoder *enc;
 	struct sde_kms *sde_kms;
+	u32 encoder_mask;
 
 	if (!crtc || !state) {
 		SDE_ERROR("invalid argument(s)\n");
@@ -3492,9 +3497,11 @@ static void sde_crtc_destroy_state(struct drm_crtc *crtc,
 		return;
 	}
 
-	SDE_DEBUG("crtc%d\n", crtc->base.id);
+	encoder_mask = state->encoder_mask ? state->encoder_mask :
+				crtc->state->encoder_mask;
+	SDE_DEBUG("crtc%d\n, encoder_mask=%d", crtc->base.id, encoder_mask);
 
-	drm_for_each_encoder_mask(enc, crtc->dev, state->encoder_mask)
+	drm_for_each_encoder_mask(enc, crtc->dev, encoder_mask)
 		sde_rm_release(&sde_kms->rm, enc, true);
 
 	__drm_atomic_helper_crtc_destroy_state(state);
@@ -3747,6 +3754,9 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 
 	SDE_ATRACE_BEGIN("crtc_commit");
 
+	/* ASUS BSP Display +++ */
+	anakin_crtc_display_commit(crtc);
+
 	idle_pc_state = sde_crtc_get_property(cstate, CRTC_PROP_IDLE_PC_STATE);
 
 	sde_crtc->kickoff_in_progress = true;
@@ -3809,6 +3819,9 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 		if (encoder->crtc != crtc)
 			continue;
 
+			/* ASUS BSP Display +++ */
+			anakin_set_dc_bl_process(encoder, crtc);
+
 		sde_encoder_kickoff(encoder, false, true);
 	}
 	sde_crtc->kickoff_in_progress = false;
@@ -3823,6 +3836,9 @@ void sde_crtc_commit_kickoff(struct drm_crtc *crtc,
 	}
 
 	_sde_crtc_schedule_idle_notify(crtc);
+
+	/* ASUS BSP Display +++ */
+	dsi_anakin_frame_commit_cnt(crtc);
 
 	SDE_ATRACE_END("crtc_commit");
 }
@@ -4249,6 +4265,9 @@ static void sde_crtc_disable(struct drm_crtc *crtc)
 
 	_sde_crtc_reset(crtc);
 	sde_cp_crtc_disable(crtc);
+
+	/* ASUS BSP Display +++ */
+	dsi_anakin_clear_commit_cnt();
 
 	mutex_unlock(&sde_crtc->crtc_lock);
 }
@@ -5435,6 +5454,16 @@ static void sde_crtc_install_properties(struct drm_crtc *crtc,
 		"idle_time", 0, 0, U64_MAX, 0,
 		CRTC_PROP_IDLE_TIMEOUT);
 
+	/* ASUS BSP Display +++ */
+	msm_property_install_range(&sde_crtc->property_info,
+		"fod_masker", 0, 0, U64_MAX, 0,
+		CRTC_PROP_FOD_MASKER);
+
+	msm_property_install_range(&sde_crtc->property_info,
+		"fod_spot", 0, 0, U64_MAX, 0,
+		CRTC_PROP_FOD_SPOT);
+	/* ASUS BSP Display --- */
+
 	if (catalog->has_trusted_vm_support) {
 		int init_idx = sde_in_trusted_vm(sde_kms) ? 1 : 0;
 
@@ -5646,6 +5675,13 @@ static int sde_crtc_atomic_set_property(struct drm_crtc *crtc,
 			}
 		}
 		break;
+	/* ASUS BSP Display +++ */
+	case CRTC_PROP_FOD_MASKER:
+	case CRTC_PROP_FOD_SPOT:
+		//printk("FOD:sde_crtc_atomic_set_property(), %d,%d",old_has_fov_makser,has_fov_makser);
+		anakin_crtc_fod_masker_spot(crtc, idx, val);
+		break;
+	/* ASUS BSP Display +++ */
 	default:
 		/* nothing to do */
 		break;
