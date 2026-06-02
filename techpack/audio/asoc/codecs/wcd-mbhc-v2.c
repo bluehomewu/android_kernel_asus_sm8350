@@ -1667,6 +1667,12 @@ int wcd_mbhc_start(struct wcd_mbhc *mbhc, struct wcd_mbhc_config *mbhc_cfg)
 
 	/* check if USB C analog is defined on device tree */
 	mbhc_cfg->enable_usbc_analog = 0;
+
+	/* ASUS BSP audio: For Picasso project HW design +++ */
+	dev_err(component->dev, "%s: Is Picasso project dont initialize mbhc!\n", __func__);
+	return 0;
+	/* ASUS BSP audio --- */
+
 	if (of_find_property(card->dev->of_node, usb_c_dt, NULL)) {
 		rc = of_property_read_u32(card->dev->of_node, usb_c_dt,
 				&mbhc_cfg->enable_usbc_analog);

@@ -15,6 +15,7 @@
 #include <linux/input.h>
 #include <linux/of_device.h>
 #include <linux/soc/qcom/fsa4480-i2c.h>
+#include <linux/regulator/consumer.h>
 #include <sound/core.h>
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
@@ -42,6 +43,21 @@
 #include "lahaina-port-config.h"
 #include "msm_dailink.h"
 #include "msm-common.h"
+
+//ASUS_BSP +++   add for codec_status
+#ifdef ASUS_FTM_BUILD
+#if defined ASUS_VODKA_PROJECT || defined ASUS_SAKE_PROJECT
+#include <linux/proc_fs.h>
+#include <linux/syscalls.h>
+#include <linux/fs.h>
+#include <linux/file.h>
+#define AUDIO_CODEC_PROC_FILE  "driver/audio_codec"
+static struct proc_dir_entry *audio_codec_proc_file;
+int codec_status=0;
+int codec_num=0;
+#endif
+#endif
+//ASUS_BSP ---   add for codec_status
 
 #define DRV_NAME "lahaina-asoc-snd"
 #define __CHIPSET__ "LAHAINA "
@@ -89,7 +105,15 @@
 #define WCN_CDC_SLIM_TX_CH_MAX 2
 #define WCN_CDC_SLIM_TX_CH_MAX_LITO 3
 
+#ifdef ASUS_ZS673KS_PROJECT
+/* ESS Definitions */
+static struct snd_soc_jack sdm845_sound_jack;
+#endif
 #define SWR_MAX_SLAVE_DEVICES 6
+
+extern int audio_req_set_lcm_mode(bool enable); //Austin +++
+
+static struct regulator *bob_pwm_supply;
 
 enum {
 	RX_PATH = 0,
@@ -341,6 +365,7 @@ static u32 mi2s_ebit_clk[MI2S_MAX] = {
 	Q6AFE_LPASS_CLK_ID_PRI_MI2S_EBIT,
 	Q6AFE_LPASS_CLK_ID_SEC_MI2S_EBIT,
 	Q6AFE_LPASS_CLK_ID_TER_MI2S_EBIT,
+	Q6AFE_LPASS_CLK_ID_QUAD_MI2S_EBIT,//Austin+++
 };
 
 static struct mi2s_conf mi2s_intf_conf[MI2S_MAX];
@@ -493,21 +518,25 @@ static struct dev_config aux_pcm_tx_cfg[] = {
 
 /* Default configuration of MI2S channels */
 static struct dev_config mi2s_rx_cfg[] = {
-	[PRIM_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+	[PRIM_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S24_LE, 2}, /* Austin+++ *//* mei+++for vodka tfa9874 */
 	[SEC_MI2S]  = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 	[TERT_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 	[QUAT_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 	[QUIN_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
-	[SEN_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+	[SEN_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S24_LE, 2}, /* ASUS_BSP Paul +++ */
 };
 
 static struct dev_config mi2s_tx_cfg[] = {
+#if defined ASUS_VODKA_PROJECT || defined ASUS_SAKE_PROJECT
+	[PRIM_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S24_LE, 2},/* mei+++for vodka tfa9874,sake cs35l45 amp echo reference */
+#else
 	[PRIM_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
+#endif
 	[SEC_MI2S]  = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
 	[TERT_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
-	[QUAT_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
+	[QUAT_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* Austin +++ */
 	[QUIN_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
-	[SEN_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
+	[SEN_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S24_LE, 2}, /* ASUS_BSP Paul +++ */
 };
 
 static struct tdm_dev_config pri_tdm_dev_config[MAX_PATH][TDM_PORT_MAX] = {
@@ -5009,6 +5038,117 @@ static const struct snd_kcontrol_new msm_snd_controls[] = {
 			aux_pcm_tx_sample_rate_put),
 };
 
+atomic_t BOB_PWM_enable_ref_count;
+static const char *const BOB_PWM_control_text[] = {"False", "True"};
+static SOC_ENUM_SINGLE_EXT_DECL(BOB_PWM_control, BOB_PWM_control_text);
+
+static int BOB_PWM_control_get(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.enumerated.item[0] =
+		atomic_read(&BOB_PWM_enable_ref_count) & 1;
+
+	return 0;
+}
+
+static int BOB_PWM_control_put(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	int ret = 0;
+
+	switch (ucontrol->value.integer.value[0]) {
+	case 0:
+		atomic_dec(&BOB_PWM_enable_ref_count);
+		pr_debug("%s remove - vote BOB PWM\n", __func__);
+		if (atomic_read(&BOB_PWM_enable_ref_count) == 0) {
+			pr_debug("Rquest BOB PWM disable\n");
+			// You can add PMIC function call here
+			ret = regulator_set_load(bob_pwm_supply, 0);
+			pr_debug("%s: regulator_set_load bob_pwm_supply 0, ret = %d\n", __func__, ret);
+			ret = regulator_enable(bob_pwm_supply);
+			pr_debug("%s: regulator_enable bob_pwm_supply, ret = %d\n", __func__, ret);
+		}
+		break;
+	case 1:
+		pr_debug("%s add - vote BOB PWM\n", __func__);
+		if (atomic_read(&BOB_PWM_enable_ref_count) == 0) {
+			pr_debug("Request BOB PWM enable\n");
+			// You can add PMIC function call here
+			ret = regulator_set_load(bob_pwm_supply, 2000000);
+			pr_debug("%s: regulator_set_load bob_pwm_supply 2000000, ret = %d\n", __func__, ret);
+			ret = regulator_enable(bob_pwm_supply);
+			pr_debug("%s: regulator_enable bob_pwm_supply, ret = %d\n", __func__, ret);
+		}
+		atomic_inc(&BOB_PWM_enable_ref_count);
+		break;
+	default:
+		pr_debug("%s wrong configuration\n", __func__);
+		break;
+	}
+
+	return 0;
+}
+
+static const struct snd_kcontrol_new msm_BOB_PWM_controls[] = {
+	SOC_ENUM_EXT("BOB PWM ENABLE VOTE", BOB_PWM_control,
+			BOB_PWM_control_get,
+			BOB_PWM_control_put),
+};
+
+atomic_t smb1399_lcm_disable_ref_count;
+static const char *const smb1399_lcm_control_text[] = {"False", "True"};
+static SOC_ENUM_SINGLE_EXT_DECL(smb1399_lcm_control, smb1399_lcm_control_text);
+
+static int smb1399_lcm_control_get(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.enumerated.item[0] =
+	     atomic_read(&smb1399_lcm_disable_ref_count) & 1;
+
+	return 0;
+}
+
+static int smb1399_lcm_control_put(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_value *ucontrol)
+{
+
+	switch (ucontrol->value.integer.value[0]) {
+	case 0:
+		atomic_dec(&smb1399_lcm_disable_ref_count);
+		printk("%s remove - vote LCM to disable\n", __func__);
+		if (atomic_read(&smb1399_lcm_disable_ref_count) == 0) {
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
+			printk("Rquest SMB1399 to enable LCM\n");
+			/* Enable LCM */
+			audio_req_set_lcm_mode(true);
+#endif /* CONFIG_AUDIO_QGKI */
+		}
+		break;
+	case 1:
+		printk("%s add - vote LCM to disable\n", __func__);
+		if (atomic_read(&smb1399_lcm_disable_ref_count) == 0) {
+#if IS_ENABLED(CONFIG_AUDIO_QGKI)
+			printk("Request SMB1399 to disable LCM\n");
+			/* Disable LCM */
+			audio_req_set_lcm_mode(false);
+#endif /* CONFIG_AUDIO_QGKI */
+		}
+		atomic_inc(&smb1399_lcm_disable_ref_count);
+		break;
+	default:
+		printk("%s wrong configuration\n", __func__);
+		break;
+	}
+
+	return 0;
+}
+
+static const struct snd_kcontrol_new msm_smb1399_lcm_controls[] = {
+	SOC_ENUM_EXT("SMB1399 LCM DISABLE VOTE", smb1399_lcm_control,
+			smb1399_lcm_control_get,
+			smb1399_lcm_control_put),
+};
+
 static int msm_ext_mclk_get(struct snd_kcontrol *kcontrol,
 			     struct snd_ctl_elem_value *ucontrol)
 {
@@ -6583,6 +6723,47 @@ static const struct snd_soc_dapm_widget msm_int_dapm_widgets[] = {
 	SND_SOC_DAPM_MIC("Digital Mic7", NULL),
 };
 
+#ifdef ASUS_ZS673KS_PROJECT
+// Austin +++
+extern void es928x_jdet_jack_det(struct snd_soc_component *component, struct snd_soc_jack *jack);
+
+static int msm_audrx_ess_init(struct snd_soc_pcm_runtime *rtd)
+{
+       int ret = 0;
+       struct snd_soc_dapm_context *dapm;
+       struct snd_soc_component *component = snd_soc_rtdcom_lookup(rtd, "es928x_codec");
+
+		if (!component) {
+			pr_err("%s: component is NULL\n", __func__);
+			return -EINVAL;
+		}
+		dapm = snd_soc_component_get_dapm(component);
+
+       ret = snd_soc_card_jack_new(rtd->card, "ess Headset Jack",
+                                       SND_JACK_HEADSET | SND_JACK_LINEOUT |
+                                   SND_JACK_BTN_0 | SND_JACK_BTN_1 |
+                                   SND_JACK_BTN_2 | SND_JACK_BTN_3,
+                                       &sdm845_sound_jack, NULL, 0);
+
+       if (ret)
+       {
+               dev_err(rtd->card->dev, "New Headset Jack failed! (%d)\n", ret);
+               return ret;
+       }
+
+       snd_jack_set_key(sdm845_sound_jack.jack, SND_JACK_BTN_0, KEY_MEDIA);
+       snd_jack_set_key(sdm845_sound_jack.jack, SND_JACK_BTN_1, KEY_VOLUMEUP);
+       snd_jack_set_key(sdm845_sound_jack.jack, SND_JACK_BTN_2, KEY_VOLUMEDOWN);
+       snd_jack_set_key(sdm845_sound_jack.jack, SND_JACK_BTN_3, KEY_VOICECOMMAND);
+
+	es928x_jdet_jack_det(component, &sdm845_sound_jack);
+	pr_err("%s: end \n", __func__);
+	return 0;
+
+}
+//Austin ---
+#endif
+
 static int msm_wcn_init(struct snd_soc_pcm_runtime *rtd)
 {
 	unsigned int rx_ch[WCN_CDC_SLIM_RX_CH_MAX] = {157, 158};
@@ -7091,6 +7272,22 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.ignore_pmdown_time = 1,
 		SND_SOC_DAILINK_REG(tert_mi2s_tx_hostless),
 	},
+/* mei +++ for vodka tfa9874 */
+#if defined ASUS_VODKA_PROJECT
+	{
+		.name = "Primary MI2S_TX Hostless",
+		.stream_name = "Primary MI2S_TX Hostless Capture",
+		.dynamic = 1,
+		.dpcm_capture = 1,
+		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
+				SND_SOC_DPCM_TRIGGER_POST},
+		.no_host_mode = SND_SOC_DAI_LINK_NO_HOST,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		SND_SOC_DAILINK_REG(pri_mi2s_tx_hostless),
+	},
+#endif
+/* mei --- for vodka tfa9874 */
 };
 
 static struct snd_soc_dai_link msm_bolero_fe_dai_links[] = {
@@ -7633,6 +7830,9 @@ static struct snd_soc_dai_link msm_mi2s_be_dai_links[] = {
 	{
 		.name = LPASS_BE_PRI_MI2S_RX,
 		.stream_name = "Primary MI2S Playback",
+#ifdef ASUS_ZS673KS_PROJECT
+		.init = &msm_audrx_ess_init, //Austin+++
+#endif
 		.no_pcm = 1,
 		.dpcm_playback = 1,
 		.id = MSM_BACKEND_DAI_PRI_MI2S_RX,
@@ -8450,6 +8650,118 @@ err_hs_detect:
 	return ret;
 }
 
+#ifdef ASUS_VODKA_PROJECT
+struct tfa98xx_dai_name {
+    const char *name;
+    const char *dai_name;
+};
+
+static struct tfa98xx_dai_name tfa98xx_dai_names[] = {
+       {
+               .name = "tfa98xx.3-0034",//for receiver AMP
+               .dai_name = "tfa98xx-aif-3-34",
+       },
+       {
+               .name = "tfa98xx.3-0035",//for speaker AMP
+               .dai_name = "tfa98xx-aif-3-35",
+       },
+};
+
+int register_receiver_dai_name(struct device *dev, int i2cbus, int addr){
+    char buf[50];
+    char *str;
+    snprintf(buf, 50, "tfa98xx.%x-00%x", i2cbus, addr);
+    str = devm_kzalloc(dev, strlen(buf) + 1, GFP_KERNEL);
+    if (!str)
+        return -EINVAL;
+    memcpy(str, buf, strlen(buf));
+    pr_info("%s: register TFA9874 receiver name =  %s\n", __func__, str);
+    tfa98xx_dai_names[0].name = str;
+
+    snprintf(buf, 50, "tfa98xx-aif-%x-%x", i2cbus, addr);
+    str = devm_kzalloc(dev, strlen(buf) + 1, GFP_KERNEL);
+    if (!str)
+        return -EINVAL;
+    memcpy(str, buf, strlen(buf));
+    pr_info("%s: register TFA9874 receiver dai_name =  %s\n", __func__, str);
+    tfa98xx_dai_names[0].dai_name = str;
+    return 0;
+}
+EXPORT_SYMBOL(register_receiver_dai_name);
+
+int register_speaker_dai_name(struct device *dev, int i2cbus, int addr){
+    char buf[50];
+    char *str;
+    snprintf(buf, 50, "tfa98xx.%x-00%x", i2cbus, addr);
+    str = devm_kzalloc(dev, strlen(buf) + 1, GFP_KERNEL);
+    if (!str)
+        return -EINVAL;
+    memcpy(str, buf, strlen(buf));
+    pr_info("%s: register TFA9874 speaker name =  %s\n", __func__, str);
+    tfa98xx_dai_names[1].name = str;
+
+    snprintf(buf, 50, "tfa98xx-aif-%x-%x", i2cbus, addr);
+    str = devm_kzalloc(dev, strlen(buf) + 1, GFP_KERNEL);
+    if (!str)
+        return -EINVAL;
+    memcpy(str, buf, strlen(buf));
+    pr_info("%s: register TFA9874 speaker dai_name =  %s\n", __func__, str);
+    tfa98xx_dai_names[1].dai_name = str;
+    return 0;
+}
+EXPORT_SYMBOL(register_speaker_dai_name);
+#endif
+
+#ifdef ASUS_SAKE_PROJECT
+struct cs35l45_dai_name {
+    const char *name;
+    const char *dai_name;
+};
+
+static struct cs35l45_dai_name cs35l45_dai_names[] = {
+       {
+               .name = "cs35l45.3-0030",//for receiver AMP
+               .dai_name = "cs35l45",
+       },
+       {
+               .name = "cs35l45.3-0031",//for speaker AMP
+               .dai_name = "cs35l45",
+       },
+};
+
+int register_receiver_dai_name(struct device *dev, int i2cbus, int addr){
+    char buf[50];
+    char *str;
+    snprintf(buf, 50, "cs35l45.%x-00%x", i2cbus, addr);
+    str = devm_kzalloc(dev, strlen(buf) + 1, GFP_KERNEL);
+    if (!str)
+        return -EINVAL;
+    memcpy(str, buf, strlen(buf));
+    pr_info("%s: register cs35l45 receiver name =  %s\n", __func__, str);
+    cs35l45_dai_names[0].name = str;
+
+    cs35l45_dai_names[0].dai_name = "cs35l45";
+    return 0;
+}
+EXPORT_SYMBOL(register_receiver_dai_name);
+
+int register_speaker_dai_name(struct device *dev, int i2cbus, int addr){
+    char buf[50];
+    char *str;
+    snprintf(buf, 50, "cs35l45.%x-00%x", i2cbus, addr);
+    str = devm_kzalloc(dev, strlen(buf) + 1, GFP_KERNEL);
+    if (!str)
+        return -EINVAL;
+    memcpy(str, buf, strlen(buf));
+    pr_info("%s: register cs35l45 speaker name =  %s\n", __func__, str);
+    cs35l45_dai_names[1].name = str;
+
+    cs35l45_dai_names[1].dai_name = "cs35l45";
+    return 0;
+}
+EXPORT_SYMBOL(register_speaker_dai_name);
+#endif
+
 static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 {
 	struct snd_soc_card *card = NULL;
@@ -8541,6 +8853,33 @@ static struct snd_soc_card *populate_snd_card_dailinks(struct device *dev)
 				__func__);
 		} else {
 			if (mi2s_audio_intf) {
+#ifdef ASUS_VODKA_PROJECT
+				//for pri_mi2s_rx
+				msm_mi2s_be_dai_links[0].codecs[0].name = tfa98xx_dai_names[0].name;
+				msm_mi2s_be_dai_links[0].codecs[0].dai_name = tfa98xx_dai_names[0].dai_name;
+				msm_mi2s_be_dai_links[0].codecs[1].name = tfa98xx_dai_names[1].name;
+				msm_mi2s_be_dai_links[0].codecs[1].dai_name = tfa98xx_dai_names[1].dai_name;
+
+				//for pri_mi2s_tx
+				msm_mi2s_be_dai_links[1].codecs[0].name = tfa98xx_dai_names[0].name;
+				msm_mi2s_be_dai_links[1].codecs[0].dai_name = tfa98xx_dai_names[0].dai_name;
+				msm_mi2s_be_dai_links[1].codecs[1].name = tfa98xx_dai_names[1].name;
+				msm_mi2s_be_dai_links[1].codecs[1].dai_name = tfa98xx_dai_names[1].dai_name;
+#endif
+
+#ifdef ASUS_SAKE_PROJECT
+				//for pri_mi2s_rx
+				msm_mi2s_be_dai_links[0].codecs[0].name = cs35l45_dai_names[0].name;
+				msm_mi2s_be_dai_links[0].codecs[0].dai_name = cs35l45_dai_names[0].dai_name;
+				msm_mi2s_be_dai_links[0].codecs[1].name = cs35l45_dai_names[1].name;
+				msm_mi2s_be_dai_links[0].codecs[1].dai_name = cs35l45_dai_names[1].dai_name;
+
+				//for pri_mi2s_tx
+				msm_mi2s_be_dai_links[1].codecs[0].name = cs35l45_dai_names[0].name;
+				msm_mi2s_be_dai_links[1].codecs[0].dai_name = cs35l45_dai_names[0].dai_name;
+				msm_mi2s_be_dai_links[1].codecs[1].name = cs35l45_dai_names[1].name;
+				msm_mi2s_be_dai_links[1].codecs[1].dai_name = cs35l45_dai_names[1].dai_name;
+#endif
 				memcpy(msm_lahaina_dai_links + total_links,
 					msm_mi2s_be_dai_links,
 					sizeof(msm_mi2s_be_dai_links));
@@ -8736,6 +9075,26 @@ static int msm_rx_tx_codec_init(struct snd_soc_pcm_runtime *rtd)
 			__func__, ret);
 		return ret;
 	}
+
+	ret = snd_soc_add_component_controls(component, msm_smb1399_lcm_controls,
+				ARRAY_SIZE(msm_smb1399_lcm_controls));
+	if (ret < 0) {
+		pr_err("%s:add SMB1399 LCM controls failed: %d\n",
+			__func__, ret);
+		return ret;
+	}
+	atomic_set(&smb1399_lcm_disable_ref_count, 0);
+	printk("%s add msm_smb1399_lcm_controls \n", __func__);
+
+	ret = snd_soc_add_component_controls(component, msm_BOB_PWM_controls,
+				ARRAY_SIZE(msm_BOB_PWM_controls));
+	if (ret < 0) {
+		pr_err("%s:add BOB PWM controls failed: %d\n",
+			__func__, ret);
+		return ret;
+	}
+	atomic_set(&BOB_PWM_enable_ref_count, 0);
+	printk("%s [Peter] test enter \n", __func__);
 
 	snd_soc_dapm_new_controls(dapm, msm_int_dapm_widgets,
 				ARRAY_SIZE(msm_int_dapm_widgets));
@@ -9092,6 +9451,44 @@ static void parse_cps_configuration(struct platform_device *pdev,
 	}
 }
 
+//ASUS_BSP +++   add for codec_status
+#ifdef ASUS_FTM_BUILD
+#if defined ASUS_VODKA_PROJECT || defined ASUS_SAKE_PROJECT
+static ssize_t audio_codec_proc_read(struct file *filp, char __user *buff, size_t len, loff_t *off)
+{
+       char messages[256];
+       pr_err("[Audio] audio_codec_proc_read, codec_status is %d\n", codec_status);
+       if(*off)
+               return 0;
+       memset(messages, 0, sizeof(messages));
+       if (len > 256)
+               len = 256;
+
+       sprintf(messages, "%d\n", codec_status);
+    if (copy_to_user(buff, messages, sizeof(messages)))
+               return -EFAULT;
+       (*off)++;
+       return len;
+}
+
+static struct file_operations proc_fops=
+{
+    .read=audio_codec_proc_read,
+    .owner=THIS_MODULE,
+};
+
+static void create_audio_codec_proc_file(void)
+{
+    pr_err("[Audio] create_audio_codec_proc_file\n");
+    audio_codec_proc_file = proc_create(AUDIO_CODEC_PROC_FILE, 0444, NULL, &proc_fops);
+    if (!audio_codec_proc_file){
+        pr_err("[Audio] create_audio_codec_proc_file failed!\n");
+    }
+}
+#endif
+#endif
+//ASUS_BSP ---   add for codec_status
+
 static int msm_parse_ext_mclk_gpios(struct snd_soc_card *card,
 				    struct ext_mclk_gpio_info **ext_mclk_gpios)
 {
@@ -9141,7 +9538,7 @@ static int msm_parse_ext_mclk_gpios(struct snd_soc_card *card,
 
 		/* aud_ref_mux is present only for LPI GPIOs on lahaina.
 		 * Hence we mandate parsing of mux config only for LPI GPIOs.
-		 * Review the existence of aud_ref_mux for LPI/TLMM GPIOs 
+		 * Review the existence of aud_ref_mux for LPI/TLMM GPIOs
 		 * while porting this change to other platforms
 		 */
 		if (of_property_read_bool(gpio_info[i].gpio_p, "qcom,lpi-gpios")) {
@@ -9542,6 +9939,17 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 		goto err;
 	}
 
+//ASUS_BSP +++   add for codec_status
+#ifdef ASUS_FTM_BUILD
+#if defined ASUS_VODKA_PROJECT || defined ASUS_SAKE_PROJECT
+    if(!codec_num){
+        codec_num++;
+        create_audio_codec_proc_file();
+    }
+#endif
+#endif
+//ASUS_BSP ---   add for codec_status
+
 	ret = snd_soc_of_parse_audio_routing(card, "qcom,audio-routing");
 	if (ret) {
 		dev_err(&pdev->dev, "%s: parse audio routing failed, err:%d\n",
@@ -9699,6 +10107,16 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	for (index = PRIM_MI2S; index < MI2S_MAX; index++)
 		atomic_set(&(pdata->mi2s_gpio_ref_count[index]), 0);
 
+	bob_pwm_supply = devm_regulator_get(&pdev->dev, "bob_pwm");
+	if (IS_ERR(bob_pwm_supply)) {
+		ret = PTR_ERR(bob_pwm_supply);
+		dev_err(&pdev->dev,
+				"%s:Failed to get bob pwm supply %d\n",
+				__func__, ret);
+	} else {
+		printk("%s: devm_regulator_get bob_pwm OK\n", __func__);
+	}
+
 	/* parse cps configuration from dt */
 	parse_cps_configuration(pdev, pdata);
 
@@ -9724,9 +10142,26 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	/* Add QoS request for audio tasks */
 	msm_audio_add_qos_request();
 
+//ASUS_BSP +++   add for codec_status
+#ifdef ASUS_FTM_BUILD
+#if defined ASUS_VODKA_PROJECT || defined ASUS_SAKE_PROJECT
+	if(!codec_status){
+		codec_status=1;
+	}
+#endif
+#endif
+//ASUS_BSP +++   add for codec_status
+
 	return 0;
 err:
 	devm_kfree(&pdev->dev, pdata);
+//ASUS_BSP +++  add for codec_status
+#ifdef ASUS_FTM_BUILD
+#if defined ASUS_VODKA_PROJECT || defined ASUS_SAKE_PROJECT
+    codec_status=0;
+#endif
+#endif
+//ASUS_BSP ---   add for codec_status
 	return ret;
 }
 
