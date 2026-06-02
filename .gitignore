@@ -155,5 +155,10 @@ arch/*/configs/vendor/*_defconfig
 !arch/*/configs/vendor/VODKA*
 !arch/*/configs/vendor/VODKA*
 
+# Don't ignore final defconfig blends.
+!arch/*/configs/vendor/sake*
+!arch/*/configs/vendor/vodka*
+!arch/*/configs/vendor/picasso*
+
 # Ignore the generated defconfig report.
 generate_defconfig.txt
