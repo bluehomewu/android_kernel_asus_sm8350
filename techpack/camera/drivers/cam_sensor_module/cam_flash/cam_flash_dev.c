@@ -9,6 +9,7 @@
 #include "cam_flash_core.h"
 #include "cam_common_util.h"
 #include "camera_main.h"
+#include "asus_flash.h"
 
 static int32_t cam_flash_driver_cmd(struct cam_flash_ctrl *fctrl,
 		void *arg, struct cam_flash_private_soc *soc_private)
@@ -83,7 +84,15 @@ static int32_t cam_flash_driver_cmd(struct cam_flash_ctrl *fctrl,
 			rc = -EFAULT;
 			goto release_mutex;
 		}
+		CAM_INFO(CAM_FLASH,
+			"CAM_ACQUIRE_DEV flash_acq_dev.device_handle %d fctrl:%d fctrl->pdev:%d change state from %d to %d",
+			flash_acq_dev.device_handle,
+			fctrl,
+			fctrl->pdev,
+			fctrl->flash_state,
+			CAM_FLASH_STATE_ACQUIRE); //ASUS_BSP Shianliang "add log for debug"
 		fctrl->flash_state = CAM_FLASH_STATE_ACQUIRE;
+		cam_flash_copy_fctrl(fctrl); //ASUS_BSP Shianliang add low battery checking
 		break;
 	}
 	case CAM_RELEASE_DEV: {
@@ -126,6 +135,12 @@ static int32_t cam_flash_driver_cmd(struct cam_flash_ctrl *fctrl,
 			if (fctrl->func_tbl.power_ops(fctrl, false))
 				CAM_WARN(CAM_FLASH, "Power Down Failed");
 		}
+		CAM_INFO(CAM_FLASH,
+			"CAM_RELEASE_DEV fctrl:%d fctrl->pdev:%d change state from %d to %d",
+			fctrl,
+			fctrl->pdev,
+			fctrl->flash_state,
+			CAM_FLASH_STATE_INIT); //ASUS_BSP Shianliang "add log for debug"
 
 		fctrl->streamoff_count = 0;
 		fctrl->flash_state = CAM_FLASH_STATE_INIT;
@@ -418,7 +433,7 @@ static int cam_flash_component_bind(struct device *dev,
 	struct platform_device *pdev = to_platform_device(dev);
 	struct cam_hw_soc_info *soc_info = NULL;
 
-	CAM_DBG(CAM_FLASH, "Binding flash component");
+	CAM_DBG(CAM_FLASH, "Flash probe Enter");
 	if (!pdev->dev.of_node) {
 		CAM_ERR(CAM_FLASH, "of_node NULL");
 		return -EINVAL;
@@ -533,7 +548,8 @@ static int cam_flash_component_bind(struct device *dev,
 	mutex_init(&(fctrl->flash_mutex));
 
 	fctrl->flash_state = CAM_FLASH_STATE_INIT;
-	CAM_DBG(CAM_FLASH, "Component bound successfully");
+	asus_flash_init(fctrl);//ASUS_BSP Zhengwei "porting flash"
+	CAM_DBG(CAM_FLASH, "Flash probe succeed");
 	return rc;
 
 free_cci_resource:

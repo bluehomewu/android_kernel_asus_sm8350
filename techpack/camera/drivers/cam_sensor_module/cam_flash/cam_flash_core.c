@@ -14,6 +14,11 @@
 
 static uint default_on_timer = 2;
 module_param(default_on_timer, uint, 0644);
+//ASUS_BSP +++ Shianliang add low battery checking
+static int asus_bat_low = 0;
+static int asus_flash_state = 0;
+static struct cam_flash_ctrl *asus_fctrl;
+//ASUS_BSP --- Shianliang add low battery checking
 
 int cam_flash_led_prepare(struct led_trigger *trigger, int options,
 	int *max_current, bool is_wled)
@@ -381,6 +386,13 @@ static int cam_flash_ops(struct cam_flash_ctrl *flash_ctrl,
 		return -EINVAL;
 	}
 
+//ASUS_BSP +++ Shianliang add low battery checking
+	if(asus_bat_low) {
+		CAM_DBG(CAM_FLASH, "asus_bat_low: %d",asus_bat_low);
+		return 0;
+	}
+//ASUS_BSP --- Shianliang add low battery checking
+
 	soc_private = (struct cam_flash_private_soc *)
 		flash_ctrl->soc_info.soc_private;
 
@@ -453,6 +465,7 @@ static int cam_flash_ops(struct cam_flash_ctrl *flash_ctrl,
 			flash_ctrl->switch_trigger,
 			(enum led_brightness)LED_SWITCH_ON);
 	}
+	asus_flash_state = 1; //ASUS_BSP +++ Shianliang add low battery checking
 
 	return 0;
 }
@@ -470,6 +483,8 @@ int cam_flash_off(struct cam_flash_ctrl *flash_ctrl)
 		cam_res_mgr_led_trigger_event(flash_ctrl->switch_trigger,
 			(enum led_brightness)LED_SWITCH_OFF);
 
+	asus_flash_state = 0; //ASUS_BSP +++ Shianliang add low battery checking
+
 	if ((flash_ctrl->i2c_data.streamoff_settings.is_settings_valid) &&
 		(flash_ctrl->i2c_data.streamoff_settings.request_id == 0)) {
 		flash_ctrl->apply_streamoff = true;
@@ -482,7 +497,7 @@ int cam_flash_off(struct cam_flash_ctrl *flash_ctrl)
 	return 0;
 }
 
-static int cam_flash_low(
+int cam_flash_low(
 	struct cam_flash_ctrl *flash_ctrl,
 	struct cam_flash_frame_setting *flash_data)
 {
@@ -492,13 +507,21 @@ static int cam_flash_low(
 		CAM_ERR(CAM_FLASH, "Flash Data Null");
 		return -EINVAL;
 	}
-
-	for (i = 0; i < flash_ctrl->flash_num_sources; i++)
-		if (flash_ctrl->flash_trigger[i])
-			cam_res_mgr_led_trigger_event(
-				flash_ctrl->flash_trigger[i],
-				LED_OFF);
-
+	//ASUS_BSP +++ Shianliang fix torch current changed after switch camera
+	if (flash_ctrl->switch_trigger) {
+		cam_res_mgr_led_trigger_event(flash_ctrl->switch_trigger,
+			(enum led_brightness)LED_SWITCH_OFF);
+	}
+	else {
+		for (i = 0; i < flash_ctrl->flash_num_sources; i++){
+			if (flash_ctrl->flash_trigger[i]){
+				cam_res_mgr_led_trigger_event(
+					flash_ctrl->flash_trigger[i],
+					LED_OFF);
+			}
+		}
+	}
+	//ASUS_BSP --- Shianliang fix torch current changed after switch camera
 	rc = cam_flash_ops(flash_ctrl, flash_data,
 		CAMERA_SENSOR_FLASH_OP_FIRELOW);
 	if (rc)
@@ -507,7 +530,7 @@ static int cam_flash_low(
 	return rc;
 }
 
-static int cam_flash_high(
+int cam_flash_high(
 	struct cam_flash_ctrl *flash_ctrl,
 	struct cam_flash_frame_setting *flash_data)
 {
@@ -1920,6 +1943,8 @@ int cam_flash_release_dev(struct cam_flash_ctrl *fctrl)
 		fctrl->streamoff_count = 0;
 	}
 
+	asus_flash_state = 0; //ASUS_BSP +++ Shianliang add low battery checking
+
 	return rc;
 }
 
@@ -1976,3 +2001,27 @@ int cam_flash_apply_request(struct cam_req_mgr_apply_request *apply)
 
 	return rc;
 }
+//ASUS_BSP +++ Shianliang add low battery checking
+int cam_flash_battery_low(int enable)
+{
+	asus_bat_low = enable;
+
+	if(asus_fctrl == NULL)
+		return -EINVAL;
+
+	mutex_lock(&asus_fctrl->flash_mutex);
+	if(asus_flash_state && enable)
+		cam_flash_off(asus_fctrl);
+	mutex_unlock(&asus_fctrl->flash_mutex);
+
+	CAM_DBG(CAM_FLASH, "enable:%d flash_state:%d",
+		asus_bat_low,asus_flash_state);
+	return 0;
+}
+
+void cam_flash_copy_fctrl(struct cam_flash_ctrl * fctrl)
+{
+	if(fctrl)
+		asus_fctrl = fctrl;
+}
+//ASUS_BSP --- Shianliang add low battery checking

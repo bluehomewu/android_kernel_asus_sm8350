@@ -9,6 +9,7 @@
 #include "cam_actuator_core.h"
 #include "cam_trace.h"
 #include "camera_main.h"
+#include "asus_actuator.h"
 
 static int cam_actuator_subdev_close_internal(struct v4l2_subdev *sd,
 	struct v4l2_subdev_fh *fh)
@@ -240,7 +241,6 @@ static int32_t cam_actuator_driver_i2c_probe(struct i2c_client *client,
 		cam_actuator_apply_request;
 	a_ctrl->last_flush_req = 0;
 	a_ctrl->cam_act_state = CAM_ACTUATOR_INIT;
-
 	return rc;
 
 unreg_subdev:
@@ -330,7 +330,10 @@ static int cam_actuator_component_bind(struct device *dev,
 
 	platform_set_drvdata(pdev, a_ctrl);
 	a_ctrl->cam_act_state = CAM_ACTUATOR_INIT;
+	asus_actuator_init(a_ctrl);
+
 	CAM_DBG(CAM_ACTUATOR, "Component bound successfully");
+	CAM_INFO(CAM_ACTUATOR, "Actuator Probe Success.");
 
 	return rc;
 
