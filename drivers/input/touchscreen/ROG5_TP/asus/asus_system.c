@@ -48,7 +48,7 @@ void set_rotation_mode()
     }    
 }
 
-void disable_edge_palm() {
+void disable_edge_palm(void) {
     int ret;
     u8 mode = 0;
     
@@ -61,7 +61,7 @@ void disable_edge_palm() {
         FTS_INFO("Edge palm disabled");
 }
 
-void set_edge_palm() {
+void set_edge_palm(void) {
     struct fts_ts_data *ts_data = fts_data;
     u8 l_val = 0 , r_val = 0;
     int retl = 0, retr = 0;

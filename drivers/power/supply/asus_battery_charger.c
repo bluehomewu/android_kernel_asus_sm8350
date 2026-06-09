@@ -692,7 +692,7 @@ static int drm_notifier_callback(struct notifier_block *self,
 	return 0;
 }
 
-void RegisterDRMCallback()
+void RegisterDRMCallback(void)
 {
 	int ret = 0;
 
@@ -796,7 +796,7 @@ int BTM_OTG_EN(bool enable)
 }
 EXPORT_SYMBOL(BTM_OTG_EN);
 
-int PASS_HWID_TO_ADSP() {
+int PASS_HWID_TO_ADSP(void) {
     struct oem_set_hwid_to_ADSP_req req_msg = { { 0 } };
 	int rc;
 

@@ -571,7 +571,7 @@ void writePowerOnOff2Evtlog(struct nvmem_device *nvmem,int addr_start)
 		snprintf(evtlog_bootup_reason, sizeof(evtlog_bootup_reason), "[Unknown]; ");
 }
 
-void reverse_pm_pon_logs()
+void reverse_pm_pon_logs(void)
 {
 	struct pmic_pon_log_entry temp;
 	int i;
