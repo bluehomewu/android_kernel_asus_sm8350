@@ -236,6 +236,8 @@
 		qcom,sn-ven = <&tlmm 62 0x00>;
 		qcom,sn-firm = <&tlmm 86 0x00>;
 		qcom,sn-clkreq = <&tlmm 63 0x00>;
+		qcom,sn-vdd-1p8-voltage = <1800000 1800000>;
+		qcom,sn-vdd-1p8-current = <157000>;
 		interrupt-parent = <&tlmm>;
 		interrupts = <87 0>;
 		interrupt-names = "nfc_irq";
@@ -1229,6 +1231,5 @@
  *    overlay for lahaina-usb.dtsi - end
  *    ====================================
  */
-
 
 
