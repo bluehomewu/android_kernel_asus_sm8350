@@ -84,6 +84,9 @@
 &mdss_mdp {
 	qcom,sde-mixer-display-pref = "primary", "none", "none",
 				"none", "none", "none";
+	qcom,sde-min-core-ib-kbps = <2500000>;
+	qcom,sde-min-llcc-ib-kbps = <0>;
+	qcom,sde-min-dram-ib-kbps = <800000>;
 };
 
 &sde_dp {
@@ -1231,5 +1234,3 @@
  *    overlay for lahaina-usb.dtsi - end
  *    ====================================
  */
-
-

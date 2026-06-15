@@ -18,6 +18,7 @@ pxlw,pkt-payload-size = <228>;
 pxlw,last-per-pkt = <0>;
 pxlw,min-color-temp = <5620>;
 pxlw,max-color-temp = <9220>;
+pxlw,lut-mode = "interpolation";
 pxlw,vivid-color-temp = <8150>;
 pxlw,P3-color-temp = <6500>;
 pxlw,sRGB-color-temp = <6500>;
@@ -44,8 +45,6 @@ pxlw,iris-lightup-sequence-pre1 = [
 00  a0  00
 00  00  00
 00  07  00
-];
-pxlw,iris-mode-switch-sequence = [
 ];
 
 pxlw,iris-lightup-sequence = [
