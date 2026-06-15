@@ -1536,6 +1536,13 @@ static int32_t _iris_parse_mode_switch_seq(
 	const uint8_t *key = "pxlw,iris-mode-switch-sequence";
 	const uint8_t *pdata = NULL;
 
+	if (!of_get_property(np, key, NULL)) {
+		IRIS_LOGI("%s, [optional] without mode switch sequence",
+				__func__);
+
+		return 0;
+	}
+
 	seq_cnt = _iris_parse_cmd_seq_data(np, key, &pdata);
 	if (seq_cnt <= 0) {
 		IRIS_LOGI("%s, [optional] without mode switch sequence, seq count: %d",
