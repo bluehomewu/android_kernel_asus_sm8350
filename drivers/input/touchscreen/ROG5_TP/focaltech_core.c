@@ -67,6 +67,7 @@
 #define FTS_DRIVER_NAME                     "fts_ts"
 #define INTERVAL_READ_REG                   50  /* unit:ms */
 #define TIMEOUT_READ_REG                    1000 /* unit:ms */
+#define FTS_TOUCH_UP_DEBOUNCE_MS            12
 #if FTS_POWER_SOURCE_CUST_EN
 #define FTS_VTG_MIN_UV                      2800000
 #define FTS_VTG_MAX_UV                      3008000
@@ -503,6 +504,10 @@ static int fts_input_report_b(struct fts_ts_data *data)
         input_mt_slot(data->input_dev, events[i].id);
 
         if (EVENT_DOWN(events[i].flag)) {
+	    if (!(data->touchs & BIT(events[i].id))) {
+		data->touch_down_time[events[i].id] = ktime_get();
+		data->touch_down_valid[events[i].id] = true;
+	    }
 #if FTS_REPORT_PRESSURE_EN
             if (events[i].p <= 0) {
                 events[i].p = 0x3f;
@@ -603,10 +608,23 @@ static int fts_input_report_b(struct fts_ts_data *data)
 		}
 	    }
         } else {
+	    if (data->touch_down_valid[events[i].id] &&
+		(data->touchs & BIT(events[i].id)) &&
+		(ktime_ms_delta(ktime_get(), data->touch_down_time[events[i].id]) <
+		 FTS_TOUCH_UP_DEBOUNCE_MS)) {
+		touchs |= BIT(events[i].id);
+		data->touchs |= BIT(events[i].id);
+		if (data->log_level >= 1) {
+		    FTS_DEBUG("[B]id %d ignore short UP !", events[i].id);
+		}
+		continue;
+	    }
+
 	    if (!fts_data->wait_reset){
 		uppoint++;
 		input_mt_report_slot_state(data->input_dev, MT_TOOL_FINGER, false);	    
 		data->touchs &= ~BIT(events[i].id);
+		data->touch_down_valid[events[i].id] = false;
 		if (data->log_level >= 1) {
 		    FTS_DEBUG("[B]id %d UP !", events[i].id);
 		}
@@ -636,6 +654,7 @@ static int fts_input_report_b(struct fts_ts_data *data)
 		    input_set_timestamp(data->input_dev, ktime_get());		
 		    input_mt_report_slot_state(data->input_dev, MT_TOOL_FINGER, false);
 		}
+		data->touch_down_valid[i] = false;
             }
         }
     }

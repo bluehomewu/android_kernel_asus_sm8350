@@ -192,6 +192,8 @@ struct fts_ts_data {
     u8 *point_buf;
     int pnt_buf_size;
     int touchs;
+    ktime_t touch_down_time[FTS_MAX_POINTS_SUPPORT];
+    bool touch_down_valid[FTS_MAX_POINTS_SUPPORT];
     int key_state;
     int touch_point;
     int point_num;
