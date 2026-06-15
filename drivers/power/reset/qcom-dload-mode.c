@@ -46,6 +46,12 @@ static enum qcom_download_mode current_download_mode = QCOM_DOWNLOAD_NODUMP;
 #ifdef CONFIG_MACH_ASUS
 #ifdef CONFIG_TUXERA_USERDEBUG
 static enum qcom_download_mode dump_mode = QCOM_DOWNLOAD_FULLDUMP;
+#else
+static enum qcom_download_mode dump_mode = QCOM_DOWNLOAD_MINIDUMP;
+#endif /* CONFIG_TUXERA_USERDEBUG */
+#else
+static enum qcom_download_mode dump_mode = QCOM_DOWNLOAD_FULLDUMP;
+#endif
 static bool early_pcie_init_enable;
 
 static int set_download_mode(enum qcom_download_mode mode)
