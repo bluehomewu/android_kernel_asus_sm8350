@@ -40,15 +40,6 @@
 	memory { device_type = "memory"; reg = <0 0 0 0>; };
 	reserved_memory: reserved-memory { };
 
-	mem-offline {
-		compatible = "qcom,mem-offline";
-		offline-sizes = <0x1 0x40000000 0x0 0x40000000>,
-				<0x1 0xc0000000 0x0 0x80000000>,
-				<0x2 0xc0000000 0x1 0x40000000>;
-		granule = <512>;
-		mboxes = <&qmp_aop 0>;
-	};
-
 	aliases {
 		ufshc1 = &ufshc_mem; /* Embedded UFS Slot */
 		sdhc1 = &sdhc_2; /* SDC2 SD card slot */
@@ -390,6 +381,17 @@
 		reg = <0x0 0x8b600000 0x0 0x100000>;
 	};
 
+		asus_debug_mem: asus_debug_resion@9b800000 {
+			no-map;
+			reg = <0x0 0x9b800000 0x0 0x00400000>;
+		};
+
+
+		hyp_reserved_mem: qheebsp_dbg_vm_hyp_region@d0000000 {
+			no-map;
+			reg = <0x0 0xd0000000 0x0 0x800000>;
+		};
+
 	pil_modem_mem: modem_region@8b800000 {
 		no-map;
 		reg = <0x0 0x8b800000 0x0 0x10000000>;
@@ -422,7 +424,7 @@
 
 	removed_mem: removed_region@d8800000 {
 		no-map;
-		reg = <0x0 0xd8800000 0x0 0x6800000>;
+		reg = <0x0 0xd8800000 0x0 0xA800000>;
 	};
 
 	adsp_mem: adsp_region {
@@ -523,7 +525,7 @@
 	};
 
 	splash_memory:splash_region {
-		reg = <0x0 0xe1000000 0x0 0x02300000>;
+		reg = <0x0 0xe5000000 0x0 0x02300000>;
 		label = "cont_splash_region";
 	};
 
@@ -542,7 +544,7 @@
 	};
 
 	dfps_data_memory: dfps_data_region {
-		reg = <0x0 0xe3300000 0x0 0x0100000>;
+		reg = <0x0 0xe7400000 0x0 0x0100000>;
 		label = "dfps_data_region";
 	};
 
@@ -3034,7 +3036,7 @@
 
 	qcom,rmtfs_sharedmem@0 {
 		compatible = "qcom,sharedmem-uio";
-		reg = <0x0 0x280000>;
+		reg = <0x0 0x300000>;
 		reg-names = "rmtfs";
 		qcom,client-id = <0x00000001>;
 	};
@@ -5401,17 +5403,15 @@
 		qcom,same-dt-multi-dev;
 
 		vdd-wlan-aon-supply = <&S2E>;
-		qcom,vdd-wlan-aon-config = <1012000 1012000 0 0 1>;
+		qcom,vdd-wlan-aon-config = <950000 952000 0 0 1>;
 		vdd-wlan-dig-supply = <&S11B>;
-		qcom,vdd-wlan-dig-config = <1012000 1012000 0 0 1>;
+		qcom,vdd-wlan-dig-config = <950000 952000 0 0 1>;
 		vdd-wlan-io-supply = <&S10B>;
 		qcom,vdd-wlan-io-config = <1800000 1800000 0 0 1>;
 		vdd-wlan-rfa1-supply = <&S1C>;
-		qcom,vdd-wlan-rfa1-config = <1900000 1952000 0 0 1>;
+		qcom,vdd-wlan-rfa1-config = <1880000 1880000 0 0 1>;
 		vdd-wlan-rfa2-supply = <&S12B>;
-		qcom,vdd-wlan-rfa2-config = <1350000 1360000 0 0 1>;
-		wlan-ant-switch-supply = <&L7E>;
-		qcom,wlan-ant-switch-config = <2800000 2800000 0 0 0>;
+		qcom,vdd-wlan-rfa2-config = <1350000 1350000 0 0 1>;
 
 		interconnects =
 		<&aggre2_noc MASTER_PCIE_0 &aggre2_noc SLAVE_ANOC_PCIE_GEM_NOC>,
@@ -5637,7 +5637,7 @@
 					compatible = "qcom,spmi-pmic";
 					reg = <0xd SPMI_USID>;
 					qcom,can-sleep;
-					status = "disabled";
+					status = "ok";
 				};
 			};
 		};
@@ -5658,12 +5658,12 @@
 		qcom,bt-vdd-dig-supply = <&S11B>;
 		qcom,bt-vdd-rfa1-supply = <&S1C>;
 		qcom,bt-vdd-rfa2-supply = <&S12B>;
-		qcom,bt-vdd-asd-supply = <&L7E>;
+              qcom,bt-vdd-asd-supply = <&L7E>;
 
-		qcom,bt-vdd-aon-config = <1012000 1012000 0 1>;
-		qcom,bt-vdd-dig-config = <1012000 1012000 0 1>;
-		qcom,bt-vdd-rfa1-config = <1900000 1952000 0 1>;
-		qcom,bt-vdd-rfa2-config = <1350000 1360000 0 1>;
+		qcom,bt-vdd-aon-config = <950000 950000 0 1>;
+		qcom,bt-vdd-dig-config = <950000 950000 0 1>;
+		qcom,bt-vdd-rfa1-config = <1880000 1880000 0 1>;
+		qcom,bt-vdd-rfa2-config = <1350000 1350000 0 1>;
 		qcom,bt-vdd-asd-config = <2800000 2800000 0 1>;
 	};
 
@@ -5777,8 +5777,6 @@
 		compatible = "rtc6226";
 		reg = <0x64>;
 		fmint-gpio = <&tlmm 50 0>;
-		vdd-supply = <&L7E>;
-		rtc6226,vdd-supply-voltage = <2800000 2800000>;
 		vio-supply = <&S10B>;
 		rtc6226,vio-supply-voltage = <1800000 1800000 >;
 	};

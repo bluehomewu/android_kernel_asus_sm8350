@@ -90,7 +90,7 @@
 		status = "ok";
 	};
 
-	eeprom_front_picasso: qcom,eeprom@1{
+	eeprom_front: qcom,eeprom@1{
 		cell-index = <1>;
 		reg = <0x1>;
 		cci-master = <1>;
@@ -140,7 +140,7 @@
 		qcom,slave-id = <0x72 0xF0 0x42>;
 		status = "ok";
     };
-    
+
 	//########### IMX363 ###########
 	eeprom_rear1: qcom,eeprom@2{
 		cell-index = <2>;
@@ -155,7 +155,7 @@
 		rgltr-load-current = <80000>;
 		status = "ok";
 	};
-	
+
 	actuator_rear1: qcom,actuator@2 {
 		cell-index = <2>;
 		reg = <0x72>;
@@ -273,7 +273,7 @@
 		sensor-position-pitch = <0>;
 		sensor-position-yaw = <0>;
 		//led-flash-src = <&led_flash_rear1>;
-		eeprom-src = <&eeprom_front_picasso>;
+		eeprom-src = <&eeprom_front>;
 		cam_vana-supply = <&pm8008j_l6>;		    //CAM3_AVDD_2P8
 		cam_vdig-supply = <&pm8008j_l2>;			//CAM3_DVDD_1P1
 		cam_vio-supply = <&pm8008j_l5>;			    //CAM3_DOVDD_1P8
@@ -304,7 +304,7 @@
 		clock-cntl-level = "nominal";
 		clock-rates = <19200000>;
 	};
-	
+
 	//########### IMX363 ###########
 	qcom,cam-sensor@2 {
 		cell-index = <2>;
