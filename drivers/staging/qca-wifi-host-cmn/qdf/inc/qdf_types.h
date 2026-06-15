@@ -211,10 +211,13 @@ typedef struct qdf_shared_mem {
  * on expiry
  * @QDF_TIMER_TYPE_WAKE_APPS: Non deferrable timer which will cause CPU to
  * wake up on expiry
+ * @QDF_TIMER_TYPE_SW_SPIN: Deferrable&Pinned SW timer, it will not cause cpu
+ * to wake up on expiry and be able to queue on assigned cpu by add_timer_on
  */
 typedef enum {
 	QDF_TIMER_TYPE_SW,
-	QDF_TIMER_TYPE_WAKE_APPS
+	QDF_TIMER_TYPE_WAKE_APPS,
+	QDF_TIMER_TYPE_SW_SPIN
 } QDF_TIMER_TYPE;
 
 /**
@@ -392,6 +395,7 @@ typedef bool (*qdf_irqlocked_func_t)(void *);
  * @QDF_MODULE_ID_IFMGR: Interface Manager feature ID
  * @QDF_MODULE_ID_MSCS: MSCS feature ID
  * @QDF_MODULE_ID_GPIO: GPIO configuration module ID
+ * @QDF_MODULE_ID_DIAG: Host diag module ID
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  *
@@ -523,6 +527,7 @@ typedef enum {
 	QDF_MODULE_ID_IFMGR,
 	QDF_MODULE_ID_MSCS,
 	QDF_MODULE_ID_GPIO,
+	QDF_MODULE_ID_DIAG,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;
@@ -1347,6 +1352,7 @@ enum qdf_suspend_type {
  * @QDF_WMI_BUF_SEQUENCE_MISMATCH: WMI Tx completion buffer sequence mismatch
  * @QDF_HAL_REG_WRITE_FAILURE: HAL register writing failures
  * @QDF_SUSPEND_NO_CREDIT: host lack of credit after suspend
+ * @QDF_TASKLET_CREDIT_LATENCY_DETECT: tasklet or credit latency happened
  * @QDF_RX_REG_PKT_ROUTE_ERR: MSDU buf errors exceed thresh in REO err path
  * @QDF_VDEV_SM_OUT_OF_SYNC: Vdev SM is out of sync and connect req received
  * when already connected
@@ -1376,6 +1382,7 @@ enum qdf_hang_reason {
 	QDF_WMI_BUF_SEQUENCE_MISMATCH,
 	QDF_HAL_REG_WRITE_FAILURE,
 	QDF_SUSPEND_NO_CREDIT,
+	QDF_TASKLET_CREDIT_LATENCY_DETECT,
 	QDF_RX_REG_PKT_ROUTE_ERR,
 	QDF_VDEV_SM_OUT_OF_SYNC,
 	QDF_STATS_REQ_TIMEDOUT,

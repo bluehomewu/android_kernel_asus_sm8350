@@ -330,6 +330,10 @@ void pkt_capture_mgmt_tx(struct wlan_objmgr_pdev *pdev,
 			 uint16_t chan_freq,
 			 uint8_t preamble_type)
 {
+	struct mgmt_offload_event_params params = {0};
+	tpSirMacFrameCtl pfc = (tpSirMacFrameCtl)(qdf_nbuf_data(nbuf));
+	struct pkt_capture_vdev_priv *vdev_priv;
+	struct wlan_objmgr_vdev *vdev;
 	qdf_nbuf_t wbuf;
 	int nbuf_len;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -406,6 +410,9 @@ pkt_capture_mgmt_tx_completion(struct wlan_objmgr_pdev *pdev,
 			       uint32_t status,
 			       struct mgmt_offload_event_params *params)
 {
+	struct pkt_capture_vdev_priv *vdev_priv;
+	struct wlan_objmgr_vdev *vdev;
+	tpSirMacFrameCtl pfc;
 	qdf_nbuf_t wbuf, nbuf;
 	int nbuf_len;
 	QDF_STATUS ret = QDF_STATUS_SUCCESS;
@@ -533,6 +540,7 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 			    enum mgmt_frame_type frm_type)
 {
 	struct mon_rx_status txrx_status = {0};
+	struct pkt_capture_vdev_priv *vdev_priv;
 	struct ieee80211_frame *wh;
 	tpSirMacFrameCtl pfc;
 	qdf_nbuf_t nbuf;
@@ -604,10 +612,6 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 	    (pfc->subType == SIR_MAC_MGMT_DISASSOC ||
 	     pfc->subType == SIR_MAC_MGMT_DEAUTH ||
 	     pfc->subType == SIR_MAC_MGMT_ACTION)) {
-		struct wlan_objmgr_pdev *pdev;
-
-		vdev = pkt_capture_get_vdev();
-		pdev = wlan_vdev_get_pdev(vdev);
 		if (pkt_capture_is_rmf_enabled(pdev, psoc, wh->i_addr1)) {
 			QDF_STATUS status;
 
@@ -618,10 +622,9 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 		}
 	}
 
-
-	txrx_status.tsft = (u_int64_t)rx_params->tsf_delta;
+	txrx_status.tsft = (u_int64_t)rx_params->tsf_l32;
 	txrx_status.chan_num = rx_params->channel;
-	txrx_status.chan_freq = wlan_chan_to_freq(txrx_status.chan_num);
+	txrx_status.chan_freq = rx_params->chan_freq;
 	/* rx_params->rate is in Kbps, convert into Mbps */
 	txrx_status.rate = (rx_params->rate / 1000);
 	txrx_status.ant_signal_db = rx_params->snr;
@@ -636,7 +639,8 @@ pkt_capture_mgmt_rx_data_cb(struct wlan_objmgr_psoc *psoc,
 	else
 		txrx_status.cck_flag = 1;
 
-	txrx_status.rate = ((txrx_status.rate == 6 /* Mbps */) ? 0x0c : 0x02);
+	/* Convert rate from Mbps to 500 Kbps */
+	txrx_status.rate = txrx_status.rate * 2;
 	txrx_status.add_rtap_ext = true;
 
 	wh = (struct ieee80211_frame *)qdf_nbuf_data(nbuf);
@@ -656,22 +660,24 @@ exit:
 QDF_STATUS pkt_capture_mgmt_rx_ops(struct wlan_objmgr_psoc *psoc,
 				   bool is_register)
 {
-	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info;
+	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info[2];
 	QDF_STATUS status;
 	int num_of_entries;
 
-	frm_cb_info.frm_type = MGMT_FRAME_TYPE_ALL;
-	frm_cb_info.mgmt_rx_cb = pkt_capture_mgmt_rx_data_cb;
-	num_of_entries = 1;
+	frm_cb_info[0].frm_type = MGMT_FRAME_TYPE_ALL;
+	frm_cb_info[0].mgmt_rx_cb = pkt_capture_mgmt_rx_data_cb;
+	frm_cb_info[1].frm_type = MGMT_CTRL_FRAME;
+	frm_cb_info[1].mgmt_rx_cb = pkt_capture_mgmt_rx_data_cb;
+	num_of_entries = 2;
 
 	if (is_register)
 		status = wlan_mgmt_txrx_register_rx_cb(
 					psoc, WLAN_UMAC_COMP_PKT_CAPTURE,
-					&frm_cb_info, num_of_entries);
+					frm_cb_info, num_of_entries);
 	else
 		status = wlan_mgmt_txrx_deregister_rx_cb(
 					psoc, WLAN_UMAC_COMP_PKT_CAPTURE,
-					&frm_cb_info, num_of_entries);
+					frm_cb_info, num_of_entries);
 
 	return status;
 }

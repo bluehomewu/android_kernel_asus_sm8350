@@ -33,23 +33,23 @@
 #include "wlan_pkt_capture_mon_thread.h"
 
 /**
- * struct pkt_capture_cfg - packet capture cfg to store ini values
+ * struct pkt_capture_cfg - struct to store config values
  * @pkt_capture_mode: packet capture mode
+ * @pkt_capture_config: config for trigger, qos and beacon frames
  */
 struct pkt_capture_cfg {
 	enum pkt_capture_mode pkt_capture_mode;
+	enum pkt_capture_config pkt_capture_config;
 };
 
 /**
  * struct pkt_capture_cb_context - packet capture callback context
  * @mon_cb: monitor callback function pointer
  * @mon_ctx: monitor callback context
- * @pkt_capture_mode: packet capture mode
  */
 struct pkt_capture_cb_context {
 	QDF_STATUS (*mon_cb)(void *, qdf_nbuf_t);
 	void *mon_ctx;
-	enum pkt_capture_mode pkt_capture_mode;
 };
 
 /**

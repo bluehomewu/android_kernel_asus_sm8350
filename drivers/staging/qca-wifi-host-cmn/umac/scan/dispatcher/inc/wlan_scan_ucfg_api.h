@@ -1042,6 +1042,16 @@ ucfg_scan_get_max_sched_scan_plan_interval(struct wlan_objmgr_psoc *psoc);
 uint32_t
 ucfg_scan_get_max_sched_scan_plan_iterations(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * ucfg_scan_get_user_config_sched_scan_plan() - API to get user config sched
+ * scan plan configuration value
+ * @psoc: pointer to psoc object
+ *
+ * Return: value.
+ */
+bool
+ucfg_scan_get_user_config_sched_scan_plan(struct wlan_objmgr_psoc *psoc);
+
 #else
 static inline
 bool ucfg_scan_is_pno_offload_enabled(struct wlan_objmgr_psoc *psoc)
@@ -1094,6 +1104,12 @@ static inline uint32_t
 ucfg_scan_get_max_sched_scan_plan_iterations(struct wlan_objmgr_psoc *psoc)
 {
 	return 0;
+}
+
+static inline bool
+ucfg_scan_get_user_config_sched_scan_plan(struct wlan_objmgr_psoc *psoc)
+{
+	return true;
 }
 
 #endif /* FEATURE_WLAN_SCAN_PNO */

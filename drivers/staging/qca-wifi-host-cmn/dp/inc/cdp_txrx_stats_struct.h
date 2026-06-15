@@ -363,6 +363,11 @@ enum WDI_EVENT {
 	WDI_EVENT_RX_MPDU,
 	WDI_EVENT_HMWDS_AST_ADD_STATUS,
 	WDI_EVENT_PEER_QOS_STATS,
+	WDI_EVENT_PKT_CAPTURE_TX_DATA,
+	WDI_EVENT_PKT_CAPTURE_RX_DATA,
+	WDI_EVENT_PKT_CAPTURE_RX_DATA_NO_PEER,
+	WDI_EVENT_PKT_CAPTURE_OFFLOAD_TX_DATA,
+	WDI_EVENT_PKT_CAPTURE_PPDU_STATS,
 	/* End of new event items */
 	WDI_EVENT_LAST
 };
@@ -1067,6 +1072,8 @@ struct cdp_tx_stats {
 	uint32_t num_ppdu_cookie_valid;
 	uint32_t no_ack_count[QDF_PROTO_SUBTYPE_MAX];
 	struct cdp_pkt_info tx_success_twt;
+	/* mpdu retry count in case of successful transmission */
+	uint32_t mpdu_success_with_retries;
 };
 
 /* struct cdp_rx_stats - rx Level Stats
@@ -2004,6 +2011,11 @@ struct cdp_pdev_stats {
 		uint64_t num_pool_bufs_replenish;
 		uint64_t num_bufs_alloc_success;
 	} rx_buffer_pool;
+
+	struct {
+		uint64_t num_bufs_refilled;
+		uint64_t num_bufs_allocated;
+	} rx_refill_buff_pool;
 };
 
 /* struct cdp_peer_hmwds_ast_add_status - hmwds peer ast add status
