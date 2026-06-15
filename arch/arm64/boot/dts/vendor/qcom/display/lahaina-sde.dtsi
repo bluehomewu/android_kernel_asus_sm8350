@@ -158,6 +158,9 @@
 		reg-names = "drv", "wrapper";
 		qcom,sde-rsc-version = <4>;
 
+		qcom,sde-min-core-ib-kbps = <2500000>;
+		qcom,sde-min-llcc-ib-kbps = <0>;
+		qcom,sde-min-dram-ib-kbps = <800000>;
 		qcom,sde-dram-channels = <2>;
 
 		vdd-supply = <&disp_cc_mdss_core_gdsc>;
