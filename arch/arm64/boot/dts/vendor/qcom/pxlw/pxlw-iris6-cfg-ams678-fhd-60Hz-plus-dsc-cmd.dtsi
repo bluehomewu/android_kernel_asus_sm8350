@@ -14,6 +14,7 @@ pxlw,path-sel = [00 00 00];
 pxlw,chip-ver = <0x6936>;
 pxlw,iris-chip-enable;
 pxlw,iris-soft-enable;
+pxlw,panel-dimming-brightness = <250>;
 pxlw,pkt-payload-size = <228>;
 pxlw,last-per-pkt = <0>;
 pxlw,min-color-temp = <5620>;
