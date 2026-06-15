@@ -1,6 +1,7 @@
 /*
- * Copyright (c) 2015-2020 The Linux Foundation. All rights reserved.
- *
+ * Copyright (c) 2015-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -799,6 +800,96 @@ QDF_STATUS hif_try_complete_tasks(struct hif_softc *scn)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#if defined(HIF_IPCI) && defined(FEATURE_HAL_DELAYED_REG_WRITE)
+QDF_STATUS hif_try_prevent_ep_vote_access(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	uint32_t work_drain_wait_cnt = 0;
+	uint32_t wait_cnt = 0;
+	int work = 0;
+
+	qdf_atomic_set(&scn->dp_ep_vote_access,
+		       HIF_EP_VOTE_ACCESS_DISABLE);
+	qdf_atomic_set(&scn->ep_vote_access,
+		       HIF_EP_VOTE_ACCESS_DISABLE);
+
+	while ((work = hif_get_num_pending_work(scn))) {
+		if (++work_drain_wait_cnt > HIF_WORK_DRAIN_WAIT_CNT) {
+			qdf_atomic_set(&scn->dp_ep_vote_access,
+				       HIF_EP_VOTE_ACCESS_ENABLE);
+			qdf_atomic_set(&scn->ep_vote_access,
+				       HIF_EP_VOTE_ACCESS_ENABLE);
+			hif_err("timeout wait for pending work %d ", work);
+			return QDF_STATUS_E_FAULT;
+		}
+		qdf_sleep(10);
+	}
+
+	if (pld_is_pci_ep_awake(scn->qdf_dev->dev) == -ENOTSUPP)
+		return QDF_STATUS_SUCCESS;
+
+	while (pld_is_pci_ep_awake(scn->qdf_dev->dev)) {
+		if (++wait_cnt > HIF_EP_WAKE_RESET_WAIT_CNT) {
+			hif_err("Release EP vote is not proceed by Fw");
+			return QDF_STATUS_E_FAULT;
+		}
+		qdf_sleep(5);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void hif_set_ep_intermediate_vote_access(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	uint8_t vote_access;
+
+	vote_access = qdf_atomic_read(&scn->ep_vote_access);
+
+	if (vote_access != HIF_EP_VOTE_ACCESS_DISABLE)
+		hif_info("EP vote changed from:%u to intermediate state",
+			 vote_access);
+
+	if (QDF_IS_STATUS_ERROR(hif_try_prevent_ep_vote_access(hif_ctx)))
+		QDF_BUG(0);
+
+	qdf_atomic_set(&scn->ep_vote_access,
+		       HIF_EP_VOTE_INTERMEDIATE_ACCESS);
+}
+
+void hif_allow_ep_vote_access(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	qdf_atomic_set(&scn->dp_ep_vote_access,
+		       HIF_EP_VOTE_ACCESS_ENABLE);
+	qdf_atomic_set(&scn->ep_vote_access,
+		       HIF_EP_VOTE_ACCESS_ENABLE);
+}
+
+void hif_set_ep_vote_access(struct hif_opaque_softc *hif_ctx,
+			    uint8_t type, uint8_t access)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	if (type == HIF_EP_VOTE_DP_ACCESS)
+		qdf_atomic_set(&scn->dp_ep_vote_access, access);
+	else
+		qdf_atomic_set(&scn->ep_vote_access, access);
+}
+
+uint8_t hif_get_ep_vote_access(struct hif_opaque_softc *hif_ctx,
+			       uint8_t type)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	if (type == HIF_EP_VOTE_DP_ACCESS)
+		return qdf_atomic_read(&scn->dp_ep_vote_access);
+	else
+		return qdf_atomic_read(&scn->ep_vote_access);
+}
+#endif
 
 #if (defined(QCA_WIFI_QCA8074) || defined(QCA_WIFI_QCA6018) || \
 	defined(QCA_WIFI_QCA6290) || defined(QCA_WIFI_QCA6390) || \

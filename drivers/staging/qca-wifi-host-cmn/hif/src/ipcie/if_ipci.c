@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2013-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -118,21 +119,14 @@ static int hif_ce_msi_map_ce_to_irq(struct hif_softc *scn, int ce_id)
 int hif_ipci_bus_configure(struct hif_softc *hif_sc)
 {
 	int status = 0;
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
 	uint8_t wake_ce_id;
 
 	hif_ce_prepare_config(hif_sc);
 
-	/* initialize sleep state adjust variables */
-	hif_state->sleep_timer_init = true;
-	hif_state->keep_awake_count = 0;
-	hif_state->fake_sleep = false;
-	hif_state->sleep_ticks = 0;
-
 	status = hif_wlan_enable(hif_sc);
 	if (status) {
 		hif_err("hif_wlan_enable error = %d", status);
-		goto timer_free;
+		return status;
 	}
 
 	A_TARGET_ACCESS_LIKELY(hif_sc);
@@ -163,11 +157,6 @@ unconfig_ce:
 disable_wlan:
 	A_TARGET_ACCESS_UNLIKELY(hif_sc);
 	hif_wlan_disable(hif_sc);
-
-timer_free:
-	qdf_timer_stop(&hif_state->sleep_timer);
-	qdf_timer_free(&hif_state->sleep_timer);
-	hif_state->sleep_timer_init = false;
 
 	hif_err("Failed, status = %d", status);
 	return status;
@@ -774,3 +763,117 @@ void hif_print_ipci_stats(struct hif_ipci_softc *ipci_handle)
 		  ipci_handle->stats.soc_force_wake_release_success);
 }
 #endif /* FORCE_WAKE */
+
+#ifdef FEATURE_HAL_DELAYED_REG_WRITE
+int hif_prevent_link_low_power_states(struct hif_opaque_softc *hif)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif);
+	struct hif_ipci_softc *ipci_scn = HIF_GET_IPCI_SOFTC(scn);
+	uint32_t start_time = 0, curr_time = 0;
+	uint32_t count = 0;
+
+	if (pld_is_pci_ep_awake(scn->qdf_dev->dev) == -ENOTSUPP)
+		return 0;
+
+	if ((qdf_atomic_read(&scn->dp_ep_vote_access) ==
+	     HIF_EP_VOTE_ACCESS_DISABLE) &&
+	    (qdf_atomic_read(&scn->ep_vote_access) ==
+	    HIF_EP_VOTE_ACCESS_DISABLE)) {
+		hif_info_high("EP access disabled in flight skip vote");
+		return 0;
+	}
+
+	start_time = curr_time = qdf_system_ticks_to_msecs(qdf_system_ticks());
+	while (pld_is_pci_ep_awake(scn->qdf_dev->dev) &&
+	       curr_time <= start_time + EP_WAKE_RESET_DELAY_TIMEOUT_MS) {
+		if (count < EP_VOTE_POLL_TIME_CNT) {
+			qdf_udelay(EP_VOTE_POLL_TIME_US);
+			count++;
+		} else {
+			qdf_sleep_us(EP_WAKE_RESET_DELAY_US);
+		}
+		curr_time = qdf_system_ticks_to_msecs(qdf_system_ticks());
+	}
+
+
+	if (pld_is_pci_ep_awake(scn->qdf_dev->dev)) {
+		hif_err_rl(" EP state reset is not done to prevent l1");
+		ipci_scn->ep_awake_reset_fail++;
+		return 0;
+	}
+
+	if (pld_prevent_l1(scn->qdf_dev->dev)) {
+		hif_err_rl("pld prevent l1 failed");
+		ipci_scn->prevent_l1_fail++;
+		return 0;
+	}
+
+	count = 0;
+	ipci_scn->prevent_l1 = true;
+	start_time = curr_time = qdf_system_ticks_to_msecs(qdf_system_ticks());
+	while (!pld_is_pci_ep_awake(scn->qdf_dev->dev) &&
+	       curr_time <= start_time + EP_WAKE_DELAY_TIMEOUT_MS) {
+		if (count < EP_VOTE_POLL_TIME_CNT) {
+			qdf_udelay(EP_WAKE_RESET_DELAY_US);
+			count++;
+		} else {
+			qdf_sleep_us(EP_WAKE_DELAY_US);
+		}
+
+		curr_time = qdf_system_ticks_to_msecs(qdf_system_ticks());
+	}
+
+	if (pld_is_pci_ep_awake(scn->qdf_dev->dev) <= 0) {
+		hif_err_rl("Unable to wakeup pci ep");
+		ipci_scn->ep_awake_set_fail++;
+		return  0;
+	}
+
+	return 0;
+}
+
+void hif_allow_link_low_power_states(struct hif_opaque_softc *hif)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif);
+	struct hif_ipci_softc *ipci_scn = HIF_GET_IPCI_SOFTC(scn);
+
+	if (qdf_likely(ipci_scn->prevent_l1)) {
+		pld_allow_l1(scn->qdf_dev->dev);
+		ipci_scn->prevent_l1 = false;
+	}
+}
+#endif
+
+int hif_ipci_enable_grp_irqs(struct hif_softc *scn)
+{
+	struct hif_ipci_softc *ipci_scn = HIF_GET_IPCI_SOFTC(scn);
+	int status;
+
+	if (!ipci_scn->grp_irqs_disabled) {
+		hif_err("Unbalanced group IRQs Enable called");
+		qdf_assert_always(0);
+	}
+
+	status = hif_apps_grp_irqs_enable(GET_HIF_OPAQUE_HDL(scn));
+	if (!status)
+		ipci_scn->grp_irqs_disabled = false;
+
+	return status;
+}
+
+int hif_ipci_disable_grp_irqs(struct hif_softc *scn)
+{
+	struct hif_ipci_softc *ipci_scn = HIF_GET_IPCI_SOFTC(scn);
+	int status;
+
+	if (ipci_scn->grp_irqs_disabled) {
+		hif_err("Unbalanced group IRQs disable called");
+		qdf_assert_always(0);
+	}
+
+	status = hif_apps_grp_irqs_disable(GET_HIF_OPAQUE_HDL(scn));
+	if (!status)
+		ipci_scn->grp_irqs_disabled = true;
+
+	return status;
+}

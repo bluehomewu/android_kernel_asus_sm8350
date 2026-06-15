@@ -149,16 +149,10 @@ x509.genkey
 # generated defconfigs
 arch/*/configs/vendor/*_defconfig
 
-# Make sure we don't ignore ASUS fragments.
-!arch/*/configs/vendor/PICASSO*
-!arch/*/configs/vendor/SAKE*
-!arch/*/configs/vendor/VODKA*
-!arch/*/configs/vendor/VODKA*
+# vendor device tree directories
+arch/arm/boot/dts/vendor
 
-# Don't ignore final defconfig blends.
-!arch/*/configs/vendor/sake*
-!arch/*/configs/vendor/vodka*
-!arch/*/configs/vendor/picasso*
-
-# Ignore the generated defconfig report.
-generate_defconfig.txt
+#
+#Ignoring Android.bp link file
+#
+Android.bp

@@ -1444,9 +1444,8 @@ dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 		hal_tx_desc_set_to_fw(hal_tx_desc_cached, 1);
 
 	/* verify checksum offload configuration*/
-	if (vdev->csum_enabled &&
-	    ((qdf_nbuf_get_tx_cksum(tx_desc->nbuf) == QDF_NBUF_TX_CKSUM_TCP_UDP)
-		|| qdf_nbuf_is_tso(tx_desc->nbuf)))  {
+	if ((qdf_nbuf_get_tx_cksum(tx_desc->nbuf) == QDF_NBUF_TX_CKSUM_TCP_UDP)
+		|| qdf_nbuf_is_tso(tx_desc->nbuf))  {
 		hal_tx_desc_set_l3_checksum_en(hal_tx_desc_cached, 1);
 		hal_tx_desc_set_l4_checksum_en(hal_tx_desc_cached, 1);
 	}
@@ -3862,6 +3861,12 @@ dp_tx_update_peer_stats(struct dp_tx_desc_s *tx_desc,
 			     &peer->stats, ts->peer_id,
 			     UPDATE_PEER_STATS, pdev->pdev_id);
 #endif
+	if (ts->first_msdu) {
+		DP_STATS_INCC(peer, tx.mpdu_success_with_retries,
+			      qdf_do_div(ts->transmit_cnt, DP_RETRY_COUNT),
+			      ts->transmit_cnt > DP_RETRY_COUNT);
+		DP_STATS_INCC(peer, tx.retries_mpdu, 1, ts->transmit_cnt > 1);
+	}
 }
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
@@ -4733,30 +4738,6 @@ qdf_nbuf_t dp_tx_non_std(struct cdp_soc_t *soc_hdl, uint8_t vdev_id,
 }
 #endif
 
-static void dp_tx_vdev_update_feature_flags(struct dp_vdev *vdev)
-{
-	struct wlan_cfg_dp_soc_ctxt *cfg;
-
-	struct dp_soc *soc;
-
-	soc = vdev->pdev->soc;
-	if (!soc)
-		return;
-
-	cfg = soc->wlan_cfg_ctx;
-	if (!cfg)
-		return;
-
-	if (vdev->opmode == wlan_op_mode_ndi)
-		vdev->csum_enabled = wlan_cfg_get_nan_checksum_offload(cfg);
-	else if ((vdev->subtype == wlan_op_subtype_p2p_device) ||
-		 (vdev->subtype == wlan_op_subtype_p2p_cli) ||
-		 (vdev->subtype == wlan_op_subtype_p2p_go))
-		vdev->csum_enabled = wlan_cfg_get_p2p_checksum_offload(cfg);
-	else
-		vdev->csum_enabled = wlan_cfg_get_checksum_offload(cfg);
-}
-
 /**
  * dp_tx_vdev_attach() - attach vdev to dp tx
  * @vdev: virtual device instance
@@ -4787,8 +4768,6 @@ QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev)
 	HTT_TX_TCL_METADATA_VALID_HTT_SET(vdev->htt_tcl_metadata, 0);
 
 	dp_tx_vdev_update_search_flags(vdev);
-
-	dp_tx_vdev_update_feature_flags(vdev);
 
 	return QDF_STATUS_SUCCESS;
 }

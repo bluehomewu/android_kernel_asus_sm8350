@@ -1,102 +1,5 @@
-
-# +++ ASUS_BSP : add for asus dtbo
-$(warning [Build] build dtbo CONFIG_BUILD_ARM64_DT_OVERLAY = $(CONFIG_BUILD_ARM64_DT_OVERLAY))
-$(warning [Build] build dtbo ASUS_BUILD_PROJECT = $(ASUS_BUILD_PROJECT))
-$(warning [Build] build dtbo CONFIG_ARCH_QTI_VM = $(CONFIG_ARCH_QTI_VM))
-# --- ASUS_BSP : add for asus dtbo
-
 ifneq ($(CONFIG_ARCH_QTI_VM), y)
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
-
-# +++ ASUS_BSP : add for asus dtbo
-ifneq (,$(filter ZS673KS,$(ASUS_BUILD_PROJECT)))
-$(warning build dtbo for ZS673KS...)
-
-dtbo-$(CONFIG_ARCH_LAHAINA) += \
-                ZS673KS-EVB-overlay.dtbo \
-                ZS673KS-EVB2-overlay.dtbo \
-                ZS673KS-SR1-overlay.dtbo \
-                ZS673KS-ER1-overlay.dtbo \
-                ZS673KS-ER2-overlay.dtbo \
-                ZS673KS-PR1-overlay.dtbo \
-                ZS673KS-MP-overlay.dtbo \
-
-lahaina-mtp-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-ZS673KS-EVB-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-ZS673KS-EVB2-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-ZS673KS-SR1-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-ZS673KS-ER1-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-ZS673KS-ER2-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-ZS673KS-PR1-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-ZS673KS-MP-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-
-else ifneq (,$(filter PICASSO,$(ASUS_BUILD_PROJECT)))
-
-dtbo-$(CONFIG_ARCH_LAHAINA) += \
-                PICASSO-EVB-overlay.dtbo \
-                PICASSO-EVB2-overlay.dtbo \
-                PICASSO-SR1-overlay.dtbo \
-                PICASSO-ER1-overlay.dtbo \
-                PICASSO-ER2-overlay.dtbo \
-                PICASSO-PR1-overlay.dtbo \
-                PICASSO-PR2-overlay.dtbo \
-                PICASSO-MP-overlay.dtbo \
-
-PICASSO-EVB-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-PICASSO-EVB2-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-PICASSO-SR1-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-PICASSO-ER1-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-PICASSO-ER2-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-PICASSO-PR1-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-PICASSO-PR2-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-PICASSO-MP-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-
-else ifneq (,$(filter SAKE,$(ASUS_BUILD_PROJECT)))
-$(warning build dtbo for SAKE...)
-
-dtbo-$(CONFIG_ARCH_LAHAINA) += \
-                SAKE-EVB-overlay.dtbo \
-                SAKE-EVB2-overlay.dtbo \
-                SAKE-SR1-overlay.dtbo \
-                SAKE-SR2-overlay.dtbo \
-                SAKE-ER1-overlay.dtbo \
-                SAKE-ER2-overlay.dtbo \
-                SAKE-PR-overlay.dtbo \
-                SAKE-MP-overlay.dtbo \
-
-lahaina-mtp-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-SAKE-EVB-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-SAKE-EVB2-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-SAKE-SR1-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-SAKE-SR2-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-SAKE-ER1-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-SAKE-ER2-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-SAKE-PR-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-SAKE-MP-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb	
-else ifneq (,$(filter VODKA,$(ASUS_BUILD_PROJECT)))
-$(warning build dtbo for VODKA...)
-
-dtbo-$(CONFIG_ARCH_LAHAINA) += \
-                VODKA-EVB-overlay.dtbo \
-                VODKA-EVB2-overlay.dtbo \
-                VODKA-SR1-overlay.dtbo \
-                VODKA-SR2-overlay.dtbo \
-                VODKA-ER1-overlay.dtbo \
-                VODKA-ER2-overlay.dtbo \
-                VODKA-PR-overlay.dtbo \
-                VODKA-MP-overlay.dtbo \
-
-lahaina-mtp-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-VODKA-EVB-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-VODKA-EVB2-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-VODKA-SR1-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-VODKA-SR2-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-VODKA-ER1-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-VODKA-ER2-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-VODKA-PR-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-VODKA-MP-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-# --- ASUS_BSP : add for asus dtbo
-else
 dtbo-$(CONFIG_ARCH_LAHAINA) += lahaina-rumi-overlay.dtbo \
 	lahaina-mtp-overlay.dtbo \
 	lahaina-mtp-hsp-overlay.dtbo \
@@ -130,7 +33,6 @@ lahainap-hhg-hsp-pro-overlay.dtbo-base := lahainap.dtb lahainap-v2.dtb lahainap-
 lahaina-qrd-hsp-overlay.dtbo-base := lahaina.dtb
 lahaina-qrd-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
 lahaina-qrd-module-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
-
 lahainap-mtp-overlay.dtbo-base := lahainap.dtb lahainap-v2.dtb lahainap-v2.1.dtb
 lahainap-cdp-overlay.dtbo-base := lahainap.dtb lahainap-v2.dtb lahainap-v2.1.dtb
 lahainap-atp-overlay.dtbo-base := lahainap.dtb lahainap-v2.dtb lahainap-v2.1.dtb
@@ -147,7 +49,6 @@ lahaina-cdp-hsp-pro-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb \
 					lahaina-v2.1.dtb
 lahaina-qrd-hsp-pro-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb \
 					lahaina-v2.1.dtb
-endif
 else
 dtb-$(CONFIG_ARCH_LAHAINA) += lahaina-rumi.dtb \
 	lahaina-mtp-hsp.dtb \
@@ -312,16 +213,12 @@ dtbo-$(CONFIG_ARCH_YUPIK) +=    \
 	yupikp-idps-amoled-overlay.dtbo \
 	yupikp-idp-hsp-overlay.dtbo \
 	yupik-iot-idp-overlay.dtbo \
-	yupik-iot-idp-pm7250b-overlay.dtbo \
 	yupik-iot-qrd-overlay.dtbo \
 	yupik-iot-hsp-overlay.dtbo \
-	yupik-iot-hsp-pm7250b-overlay.dtbo \
 	yupik-iot-idps-amoled-overlay.dtbo \
 	yupikp-iot-idp-overlay.dtbo \
-	yupikp-iot-idp-pm7250b-overlay.dtbo \
 	yupikp-iot-qrd-overlay.dtbo \
 	yupikp-iot-hsp-overlay.dtbo \
-	yupikp-iot-hsp-pm7250b-overlay.dtbo \
 	yupikp-iot-idps-amoled-overlay.dtbo
 
 
@@ -338,16 +235,12 @@ yupikp-qrd-overlay.dtbo-base := yupikp.dtb
 yupikp-idps-amoled-overlay.dtbo-base := yupikp.dtb
 yupikp-idp-hsp-overlay.dtbo-base := yupikp-hsp.dtb
 yupik-iot-idp-overlay.dtbo-base := yupik-iot.dtb
-yupik-iot-idp-pm7250b-overlay.dtbo-base := yupik-iot.dtb
 yupik-iot-qrd-overlay.dtbo-base := yupik-iot.dtb
 yupik-iot-hsp-overlay.dtbo-base := yupik-iot.dtb
-yupik-iot-hsp-pm7250b-overlay.dtbo-base := yupik-iot.dtb
 yupik-iot-idps-amoled-overlay.dtbo-base := yupik-iot.dtb
 yupikp-iot-idp-overlay.dtbo-base := yupikp-iot.dtb
-yupikp-iot-idp-pm7250b-overlay.dtbo-base := yupikp-iot.dtb
 yupikp-iot-qrd-overlay.dtbo-base := yupikp-iot.dtb
 yupikp-iot-hsp-overlay.dtbo-base := yupikp-iot.dtb
-yupikp-iot-hsp-pm7250b-overlay.dtbo-base := yupikp-iot.dtb
 yupikp-iot-idps-amoled-overlay.dtbo-base := yupikp-iot.dtb
 else
 dtb-$(CONFIG_ARCH_YUPIK) += yupik-rumi.dtb \
@@ -363,16 +256,12 @@ dtb-$(CONFIG_ARCH_YUPIK) += yupik-rumi.dtb \
 	yupikp-idps-amoled.dtb \
 	yupikp-idp-hsp.dtb \
 	yupik-iot-idp.dtb \
-	yupik-iot-idp-pm7250b.dtb \
 	yupik-iot-qrd.dtb \
 	yupik-iot-hsp.dtb \
 	yupik-iot-idps-amoled.dtb \
 	yupikp-iot-idp.dtb \
-	yupikp-iot-idp-pm7250b.dtb \
 	yupikp-iot-qrd.dtb \
 	yupikp-iot-hsp.dtb \
-	yupik-iot-hsp-pm7250b.dtb \
-	yupikp-iot-hsp-pm7250b.dtb \
 	yupikp-iot-idps-amoled.dtb
 endif
 
@@ -544,16 +433,7 @@ dtb-$(CONFIG_ARCH_SDXLEMUR) += sdxlemur-rumi.dtb \
 	sdxlemur-v2-mtp-mbb-pcie-ep-ipq.dtb \
 	sdxlemur-v2-mtp-mbb-pcie-rc-ep.dtb \
 	sdxlemur-v2-rcm-pcie-ep.dtb \
-	sdxlemur-v2-rcm-rc.dtb \
-	sdxlemur-v2-atp.dtb \
-	sdxlemur-v2-mtp-cpe-pine1x.dtb \
-	sdxlemur-v2-mtp-cpe-pine2x.dtb \
-	sdxlemur-v2-mtp-mbb-emmc-512mb.dtb \
-	sdxlemur-v2-mtp-mbb-m2-ep-usb.dtb \
-	sdxlemur-v2-mtp-mbb-m2-ep.dtb \
-	sdxlemur-v2-rcm-rc-pine1x.dtb \
-	sdxlemur-v2-rcm-rc-pine2x.dtb
-
+	sdxlemur-v2-rcm-rc.dtb
 
 
 ifeq ($(CONFIG_ARCH_SHIMA), y)

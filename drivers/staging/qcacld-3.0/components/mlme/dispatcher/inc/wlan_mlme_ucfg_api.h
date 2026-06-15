@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -4194,6 +4195,49 @@ ucfg_mlme_set_roam_reason_vsie_status(struct wlan_objmgr_psoc *psoc,
 }
 
 #endif
+
+/**
+ * ucfg_mlme_set_user_ps()  - Set the PS user config
+ * @psoc: pointer to psoc object
+ * @vdev_id: Vdev id
+ * @ps_enable: Flag to indicate if user PS is enabled
+ *
+ * Return: QDF_STATUS
+ */
+static inline
+QDF_STATUS ucfg_mlme_set_user_ps(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id,
+				 bool ps_enable)
+{
+	return mlme_set_user_ps(psoc, vdev_id, ps_enable);
+}
+
+/**
+ * ucfg_mlme_set_ft_over_ds() - update ft_over_ds status with user configured
+ * value
+ * @psoc: pointer to psoc object
+ * @ft_over_ds_enable: value of ft_over_ds
+ *
+ * Return: QDF Status
+ */
+static inline QDF_STATUS
+ucfg_mlme_set_ft_over_ds(struct wlan_objmgr_psoc *psoc,
+			 uint8_t ft_over_ds_enable)
+{
+	return wlan_mlme_set_ft_over_ds(psoc, ft_over_ds_enable);
+}
+
+/**
+ * ucfg_mlme_get_user_ps()  - Get user PS flag
+ * @psoc: pointer to psoc object
+ * @vdev_id: Vdev id
+ *
+ * Return: True if user ps is enabled else false
+ */
+static inline
+bool ucfg_mlme_get_user_ps(struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
+{
+	return mlme_get_user_ps(psoc, vdev_id);
+}
 
 /**
  * ucfg_mlme_is_sta_mon_conc_supported() - Check if STA + Monitor mode

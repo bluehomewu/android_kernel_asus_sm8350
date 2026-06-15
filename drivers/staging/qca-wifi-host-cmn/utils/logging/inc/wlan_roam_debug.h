@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2013-2019 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2019, 2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -78,6 +79,16 @@ struct wlan_roam_debug_info {
  * @DEBUG_ROAM_EVENT: received roam event
  * @DEBUG_BUS_SUSPEND: host going into suspend mode
  * @DEBUG_BUS_RESUME: host operation resumed
+ * @DEBUG_CONN_CONNECTING: trace connecting to bssid
+ * @DEBUG_CONN_ASSOCIATION: trace association completion
+ * @DEBUG_CONN_CONNECT_RESULT: trace connect result to os
+ * @DEBUG_CONN_ROAMING: trace station roaming propagtion
+ * @DEBUG_CONN_ROAMED: trace roamed to bssid
+ * @DEBUG_CONN_ROAMED_IND: trace roam indication
+ * @DEBUG_CONN_DISCONNECT: trace station disconnect
+ * @DEBUG_CONN_DISCONNECT_HANDLER: trace disconnect handler
+ * @DEBUG_CONN_DISCONNECT_IND: trace disconnect indication
+ * @DEBUG_CONN_RSO: trace RSO state changing
  */
 
 enum peer_debug_op {
@@ -97,6 +108,53 @@ enum peer_debug_op {
 	DEBUG_BUS_SUSPEND,
 	DEBUG_BUS_RESUME,
 	DEBUG_WOW_REASON,
+	DEBUG_CONN_CONNECTING,
+	DEBUG_CONN_ASSOCIATION,
+	DEBUG_CONN_CONNECT_RESULT,
+	DEBUG_CONN_ROAMING,
+	DEBUG_CONN_ROAMED,
+	DEBUG_CONN_ROAMED_IND,
+	DEBUG_CONN_DISCONNECT,
+	DEBUG_CONN_DISCONNECT_HANDLER,
+	DEBUG_CONN_DISCONNECT_IND,
+	DEBUG_CONN_RSO,
+};
+
+/**
+ * struct wlan_roam_debug_rec - roam debug information record definition
+ * @time: timestamp when record was added
+ * @operation: identifier for operation, command, event, etc.
+ * @vdev_id: vdev identifier
+ * @peer_id: peer_id. Range 0 - 255, 0xffff is invalid peer_id.
+ * @mac_addr: mac address of peer
+ * @peer_obj: pointer to peer object
+ * @arg1: Optional argument #1
+ * @arg2: Opttional argument #2
+ */
+struct wlan_roam_debug_rec {
+	uint64_t time;
+	enum peer_debug_op operation;
+	uint8_t vdev_id;
+	uint16_t peer_id;
+	struct qdf_mac_addr mac_addr;
+	void *peer_obj;
+	uint32_t arg1;
+	uint32_t arg2;
+};
+
+/**
+ * struct wlan_roam_debug_info - Buffer to store the wma debug records
+ * @index: index of the most recent entry in the circular buffer
+ * @num_max_rec: maximum records stored in the records array
+ * @rec: array to store wma debug records, used in circular fashion
+ */
+struct wlan_roam_debug_info {
+	qdf_atomic_t index;
+	uint32_t num_max_rec;
+	void (*rec_print)(struct wlan_roam_debug_rec *dbg_rec,
+			  uint32_t idx, uint32_t delta,
+			  bool to_kernel);
+	struct wlan_roam_debug_rec rec[WLAN_ROAM_DEBUG_MAX_REC];
 };
 
 #define DEBUG_INVALID_PEER_ID 0xffff

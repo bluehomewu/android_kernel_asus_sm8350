@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2013-2018, 2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018, 2020-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -192,6 +193,26 @@ static char *wlan_roam_debug_string(uint32_t op)
 		return "host wakeup";
 	case DEBUG_WOW_REASON:
 		return "wow wakeup reason";
+	case DEBUG_CONN_CONNECTING:
+		return "conn";
+	case DEBUG_CONN_ASSOCIATION:
+		return "assoc";
+	case DEBUG_CONN_CONNECT_RESULT:
+		return "cnrlt";
+	case DEBUG_CONN_ROAMING:
+		return "roaming";
+	case DEBUG_CONN_ROAMED:
+		return "roamed";
+	case DEBUG_CONN_ROAMED_IND:
+		return "rmind";
+	case DEBUG_CONN_DISCONNECT:
+		return "disc";
+	case DEBUG_CONN_DISCONNECT_HANDLER:
+		return "dishdr";
+	case DEBUG_CONN_DISCONNECT_IND:
+		return "disind";
+	case DEBUG_CONN_RSO:
+		return "rso";
 	default:
 		return "unknown";
 	}

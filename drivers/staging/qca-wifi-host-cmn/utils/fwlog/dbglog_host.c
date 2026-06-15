@@ -1693,7 +1693,7 @@ process_fw_diag_event_data(uint8_t *datap, uint32_t num_data)
 	uint32_t diag_data_len; /* each fw diag payload */
 	struct wlan_diag_data *diag_data;
 
-	while (num_data > 0) {
+	while (num_data >= sizeof(struct wlan_diag_data)) {
 		diag_data = (struct wlan_diag_data *)datap;
 		diag_type = WLAN_DIAG_0_TYPE_GET(diag_data->word0);
 		diag_data_len = WLAN_DIAG_0_LEN_GET(diag_data->word0);
@@ -1750,8 +1750,7 @@ send_diag_netlink_data(const uint8_t *buffer, uint32_t len, uint32_t cmd)
 
 		skb_out = nlmsg_new(slot_len, GFP_ATOMIC);
 		if (!skb_out) {
-			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-					("Failed to allocate new skb\n"));
+			diag_err_rl("Failed to allocate new skb");
 			return A_ERROR;
 		}
 

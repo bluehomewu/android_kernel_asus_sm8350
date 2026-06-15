@@ -1,5 +1,6 @@
 /*
- * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2021 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2021 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -220,9 +221,6 @@ enum wmamsgtype {
 	WMA_SET_PLM_REQ = SIR_HAL_SET_PLM_REQ,
 #endif
 
-#ifndef ROAM_OFFLOAD_V1
-	WMA_ROAM_SCAN_OFFLOAD_REQ = SIR_HAL_ROAM_SCAN_OFFLOAD_REQ,
-#endif
 	WMA_ROAM_PRE_AUTH_STATUS = SIR_HAL_ROAM_PRE_AUTH_STATUS_IND,
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -406,10 +404,6 @@ enum wmamsgtype {
 
 	WMA_SET_WOW_PULSE_CMD = SIR_HAL_SET_WOW_PULSE_CMD,
 
-#ifndef ROAM_OFFLOAD_V1
-	WMA_SET_PER_ROAM_CONFIG_CMD = SIR_HAL_SET_PER_ROAM_CONFIG_CMD,
-#endif
-
 	WMA_SEND_AP_VDEV_UP = SIR_HAL_SEND_AP_VDEV_UP,
 
 	WMA_SET_ARP_STATS_REQ = SIR_HAL_SET_ARP_STATS_REQ,
@@ -441,26 +435,19 @@ enum wmamsgtype {
 	WMA_GET_MWS_COEX_INFO_REQ = SIR_HAL_GET_MWS_COEX_INFO_REQ,
 #endif
 
-#ifndef ROAM_OFFLOAD_V1
-	WMA_SET_ROAM_TRIGGERS = SIR_HAL_SET_ROAM_TRIGGERS,
-	WMA_ROAM_INIT_PARAM = SIR_HAL_INIT_ROAM_OFFLOAD_PARAM,
-	WMA_ROAM_DISABLE_CFG = SIR_HAL_INIT_ROAM_DISABLE_CFG,
-
-#endif
 	WMA_TWT_ADD_DIALOG_REQUEST = SIR_HAL_TWT_ADD_DIALOG_REQUEST,
 	WMA_TWT_DEL_DIALOG_REQUEST = SIR_HAL_TWT_DEL_DIALOG_REQUEST,
 	WMA_TWT_PAUSE_DIALOG_REQUEST = SIR_HAL_TWT_PAUSE_DIALOG_REQUEST,
 	WMA_TWT_RESUME_DIALOG_REQUEST =  SIR_HAL_TWT_RESUME_DIALOG_REQUEST,
 	WMA_PEER_CREATE_REQ = SIR_HAL_PEER_CREATE_REQ,
+	WMA_TWT_NUDGE_DIALOG_REQUEST = SIR_HAL_TWT_NUDGE_DIALOG_REQUEST,
 };
-
-#define WMA_DATA_STALL_TRIGGER 6
 
 /* Bit 6 will be used to control BD rate for Management frames */
 #define HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME 0x40
 
 #define wma_tx_frame(hHal, pFrmBuf, frmLen, frmType, txDir, tid, pCompFunc, \
-		   pData, txFlag, sessionid, channel_freq, rid) \
+		   pData, txFlag, sessionid, channel_freq, rid, peer_rssi) \
 	(QDF_STATUS)( wma_tx_packet( \
 		      cds_get_context(QDF_MODULE_ID_WMA), \
 		      (pFrmBuf), \
@@ -475,11 +462,12 @@ enum wmamsgtype {
 		      (sessionid), \
 		      (false), \
 		      (channel_freq), \
-		      (rid)))
+		      (rid), \
+		      (peer_rssi)))
 
 #define wma_tx_frameWithTxComplete(hHal, pFrmBuf, frmLen, frmType, txDir, tid, \
 	 pCompFunc, pData, pCBackFnTxComp, txFlag, sessionid, tdlsflag, \
-	 channel_freq, rid) \
+	 channel_freq, rid, peer_rssi) \
 	(QDF_STATUS)( wma_tx_packet( \
 		      cds_get_context(QDF_MODULE_ID_WMA), \
 		      (pFrmBuf), \
@@ -494,7 +482,8 @@ enum wmamsgtype {
 		      (sessionid), \
 		      (tdlsflag), \
 		      (channel_freq), \
-		      (rid)))
+		      (rid), \
+		      (peer_rssi)))
 
 /**
  * struct sUapsd_Params - Powersave Offload Changes
@@ -687,6 +676,7 @@ void wma_tx_abort(uint8_t vdev_id);
  * @tdls_flag: tdls flag
  * @channel_freq: channel frequency
  * @rid: rate id
+ * @peer_rssi: peer RSSI value
  *
  * This function sends the frame corresponding to the
  * given vdev id.
@@ -700,7 +690,8 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			 void *pData,
 			 wma_tx_ota_comp_callback tx_frm_ota_comp_cb,
 			 uint8_t tx_flag, uint8_t vdev_id, bool tdls_flag,
-			 uint16_t channel_freq, enum rateid rid);
+			 uint16_t channel_freq, enum rateid rid,
+			 int8_t peer_rssi);
 
 /**
  * wma_open() - Allocate wma context and initialize it.

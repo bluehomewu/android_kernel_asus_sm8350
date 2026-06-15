@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2011-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -97,8 +98,9 @@ static void lim_process_sae_msg_sta(struct mac_context *mac,
 						    STATUS_SUCCESS,
 						    session);
 		else
-			lim_restore_from_auth_state(mac, eSIR_SME_AUTH_REFUSED,
-				STATUS_UNSPECIFIED_FAILURE, session);
+			lim_restore_from_auth_state(mac, sae_msg->result_code,
+						    STATUS_UNSPECIFIED_FAILURE,
+						    session);
 		break;
 	default:
 		/* SAE msg is received in unexpected state */
@@ -190,7 +192,7 @@ static void lim_process_sae_msg_ap(struct mac_context *mac,
  *
  * Return: None
  */
-static void lim_process_sae_msg(struct mac_context *mac, struct sir_sae_msg *body)
+void lim_process_sae_msg(struct mac_context *mac, struct sir_sae_msg *body)
 {
 	struct sir_sae_msg *sae_msg = body;
 	struct pe_session *session;
@@ -207,7 +209,9 @@ static void lim_process_sae_msg(struct mac_context *mac, struct sir_sae_msg *bod
 	}
 
 	if (session->opmode != QDF_STA_MODE &&
-	    session->opmode != QDF_SAP_MODE) {
+	    session->opmode != QDF_SAP_MODE &&
+	    session->opmode != QDF_P2P_GO_MODE &&
+	    session->opmode != QDF_P2P_CLIENT_MODE) {
 		pe_err("SAE:Not supported in this mode %d",
 				session->opmode);
 		return;
@@ -224,9 +228,6 @@ static void lim_process_sae_msg(struct mac_context *mac, struct sir_sae_msg *bod
 	else
 		pe_debug("SAE message on unsupported interface");
 }
-#else
-static inline void lim_process_sae_msg(struct mac_context *mac, void *body)
-{}
 #endif
 
 /**
@@ -1762,12 +1763,6 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 	case eWNI_SME_ROAM_INVOKE:
 		/* fall through */
 	case eWNI_SME_ROAM_SEND_SET_PCL_REQ:
-#ifndef ROAM_OFFLOAD_V1
-	case eWNI_SME_ROAM_INIT_PARAM:
-	case eWNI_SME_ROAM_DISABLE_CFG:
-	case eWNI_SME_ROAM_SEND_PER_REQ:
-	case eWNI_SME_ROAM_SCAN_OFFLOAD_REQ:
-#endif
 	case eWNI_SME_SET_ADDBA_ACCEPT:
 	case eWNI_SME_UPDATE_EDCA_PROFILE:
 	case WNI_SME_UPDATE_MU_EDCA_PARAMS:
@@ -2107,6 +2102,9 @@ static void lim_process_messages(struct mac_context *mac_ctx,
 		msg->bodyptr = NULL;
 		break;
 	case SIR_LIM_PROCESS_DEFERRED_QUEUE:
+		break;
+	case eWNI_SME_ABORT_CONN_TIMER:
+		lim_deactivate_timers_for_vdev(mac_ctx, msg->bodyval);
 		break;
 	default:
 		qdf_mem_free((void *)msg->bodyptr);

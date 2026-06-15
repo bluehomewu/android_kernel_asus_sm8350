@@ -7,6 +7,10 @@ ENABLE_QCACLD := true
 endif
 endif
 
+ifeq ($(BOARD_COMMON_DIR),)
+    BOARD_COMMON_DIR := device/qcom/common
+endif
+
 ifeq  ($(ENABLE_QCACLD), true)
 # Android makefile for the WLAN Module
 LOCAL_PATH := $(call my-dir)
@@ -68,7 +72,9 @@ include $(foreach chip, $(TARGET_WLAN_CHIP), $(LOCAL_PATH)/.$(chip)/Android.mk)
 
 else # Multi-ok check
 
+ifeq ($(WLAN_PROFILE),)
 WLAN_PROFILE := default
+endif
 
 ifeq ($(LOCAL_DEV_NAME), qcacld-3.0)
 
@@ -103,7 +109,7 @@ endif
 
 # DLKM_DIR was moved for JELLY_BEAN (PLATFORM_SDK 16)
 ifeq ($(call is-platform-sdk-version-at-least,16),true)
-	DLKM_DIR := $(TOP)/device/qcom/common/dlkm
+	DLKM_DIR := $(TOP)/$(BOARD_COMMON_DIR)/dlkm
 else
 	DLKM_DIR := build/dlkm
 endif # platform-sdk-version
@@ -123,6 +129,7 @@ KBUILD_OPTIONS += DYNAMIC_SINGLE_CHIP=$(DYNAMIC_SINGLE_CHIP)
 # This means we need to rename the module to <chipset>_wlan.ko
 # after wlan.ko is built.
 KBUILD_OPTIONS += MODNAME=$(LOCAL_MOD_NAME)
+KBUILD_OPTIONS += DEVNAME=$(LOCAL_DEV_NAME)
 KBUILD_OPTIONS += BOARD_PLATFORM=$(TARGET_BOARD_PLATFORM)
 KBUILD_OPTIONS += $(WLAN_SELECT)
 
@@ -176,14 +183,12 @@ TARGET_FW_PATH := $(TARGET_OUT_ETC)/$(TARGET_FW_DIR)
 endif
 
 $(shell mkdir -p $(TARGET_FW_PATH); \
-	ln -sf /vendor/factory/wlan_mac.bin $(TARGET_FW_PATH)/wlan_mac.bin)
-$(shell ln -sf /vendor/factory/COUNTRY $(TARGET_FW_PATH)/COUNTRY)
+	ln -sf $(TARGET_MAC_BIN_PATH)/wlan_mac.bin $(TARGET_FW_PATH)/wlan_mac.bin)
 ifneq ($(GENERIC_ODM_IMAGE),true)
-#$(shell ln -sf $(TARGET_CFG_PATH)/WCNSS_qcom_cfg.ini $(TARGET_FW_PATH)/WCNSS_qcom_cfg.ini)
+$(shell ln -sf $(TARGET_CFG_PATH)/WCNSS_qcom_cfg.ini $(TARGET_FW_PATH)/WCNSS_qcom_cfg.ini)
 endif
 endif # Multi-ko check
 endif # DLKM check
 endif # supported target check
-
 endif # WLAN enabled check
 endif # ENABLE_QCACLD

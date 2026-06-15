@@ -1,5 +1,6 @@
 /*
  * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -890,6 +891,21 @@ QDF_STATUS sme_qos_msg_processor(struct mac_context *mac_ctx,
 	return status;
 }
 
+/**
+ * sme_qos_process_disconnect_roam_ind() - Delete the existing TSPEC
+ * flows when roaming due to disconnect is complete.
+ * @mac - Pointer to the global MAC parameter structure.
+ * @vdev_id: Vdev id
+ *
+ * Return: None
+ */
+static void
+sme_qos_process_disconnect_roam_ind(struct mac_context *mac,
+				    uint8_t vdev_id)
+{
+	sme_qos_delete_existing_flows(mac, vdev_id);
+}
+
 /*
  * sme_qos_csr_event_ind() - The QoS sub-module in SME expects notifications
  * from CSR when certain events occur as mentioned in sme_qos_csr_event_indType.
@@ -960,6 +976,10 @@ QDF_STATUS sme_qos_csr_event_ind(struct mac_context *mac,
 		status =
 			sme_qos_process_set_key_success_ind(mac, sessionId,
 							    pEvent_info);
+		break;
+	case SME_QOS_CSR_DISCONNECT_ROAM_COMPLETE:
+		sme_qos_process_disconnect_roam_ind(mac, sessionId);
+		status = QDF_STATUS_SUCCESS;
 		break;
 	default:
 		/* Err msg */
@@ -4654,9 +4674,7 @@ static QDF_STATUS sme_qos_process_reassoc_success_ev(struct mac_context *mac_ctx
 						mac_ctx, sessionid,
 						event_info);
 			} else {
-				QDF_TRACE(QDF_MODULE_ID_SME,
-					QDF_TRACE_LEVEL_ERROR, FL(
-					"session or RIC data is not present"));
+				sme_debug("session or RIC data is not present");
 			}
 		}
 #ifdef FEATURE_WLAN_ESE
