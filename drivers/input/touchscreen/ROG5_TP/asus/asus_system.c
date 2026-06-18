@@ -9,7 +9,7 @@ int pre_angle = 0;
 /*****************************************************************************
 * 1.Static function prototypes
 *******************************************************************************/
-void set_rotation_mode()
+void set_rotation_mode(void)
 {
     struct fts_ts_data *ts_data = fts_data;
     int ret;
@@ -128,7 +128,7 @@ void set_edge_palm(void) {
 	FTS_INFO("Set rotation reg to %d , palm range left %x right %x",ts_data->rotation_angle,l_val,r_val);
 }
 
-void set_report_rate () {
+void set_report_rate(void) {
     struct fts_ts_data *ts_data = fts_data;
     int ret = 0 , i = 0;
     u8 rate = 0;
