@@ -38,7 +38,7 @@
 #define DEBUG_LEVEL_CRITICAL	1
 #define DEBUG_LEVEL_INFO	2
 #define DEBUG_LEVEL_VERBOSE	3
-static g_debug_level = DEBUG_LEVEL_VERBOSE;
+static int g_debug_level = DEBUG_LEVEL_VERBOSE;
 
 inline int asus_hwid_printk_critical(const char *fmt, ...)
 {
@@ -424,4 +424,3 @@ static void platform_release(struct device *dev)
 
 module_init(asus_hwid_init);
 module_exit(asus_hwid_exit);
-
