@@ -217,8 +217,10 @@
 &battery_charger {
 	panel = <&dsi_ams667uu07_fhd_plus_dsc_cmd &dsi_ams678_fhd_plus_dsc_cmd &dsi_ams678_er2_fhd_plus_dsc_cmd>;
 
-	io-channels = <&pmk8350_vadc PM8350B_ADC7_AMUX_THM4_100K_PU>;
-	io-channel-names ="pm8350b_amux_thm4";
+	io-channels = <&pmk8350_vadc PM8350B_ADC7_AMUX_THM4_100K_PU>,
+		      <&pmk8350_vadc PM8350_ADC7_AMUX_THM2_100K_PU>;
+	io-channel-names = "pm8350b_amux_thm4",
+			   "pm8350_amux_thm2";
 };
 //[---] ASUS_BSP : Add for charger
 
