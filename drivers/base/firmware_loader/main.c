@@ -626,6 +626,11 @@ fw_get_filesystem_firmware(struct device *device, struct fw_priv *fw_priv,
 
 		}
 
+		if ((!strcmp(fw_priv->fw_name, "iris6_ccf1b.fw") ||
+		     !strcmp(fw_priv->fw_name, "iris6_ccf2b.fw") ||
+		     !strcmp(fw_priv->fw_name, "iris6_ccf3b.fw")) && i == 2)
+			snprintf(path, PATH_MAX, "%s/%s", "/vendor/firmware", fw_priv->fw_name);
+
 #endif // End iris6
 #endif //#ifdef CONFIG_MACH_ASUS
 
