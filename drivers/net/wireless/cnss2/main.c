@@ -3158,7 +3158,7 @@ static ssize_t do_wifi_antenna_switch_store(struct device *dev,
 	return count;
 }
 
-static DEVICE_ATTR(do_wifi_antenna_switch, 0644, NULL,
+static DEVICE_ATTR(do_wifi_antenna_switch, 0200, NULL,
 		   do_wifi_antenna_switch_store);
 #endif
 
