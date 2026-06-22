@@ -65,6 +65,8 @@ struct pkt_capture_cb_context {
  * @last_freq: Last connected freq
  * @curr_freq: current connected freq
  * @rx_avg_rssi: avg rssi of rx data packets
+ * @wake_lock: wake lock for packet capture
+ * @runtime_lock: runtime lock for packet capture
  */
 struct pkt_capture_vdev_priv {
 	struct wlan_objmgr_vdev *vdev;
@@ -78,6 +80,8 @@ struct pkt_capture_vdev_priv {
 	qdf_freq_t last_freq;
 	qdf_freq_t curr_freq;
 	int32_t rx_avg_rssi;
+	qdf_wake_lock_t wake_lock;
+	qdf_runtime_lock_t runtime_lock;
 };
 
 /**
