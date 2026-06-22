@@ -17,3 +17,4 @@ source "drivers/platform/olpc/Kconfig"
 source "drivers/platform/msm/Kconfig"
 
 source "drivers/platform/asus/Kconfig"
+source "drivers/platform/surface/Kconfig"
