@@ -195,6 +195,7 @@ struct tx_macro_priv {
 	bool register_event_listener;
 	u16 current_clk_id;
 	int disable_afe_wakeup_event_listener;
+	u32 mclk_freq;
 };
 
 static bool tx_macro_get_data(struct snd_soc_component *component,
@@ -3057,13 +3058,12 @@ static int tx_macro_validate_dmic_sample_rate(u32 dmic_sample_rate,
 				      struct tx_macro_priv *tx_priv)
 {
 	u32 div_factor = TX_MACRO_CLK_DIV_2;
-	u32 mclk_rate = TX_MACRO_MCLK_FREQ;
 
 	if (dmic_sample_rate == TX_MACRO_DMIC_SAMPLE_RATE_UNDEFINED ||
-	    mclk_rate % dmic_sample_rate != 0)
+	    tx_priv->mclk_freq % dmic_sample_rate != 0)
 		goto undefined_rate;
 
-	div_factor = mclk_rate / dmic_sample_rate;
+	div_factor = tx_priv->mclk_freq / dmic_sample_rate;
 
 	switch (div_factor) {
 	case 2:
@@ -3091,13 +3091,13 @@ static int tx_macro_validate_dmic_sample_rate(u32 dmic_sample_rate,
 
 	/* Valid dmic DIV factors */
 	dev_dbg(tx_priv->dev, "%s: DMIC_DIV = %u, mclk_rate = %u\n",
-		__func__, div_factor, mclk_rate);
+		__func__, div_factor, tx_priv->mclk_freq);
 
 	return dmic_sample_rate;
 
 undefined_rate:
 	dev_dbg(tx_priv->dev, "%s: Invalid rate %d, for mclk %d\n",
-		 __func__, dmic_sample_rate, mclk_rate);
+		 __func__, dmic_sample_rate, tx_priv->mclk_freq);
 	dmic_sample_rate = TX_MACRO_DMIC_SAMPLE_RATE_UNDEFINED;
 
 	return dmic_sample_rate;
@@ -3434,7 +3434,7 @@ static int tx_macro_probe(struct platform_device *pdev)
 {
 	struct macro_ops ops = {0};
 	struct tx_macro_priv *tx_priv = NULL;
-	u32 tx_base_addr = 0, sample_rate = 0;
+	u32 tx_base_addr = 0, sample_rate = 0, mclk_freq = 0;
 	char __iomem *tx_io_base = NULL;
 //ASUS_BSP +++ for DMIC TX
 #if defined ASUS_VODKA_PROJECT
@@ -3446,6 +3446,7 @@ static int tx_macro_probe(struct platform_device *pdev)
 //ASUS_BSP --- for DMIC TX
 	int ret = 0;
 	const char *dmic_sample_rate = "qcom,tx-dmic-sample-rate";
+	const char *cdc_mclk_clk_rate = "qcom,cdc-mclk-clk-rate";
 #if defined ASUS_VODKA_PROJECT
 	u32 is_used_tx_swr_gpio = 0;
 #else
@@ -3549,6 +3550,17 @@ static int tx_macro_probe(struct platform_device *pdev)
 		return -ENOMEM;
 	}
 	tx_priv->tx_io_base = tx_io_base;
+
+	ret = of_property_read_u32(pdev->dev.of_node, cdc_mclk_clk_rate,
+				   &mclk_freq);
+	if (ret) {
+		tx_priv->mclk_freq = TX_MACRO_MCLK_FREQ;
+	} else {
+		tx_priv->mclk_freq = mclk_freq;
+	}
+	dev_dbg(tx_priv->dev,
+		"%s: mclk_freq = %u\n", __func__, tx_priv->mclk_freq);
+
 	ret = of_property_read_u32(pdev->dev.of_node, dmic_sample_rate,
 				   &sample_rate);
 	if (ret) {
