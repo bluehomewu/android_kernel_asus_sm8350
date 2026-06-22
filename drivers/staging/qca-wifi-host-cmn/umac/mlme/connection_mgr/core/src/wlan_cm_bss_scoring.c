@@ -89,7 +89,7 @@
 #define CM_OCE_WAN_WEIGHTAGE 2
 #define CM_OCE_AP_TX_POWER_WEIGHTAGE 5
 #define CM_OCE_SUBNET_ID_WEIGHTAGE 3
-#define CM_SAE_PK_AP_WEIGHTAGE 3
+#define CM_SAE_PK_AP_WEIGHTAGE 30
 #define CM_BEST_CANDIDATE_MAX_WEIGHT 200
 #define CM_MAX_PCT_SCORE 100
 #define CM_MAX_INDEX_PER_INI 4
@@ -1496,6 +1496,7 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 	bool same_bucket = false;
 	bool ap_su_beam_former = false;
 	struct wlan_ie_vhtcaps *vht_cap;
+	struct wlan_ie_hecaps *he_cap;
 	struct scoring_cfg *score_config;
 	struct weight_cfg *weight_config;
 	uint32_t sta_nss;
@@ -1584,8 +1585,17 @@ static int cm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 				score_config->rssi_score.bad_rssi_bucket_size);
 
 	vht_cap = (struct wlan_ie_vhtcaps *)util_scan_entry_vhtcap(entry);
-	if (vht_cap && vht_cap->su_beam_former)
+	he_cap = (struct wlan_ie_hecaps *)util_scan_entry_hecap(entry);
+
+	if (vht_cap && vht_cap->su_beam_former) {
 		ap_su_beam_former = true;
+
+	} else if (he_cap && QDF_GET_BITS(*(he_cap->he_phy_cap.phy_cap_bytes +
+		   WLAN_HE_PHYCAP_SU_BFER_OFFSET), WLAN_HE_PHYCAP_SU_BFER_IDX,
+		   WLAN_HE_PHYCAP_SU_BFER_BITS)) {
+		ap_su_beam_former = true;
+	}
+
 	if (phy_config->beamformee_cap && is_vht &&
 	    ap_su_beam_former &&
 	    (entry->rssi_raw > rssi_pref_5g_rssi_thresh) && !same_bucket)

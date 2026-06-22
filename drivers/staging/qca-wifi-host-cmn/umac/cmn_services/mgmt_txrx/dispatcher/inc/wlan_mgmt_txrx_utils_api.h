@@ -221,6 +221,7 @@ enum block_ack_actioncode {
 
 /**
  * enum pub_actioncode - public action frames
+ * Reference IEEE Std 802.11-2020 Table 9-364—Public Action field values
  * @PUB_ACTION_2040_BSS_COEXISTENCE:  public 20-40 bss coex action frame
  * @PUB_ACTION_EXT_CHANNEL_SWITCH_ID: public ext channel switch id action frame
  * @PUB_ACTION_VENDOR_SPECIFIC: vendor specific public action frame
