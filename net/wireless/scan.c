@@ -104,6 +104,7 @@ static inline void bss_ref_get(struct cfg80211_registered_device *rdev,
 	lockdep_assert_held(&rdev->bss_lock);
 
 	bss->refcount++;
+
 	if (bss->pub.hidden_beacon_bss)
 		bss_from_pub(bss->pub.hidden_beacon_bss)->refcount++;
 
@@ -393,6 +394,14 @@ cfg80211_add_nontrans_list(struct cfg80211_bss *trans_bss,
 	}
 
 	rcu_read_unlock();
+
+	/* This is a bit weird - it's not on the list, but already on another
+	 * one! The only way that could happen is if there's some BSSID/SSID
+	 * shared by multiple APs in their multi-BSSID profiles, potentially
+	 * with hidden SSID mixed in ... ignore it.
+	 */
+	if (!list_empty(&nontrans_bss->nontrans_list))
+		return -EINVAL;
 
 	/* add to the list */
 	list_add_tail(&nontrans_bss->nontrans_list, &trans_bss->nontrans_list);
@@ -1479,6 +1488,7 @@ cfg80211_inform_single_bss_data(struct wiphy *wiphy,
 			}
 		}
 		spin_unlock_bh(&rdev->bss_lock);
+
 		if (!res)
 			return NULL;
 	}
