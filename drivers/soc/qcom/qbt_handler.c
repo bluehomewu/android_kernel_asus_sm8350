@@ -901,8 +901,7 @@ static int qbt_create_input_device(struct qbt_drvdata *drvdata)
 	drvdata->in_dev->id.product = 0x0001;
 	drvdata->in_dev->id.version = QBT_INPUT_DEV_VERSION;
 
-	drvdata->in_dev->evbit[0] = BIT_MASK(EV_KEY) |  BIT_MASK(EV_ABS);
-	drvdata->in_dev->keybit[BIT_WORD(BTN_TOUCH)] = BIT_MASK(BTN_TOUCH);
+	drvdata->in_dev->evbit[0] = BIT_MASK(EV_KEY);
 
 	drvdata->in_dev->keybit[BIT_WORD(KEY_HOMEPAGE)] |=
 		BIT_MASK(KEY_HOMEPAGE);
@@ -910,15 +909,6 @@ static int qbt_create_input_device(struct qbt_drvdata *drvdata)
 		BIT_MASK(KEY_VOLUMEDOWN);
 	drvdata->in_dev->keybit[BIT_WORD(KEY_POWER)] |=
 		BIT_MASK(KEY_POWER);
-
-	input_set_abs_params(drvdata->in_dev, ABS_X,
-			     0,
-			     1000,
-			     0, 0);
-	input_set_abs_params(drvdata->in_dev, ABS_Y,
-			     0,
-			     1000,
-			     0, 0);
 
 	rc = input_register_device(drvdata->in_dev);
 	if (rc) {
