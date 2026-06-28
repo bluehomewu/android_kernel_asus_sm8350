@@ -1,5 +1,24 @@
 ifneq ($(CONFIG_ARCH_QTI_VM), y)
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
+ifneq (,$(filter PICASSO,$(ASUS_BUILD_PROJECT)))
+dtbo-$(CONFIG_ARCH_LAHAINA) += PICASSO-EVB-overlay.dtbo \
+	PICASSO-EVB2-overlay.dtbo \
+	PICASSO-SR1-overlay.dtbo \
+	PICASSO-ER1-overlay.dtbo \
+	PICASSO-ER2-overlay.dtbo \
+	PICASSO-PR1-overlay.dtbo \
+	PICASSO-PR2-overlay.dtbo \
+	PICASSO-MP-overlay.dtbo
+
+PICASSO-EVB-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
+PICASSO-EVB2-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
+PICASSO-SR1-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
+PICASSO-ER1-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
+PICASSO-ER2-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
+PICASSO-PR1-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
+PICASSO-PR2-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
+PICASSO-MP-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb lahaina-v2.1.dtb
+else
 dtbo-$(CONFIG_ARCH_LAHAINA) += lahaina-rumi-overlay.dtbo \
 	lahaina-mtp-overlay.dtbo \
 	lahaina-mtp-hsp-overlay.dtbo \
@@ -49,6 +68,7 @@ lahaina-cdp-hsp-pro-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb \
 					lahaina-v2.1.dtb
 lahaina-qrd-hsp-pro-overlay.dtbo-base := lahaina.dtb lahaina-v2.dtb \
 					lahaina-v2.1.dtb
+endif
 else
 dtb-$(CONFIG_ARCH_LAHAINA) += lahaina-rumi.dtb \
 	lahaina-mtp-hsp.dtb \
