@@ -23,6 +23,8 @@
 #include <linux/kernel.h>
 #include <linux/usb.h>
 #include <linux/delay.h>
+#include <linux/asus_hwid.h>
+#include <linux/asusdebug.h>
 #include "asus_chg_wakelock.h"
 //ASUS BSP ---
 

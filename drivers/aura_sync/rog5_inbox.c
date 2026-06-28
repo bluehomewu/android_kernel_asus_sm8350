@@ -12,6 +12,7 @@
 #include <linux/hidraw.h>
 #include <linux/usb.h>
 #include <linux/time.h>
+#include <linux/asusdebug.h>
 
 #include <linux/fs.h>
 #include <linux/syscalls.h>

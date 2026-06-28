@@ -26,6 +26,7 @@
 #include <linux/iio/consumer.h>
 #include <linux/kernel.h>
 #include <linux/delay.h>
+#include <linux/asusdebug.h>
 
 bool g_once_usb_thermal = false;
 bool g_asuslib_init = false;
