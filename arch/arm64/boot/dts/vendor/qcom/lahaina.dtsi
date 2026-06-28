@@ -555,6 +555,7 @@
 		console-size = <0x100000>;
 		ftrace-size = <0x40000>;
 		pmsg-size = <0x40000>;
+		mem-type = <2>;
 	};
 
 	memshare_mem: memshare_region {
