@@ -45,6 +45,11 @@
 
 #include "drm_crtc_internal.h"
 
+#ifdef CONFIG_MACH_ASUS
+bool asus_is_hdmi = false;
+EXPORT_SYMBOL(asus_is_hdmi);
+#endif
+
 /**
  * drm_mode_debug_printmodeline - print a mode to dmesg
  * @mode: mode to print
