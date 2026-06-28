@@ -70,8 +70,12 @@
 #define USB3_PORTSC		(0x420)
 
 #ifdef CONFIG_MACH_ASUS
+static struct dwc3_msm *context1;
 static struct dwc3_msm *context2;
 int usb2_host_mode;
+struct completion usb_host_complete1;
+EXPORT_SYMBOL(usb_host_complete1);
+struct completion usb_host_complete2;
 
 #ifdef CONFIG_USB_EC_DRIVER
 extern uint8_t gDongleType;
@@ -4805,8 +4809,13 @@ static int dwc3_msm_probe(struct platform_device *pdev)
 	platform_set_drvdata(pdev, mdwc);
 	mdwc->dev = &pdev->dev;
 #ifdef CONFIG_MACH_ASUS
-	if (!strcmp("a800000.ssusb", dev_name(&pdev->dev)))
+	if (!strcmp("a600000.ssusb", dev_name(&pdev->dev))) {
+		context1 = mdwc;
+		init_completion(&usb_host_complete1);
+	} else if (!strcmp("a800000.ssusb", dev_name(&pdev->dev))) {
 		context2 = mdwc;
+		init_completion(&usb_host_complete2);
+	}
 #endif
 
 	INIT_LIST_HEAD(&mdwc->req_complete_list);
@@ -5566,9 +5575,21 @@ static int dwc3_otg_start_host(struct dwc3_msm *mdwc, int on)
 		msm_dwc3_perf_vote_update(mdwc, true);
 		schedule_delayed_work(&mdwc->perf_vote_work,
 				msecs_to_jiffies(1000 * PM_QOS_SAMPLE_SEC));
+#ifdef CONFIG_MACH_ASUS
+		if (!strcmp("a600000.ssusb", dev_name(mdwc->dev)))
+			complete_all(&usb_host_complete1);
+		else if (!strcmp("a800000.ssusb", dev_name(mdwc->dev)))
+			complete_all(&usb_host_complete2);
+#endif
 	} else {
 		dev_dbg(mdwc->dev, "%s: turn off host\n", __func__);
 
+#ifdef CONFIG_MACH_ASUS
+		if (!strcmp("a600000.ssusb", dev_name(mdwc->dev)))
+			reinit_completion(&usb_host_complete1);
+		else if (!strcmp("a800000.ssusb", dev_name(mdwc->dev)))
+			reinit_completion(&usb_host_complete2);
+#endif
 		if (!IS_ERR_OR_NULL(mdwc->vbus_reg))
 			ret = regulator_disable(mdwc->vbus_reg);
 		if (ret) {
