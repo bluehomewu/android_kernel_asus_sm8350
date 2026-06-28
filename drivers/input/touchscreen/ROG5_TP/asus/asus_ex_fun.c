@@ -1,5 +1,6 @@
 #if defined ASUS_ZS673KS_PROJECT || defined ASUS_PICASSO_PROJECT
 #include <linux/power_supply.h>
+#include <linux/soc/qcom/battery_charger_asus.h>
 #endif
 #include "focaltech_core.h"
 #include "asus_tp.h"

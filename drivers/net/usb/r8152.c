@@ -838,6 +838,18 @@ static unsigned int agg_buf_sz = 16384;
 #define RTL_LIMITED_TSO_SIZE	(agg_buf_sz - sizeof(struct tx_desc) - \
 				 VLAN_ETH_HLEN - ETH_FCS_LEN)
 
+#ifdef CONFIG_MACH_ASUS
+static int net_status;
+module_param(net_status, int, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(net_status, "8153 eth status");
+
+int get_net_status(void)
+{
+	return net_status;
+}
+EXPORT_SYMBOL_GPL(get_net_status);
+#endif
+
 static
 int get_registers(struct r8152 *tp, u16 value, u16 index, u16 size, void *data)
 {
@@ -4112,6 +4124,10 @@ static void set_carrier(struct r8152 *tp)
 			napi_enable(&tp->napi);
 			netif_wake_queue(netdev);
 			netif_info(tp, link, netdev, "carrier on\n");
+#ifdef CONFIG_MACH_ASUS
+			net_status = 1;
+			pr_info("r8152 net_status=%d\n", net_status);
+#endif
 		} else if (netif_queue_stopped(netdev) &&
 			   skb_queue_len(&tp->tx_queue) < tp->tx_qlen) {
 			netif_wake_queue(netdev);
@@ -4125,6 +4141,10 @@ static void set_carrier(struct r8152 *tp)
 			napi_enable(napi);
 			tasklet_enable(&tp->tx_tl);
 			netif_info(tp, link, netdev, "carrier off\n");
+#ifdef CONFIG_MACH_ASUS
+			net_status = 0;
+			pr_info("r8152 net_status=%d\n", net_status);
+#endif
 		}
 	}
 }

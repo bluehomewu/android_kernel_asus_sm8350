@@ -153,6 +153,22 @@ static char *ramdisk_execute_command;
 bool static_key_initialized __read_mostly;
 EXPORT_SYMBOL_GPL(static_key_initialized);
 
+/* ASUS_BSP charger +++ */
+bool g_Charger_mode = false;
+static int set_charger_mode(char *str)
+{
+	if (!strcmp("charger", str))
+		g_Charger_mode = true;
+	else
+		g_Charger_mode = false;
+
+	pr_info("g_Charger_mode = %d\n", g_Charger_mode);
+	return 0;
+}
+__setup("androidboot.mode=", set_charger_mode);
+EXPORT_SYMBOL(g_Charger_mode);
+/* ASUS_BSP charger --- */
+
 /*
  * If set, this is an indication to the drivers that reset the underlying
  * device before going ahead with the initialization otherwise driver might

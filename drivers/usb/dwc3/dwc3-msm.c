@@ -69,6 +69,17 @@
 #define USB3_HCSPARAMS1		(0x4)
 #define USB3_PORTSC		(0x420)
 
+#ifdef CONFIG_MACH_ASUS
+static struct dwc3_msm *context2;
+int usb2_host_mode;
+
+#ifdef CONFIG_USB_EC_DRIVER
+extern uint8_t gDongleType;
+#else
+static uint8_t gDongleType;
+#endif
+#endif
+
 /**
  *  USB QSCRATCH Hardware registers
  *
@@ -4295,6 +4306,66 @@ static int dwc3_msm_usb_set_role(struct device *dev, enum usb_role role)
 	return 0;
 }
 
+#ifdef CONFIG_MACH_ASUS
+void rt1715_dwc3_msm_usb_set_role(enum usb_role role)
+{
+	struct dwc3_msm *mdwc = context2;
+	struct dwc3 *dwc;
+	enum usb_role cur_role = USB_ROLE_NONE;
+
+	if (!mdwc || !mdwc->dwc3)
+		return;
+
+	dwc = platform_get_drvdata(mdwc->dwc3);
+	if (!dwc)
+		return;
+
+	if (gDongleType == 1) {
+		dev_info(mdwc->dev,
+			 "[USB] %s don't set role switch in HUB mode\n",
+			 __func__);
+		return;
+	}
+
+	cur_role = dwc3_msm_usb_get_role(mdwc->dev);
+
+	switch (role) {
+	case USB_ROLE_HOST:
+		mdwc->vbus_active = false;
+		mdwc->id_state = DWC3_ID_GROUND;
+		break;
+	case USB_ROLE_DEVICE:
+		mdwc->vbus_active = true;
+		mdwc->id_state = DWC3_ID_FLOAT;
+		break;
+	case USB_ROLE_NONE:
+		mdwc->vbus_active = false;
+		mdwc->id_state = DWC3_ID_FLOAT;
+		break;
+	}
+
+	dev_info(mdwc->dev, "[USB] %s curr_role = %s, new_role = %s\n",
+		 __func__, usb_role_string(cur_role), usb_role_string(role));
+
+	if (mdwc->drd_state != DRD_STATE_UNDEFINED && cur_role == role) {
+		dev_info(mdwc->dev, "[USB] %s no USB role change\n", __func__);
+		return;
+	}
+
+	if (mdwc->ss_release_called) {
+		flush_delayed_work(&mdwc->sm_work);
+		dwc->maximum_speed = USB_SPEED_HIGH;
+		if (role == USB_ROLE_NONE) {
+			dwc->maximum_speed = USB_SPEED_UNKNOWN;
+			mdwc->ss_release_called = false;
+		}
+	}
+
+	dwc3_ext_event_notify(mdwc);
+}
+EXPORT_SYMBOL_GPL(rt1715_dwc3_msm_usb_set_role);
+#endif
+
 static struct usb_role_switch_desc role_desc = {
 	.set = dwc3_msm_usb_set_role,
 	.get = dwc3_msm_usb_get_role,
@@ -4733,6 +4804,10 @@ static int dwc3_msm_probe(struct platform_device *pdev)
 
 	platform_set_drvdata(pdev, mdwc);
 	mdwc->dev = &pdev->dev;
+#ifdef CONFIG_MACH_ASUS
+	if (!strcmp("a800000.ssusb", dev_name(&pdev->dev)))
+		context2 = mdwc;
+#endif
 
 	INIT_LIST_HEAD(&mdwc->req_complete_list);
 	INIT_WORK(&mdwc->resume_work, dwc3_resume_work);
@@ -5440,6 +5515,10 @@ static int dwc3_otg_start_host(struct dwc3_msm *mdwc, int on)
 		}
 
 		mdwc->in_host_mode = true;
+#ifdef CONFIG_MACH_ASUS
+		if (!strcmp("a800000.dwc3", dev_name(&mdwc->dwc3->dev)))
+			usb2_host_mode = 1;
+#endif
 		if (!dwc->dis_u3_susphy_quirk) {
 			dwc3_msm_write_reg_field(mdwc->base, DWC3_GUSB3PIPECTL(0),
 					DWC3_GUSB3PIPECTL_SUSPHY, 1);
@@ -5523,15 +5602,19 @@ static int dwc3_otg_start_host(struct dwc3_msm *mdwc, int on)
 #endif
 
 		dwc3_set_prtcap(dwc, DWC3_GCTL_PRTCAP_DEVICE);
-		if (!dwc->dis_u3_susphy_quirk) {
-			dwc3_msm_write_reg_field(mdwc->base, DWC3_GUSB3PIPECTL(0),
-					DWC3_GUSB3PIPECTL_SUSPHY, 0);
-			if (mdwc->dual_port) {
-				dwc3_msm_write_reg_field(mdwc->base, DWC3_GUSB3PIPECTL(1),
+			if (!dwc->dis_u3_susphy_quirk) {
+				dwc3_msm_write_reg_field(mdwc->base, DWC3_GUSB3PIPECTL(0),
 						DWC3_GUSB3PIPECTL_SUSPHY, 0);
+				if (mdwc->dual_port) {
+					dwc3_msm_write_reg_field(mdwc->base, DWC3_GUSB3PIPECTL(1),
+							DWC3_GUSB3PIPECTL_SUSPHY, 0);
+				}
 			}
-		}
 		mdwc->in_host_mode = false;
+#ifdef CONFIG_MACH_ASUS
+		if (!strcmp("a800000.dwc3", dev_name(&mdwc->dwc3->dev)))
+			usb2_host_mode = 0;
+#endif
 
 		/* wait for LPM, to ensure h/w is reset after stop_host */
 		set_bit(WAIT_FOR_LPM, &mdwc->inputs);

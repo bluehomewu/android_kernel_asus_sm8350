@@ -130,6 +130,19 @@ static int hub_port_disable(struct usb_hub *hub, int port1, int set_state);
 static bool hub_port_warm_reset_required(struct usb_hub *hub, int port1,
 		u16 portstatus);
 
+#ifdef CONFIG_MACH_ASUS
+static int ProDock_state;
+module_param(ProDock_state, int, S_IRUGO | S_IWUSR);
+MODULE_PARM_DESC(ProDock_state,
+		"ProDock_state undetect=0, detect=1, with_device=2");
+
+int get_prodock_state(void)
+{
+	return ProDock_state;
+}
+EXPORT_SYMBOL_GPL(get_prodock_state);
+#endif
+
 static inline char *portspeed(struct usb_hub *hub, int portstatus)
 {
 	if (hub_is_superspeedplus(hub->hdev))

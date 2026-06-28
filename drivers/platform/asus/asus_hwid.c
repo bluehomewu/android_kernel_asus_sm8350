@@ -78,7 +78,6 @@ MODULE_PARM_DESC(info,
 #ifdef CONFIG_ASUS_PICASSO_QTI_EMBEDDED
 
 static void parsing_hardware_id(void);
-#if 0
 enum DEVICE_HWID g_ASUS_hwID = HW_REV_INVALID;
 static int set_hardware_id(char *str)
 {
@@ -129,7 +128,6 @@ static int set_hardware_id(char *str)
 #ifdef CONFIG_MACH_ASUS
 __setup("androidboot.id.stage=", set_hardware_id);
 EXPORT_SYMBOL(g_ASUS_hwID);
-#endif
 #endif
 
 static void parsing_hardware_id(void) {
