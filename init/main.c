@@ -146,6 +146,40 @@ static char *initcall_command_line;
 static char *execute_command;
 static char *ramdisk_execute_command;
 
+#ifdef CONFIG_MACH_ASUS
+/* ASUS display code consumes these boot parameters directly. */
+char g_lcd_unique_id[10];
+EXPORT_SYMBOL(g_lcd_unique_id);
+
+static int __init set_lcd_unique_id(char *str)
+{
+	scnprintf(g_lcd_unique_id, sizeof(g_lcd_unique_id), "%s", str);
+	pr_info("[Display] lcd unique id = %s\n", g_lcd_unique_id);
+	return 0;
+}
+__setup("LCD=", set_lcd_unique_id);
+
+char g_verified_boot_state[20];
+EXPORT_SYMBOL(g_verified_boot_state);
+
+char g_unlock[2];
+EXPORT_SYMBOL(g_unlock);
+
+static int __init verified_boot_state_param(char *line)
+{
+	strlcpy(g_verified_boot_state, line, sizeof(g_verified_boot_state));
+	return 1;
+}
+__setup("androidboot.verifiedbootstate=", verified_boot_state_param);
+
+static int __init unlock_param(char *line)
+{
+	strlcpy(g_unlock, line, sizeof(g_unlock));
+	return 1;
+}
+__setup("UNLOCKED", unlock_param);
+#endif
+
 /*
  * Used to generate warnings if static_key manipulation functions are used
  * before jump_label_init is called.
