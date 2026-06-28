@@ -28,6 +28,7 @@
 #include <linux/kthread.h>
 #include <linux/cpu.h>
 #include <linux/version.h>
+#include <linux/asus_hwid.h>
 
 #include <linux/usb/pd_dbg_info.h>
 #include <linux/usb/tcpci.h>
