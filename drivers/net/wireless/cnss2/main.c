@@ -6,6 +6,9 @@
 #include <linux/module.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
+#include <linux/of_gpio.h>
+#include <linux/gpio.h>
+#include <linux/pinctrl/consumer.h>
 #include <linux/pm_wakeup.h>
 #include <linux/reboot.h>
 #include <linux/rwsem.h>
@@ -60,6 +63,12 @@ static struct cnss_fw_files FW_FILES_DEFAULT = {
 	"qwlan.bin", "bdwlan.bin", "otp.bin", "utf.bin",
 	"utfbd.bin", "epping.bin", "evicted.bin"
 };
+
+#if defined ASUS_PICASSO_PROJECT
+#define GPIO_LOOKUP_STATE "wifi_ant_gpio"
+
+static int wlan_asus_ant_gpio;
+#endif
 
 struct cnss_driver_event {
 	struct list_head list;
@@ -3128,6 +3137,31 @@ cnss_use_nv_mac(struct cnss_plat_data *plat_priv)
 				     "use-nv-mac");
 }
 
+#if defined ASUS_PICASSO_PROJECT
+static ssize_t do_wifi_antenna_switch_store(struct device *dev,
+					    struct device_attribute *attr,
+					    const char *buf, size_t count)
+{
+	int antenna_gpio;
+	int ret;
+
+	ret = kstrtoint(buf, 10, &antenna_gpio);
+	if (ret)
+		return ret;
+
+	cnss_pr_info("[cnss]: wifi_antenna_switch_start = %d, GPIO = %d.\n",
+		     antenna_gpio, gpio_get_value(wlan_asus_ant_gpio));
+	gpio_set_value(wlan_asus_ant_gpio, antenna_gpio);
+	cnss_pr_info("[cnss]: wifi_antenna_switch_end GPIO = %d.\n",
+		     gpio_get_value(wlan_asus_ant_gpio));
+
+	return count;
+}
+
+static DEVICE_ATTR(do_wifi_antenna_switch, 0644, NULL,
+		   do_wifi_antenna_switch_store);
+#endif
+
 static inline bool
 cnss_is_converged_dt(struct cnss_plat_data *plat_priv)
 {
@@ -3161,6 +3195,11 @@ static int cnss_probe(struct platform_device *plat_dev)
 	struct cnss_plat_data *plat_priv;
 	const struct of_device_id *of_id;
 	const struct platform_device_id *device_id;
+#if defined ASUS_PICASSO_PROJECT
+	struct device *dev;
+	struct pinctrl *key_pinctrl;
+	struct pinctrl_state *set_state;
+#endif
 	int retry = 0;
 
 	if (cnss_get_plat_priv(plat_dev)) {
@@ -3268,6 +3307,47 @@ retry:
 	ret = cnss_genl_init();
 	if (ret < 0)
 		cnss_pr_err("CNSS genl init failed %d\n", ret);
+
+#if defined ASUS_PICASSO_PROJECT
+	dev = &plat_priv->plat_dev->dev;
+	key_pinctrl = devm_pinctrl_get(dev);
+	if (IS_ERR_OR_NULL(key_pinctrl)) {
+		cnss_pr_err("[cnss] set_pinctrl failed\n");
+	} else {
+		set_state = pinctrl_lookup_state(key_pinctrl, GPIO_LOOKUP_STATE);
+		if (IS_ERR_OR_NULL(set_state)) {
+			cnss_pr_err("[cnss] pinctrl_lookup_state failed\n");
+		} else {
+			ret = pinctrl_select_state(key_pinctrl, set_state);
+			if (ret < 0)
+				cnss_pr_err("[cnss] pinctrl_select_state failed\n");
+		}
+	}
+
+	ret = device_create_file(&plat_dev->dev, &dev_attr_do_wifi_antenna_switch);
+	if (ret)
+		pr_err("[cnss]: sysfs node create failed error:%d\n", ret);
+
+	wlan_asus_ant_gpio = of_get_named_gpio(dev->of_node,
+					       "wlan-asus_ant_148", 0);
+	if (wlan_asus_ant_gpio < 0) {
+		pr_err("[cnss] no wlan-asus_ant_gpio\n");
+	} else if (gpio_is_valid(wlan_asus_ant_gpio)) {
+		ret = gpio_request(wlan_asus_ant_gpio, "wlan-asus_ant_148");
+		if (ret)
+			pr_err("[cnss] gpio_request.err %d\n", ret);
+
+		ret = gpio_direction_output(wlan_asus_ant_gpio, 1);
+		if (ret)
+			pr_err("[cnss] gpio_direction_output.err %d\n", ret);
+
+		gpio_set_value(wlan_asus_ant_gpio, 0);
+		pr_info("[cnss] gpio_get_value_end %d\n",
+			gpio_get_value(wlan_asus_ant_gpio));
+	} else {
+		pr_err("[cnss] wlan_asus_ant_gpio is not valid\n");
+	}
+#endif
 
 	cnss_pr_info("Platform driver probed successfully.\n");
 
