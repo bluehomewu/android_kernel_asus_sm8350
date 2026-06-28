@@ -2,7 +2,8 @@
 /*
  * Copyright (c) 2020, The Linux Foundation. All rights reserved.
  */
-#ifdef CONFIG_MACH_ASUS
+ 
+#if defined ASUS_ZS673KS_PROJECT || defined ASUS_PICASSO_PROJECT
 #include <linux/device.h>
 #include <linux/power_supply.h>
 #endif
@@ -15,6 +16,15 @@ enum battery_charger_prop {
 	BATTERY_CHARGER_PROP_MAX,
 };
 
+//ASUS_BSP Beryl +++ 
+#if defined ASUS_ZS673KS_PROJECT || defined ASUS_PICASSO_PROJECT
+#define QTI_POWER_SUPPLY_CHARGED   0x0001
+#define QTI_POWER_SUPPLY_UNCHARGED 0x0002
+extern void qti_charge_register_notify(struct notifier_block *nb);
+extern void qti_charge_unregister_notify(struct notifier_block *nb);
+#endif
+//ASUS_BSP Beryl ---
+
 #if IS_ENABLED(CONFIG_QTI_BATTERY_CHARGER)
 int qti_battery_charger_get_prop(const char *name,
 				enum battery_charger_prop prop_id, int *val);
@@ -26,8 +36,9 @@ qti_battery_charger_get_prop(const char *name,
 	return -EINVAL;
 }
 #endif
+
+#if defined ASUS_ZS673KS_PROJECT || defined ASUS_PICASSO_PROJECT
 //[+++] ASUS_BSP : Add for sub-function
-#ifdef CONFIG_MACH_ASUS
 struct psy_state {
 	struct power_supply	*psy;
 	char			*model;
@@ -62,8 +73,6 @@ struct battery_chg_dev {
 	atomic_t			state;
 	struct work_struct		subsys_up_work;
 	struct work_struct		usb_type_work;
-	struct delayed_work	asus_usb_thermal_work;
-	struct delayed_work	update_gauge_status_work;
 	int				fake_soc;
 	bool				block_tx;
 	bool				ship_mode_en;
@@ -85,7 +94,6 @@ int asuslib_init(void);
 int asuslib_deinit(void);
 int asus_chg_resume(struct device *dev);
 void set_qc_stat(int status);
-#endif
 //[---] ASUS_BSP : Add for sub-function
-
+#endif
 #endif
