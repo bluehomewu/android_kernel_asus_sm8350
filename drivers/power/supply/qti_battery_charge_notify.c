@@ -3,6 +3,7 @@
 #include <linux/notifier.h>
 #include <linux/power_supply.h>
 #include <linux/mutex.h>
+#include <linux/soc/qcom/battery_charger_asus.h>
 
 static BLOCKING_NOTIFIER_HEAD(qti_charge_notifier_list);
 /**

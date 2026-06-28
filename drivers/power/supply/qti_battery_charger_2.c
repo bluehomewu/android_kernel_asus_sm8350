@@ -20,6 +20,7 @@
 #include <linux/power_supply.h>
 #include <linux/soc/qcom/pmic_glink.h>
 #include <linux/soc/qcom/battery_charger_asus.h>
+#include <linux/asus_hwid.h>
 
 #define MSG_OWNER_BC			32778
 #define MSG_TYPE_REQ_RESP		1

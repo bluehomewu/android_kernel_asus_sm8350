@@ -23,7 +23,7 @@
 #include <linux/kernel.h>
 #include <linux/usb.h>
 #include <linux/delay.h>
-#include <asus_chg_wakelock.h>
+#include "asus_chg_wakelock.h"
 //ASUS BSP ---
 
 //[+++] Add the structure for PMIC-GLINK response
