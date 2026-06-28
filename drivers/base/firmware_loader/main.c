@@ -499,6 +499,42 @@ fw_get_filesystem_firmware(struct device *device, struct fw_priv *fw_priv,
 			break;
 		}
 
+#ifdef CONFIG_MACH_ASUS
+#ifdef ASUS_PICASSO_PROJECT
+		if (!strncmp(fw_priv->fw_name, "aw8697", 6) ||
+		    !strncmp(fw_priv->fw_name, "awinic", 6))
+			snprintf(path, PATH_MAX, "%s/%s",
+				 "/system/vendor/firmware/awinic", fw_priv->fw_name);
+
+		if (!strncmp(fw_priv->fw_name, "slpi", 4) ||
+		    !strncmp(fw_priv->fw_name, "adsp", 4) ||
+		    !strncmp(fw_priv->fw_name, "cdsp", 4) ||
+		    !strncmp(fw_priv->fw_name, "cs35l45", 7) ||
+		    !strncmp(fw_priv->fw_name, "bdwlan", 6) ||
+		    !strncmp(fw_priv->fw_name, "amss", 4) ||
+		    !strncmp(fw_priv->fw_name, "regdb", 5) ||
+		    !strncmp(fw_priv->fw_name, "m3.bin", 6))
+			snprintf(path, PATH_MAX, "%s/%s",
+				 "/vendor/firmware", fw_priv->fw_name);
+
+#ifdef CONFIG_PXLW_IRIS
+		if ((!strcmp(fw_priv->fw_name, "iris6_ccf1.fw") ||
+		     !strcmp(fw_priv->fw_name, "iris6_ccf2.fw") ||
+		     !strcmp(fw_priv->fw_name, "iris6_ccf3.fw") ||
+		     !strcmp(fw_priv->fw_name, "iris6.fw")) && i == 1)
+			snprintf(path, PATH_MAX, "%s/%s",
+				 "/vendor/firmware", fw_priv->fw_name);
+
+		if (i == 1 &&
+		    (!strcmp(fw_priv->fw_name, "iris6_ccf1b.fw") ||
+		     !strcmp(fw_priv->fw_name, "iris6_ccf2b.fw") ||
+		     !strcmp(fw_priv->fw_name, "iris6_ccf3b.fw")))
+			snprintf(path, PATH_MAX, "%s/%s",
+				 "/vendor/factory/display", fw_priv->fw_name);
+#endif
+#endif
+#endif
+
 		fw_priv->size = 0;
 		rc = kernel_read_file_from_path(path, &buffer, &size,
 						msize, id);
