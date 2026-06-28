@@ -187,3 +187,4 @@ obj-$(CONFIG_GNSS)		+= gnss/
 obj-$(CONFIG_INTERCONNECT)	+= interconnect/
 obj-$(CONFIG_COUNTER)		+= counter/
 obj-$(CONFIG_MACH_ASUS)		+= aura_sync/
+obj-$(CONFIG_SENSORS_SSC)	+= sensors/
