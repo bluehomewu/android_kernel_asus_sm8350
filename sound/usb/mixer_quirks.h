@@ -10,6 +10,10 @@ void snd_emuusb_set_samplerate(struct snd_usb_audio *chip,
 void snd_usb_mixer_rc_memory_change(struct usb_mixer_interface *mixer,
 				    int unitid);
 
+#ifdef CONFIG_MACH_ASUS
+void set_asus_eu_type(int eu_type);
+#endif
+
 void snd_usb_mixer_fu_apply_quirk(struct usb_mixer_interface *mixer,
 				  struct usb_mixer_elem_info *cval, int unitid,
 				  struct snd_kcontrol *kctl);
@@ -19,4 +23,3 @@ void snd_usb_mixer_resume_quirk(struct usb_mixer_interface *mixer);
 #endif
 
 #endif /* SND_USB_MIXER_QUIRKS_H */
-

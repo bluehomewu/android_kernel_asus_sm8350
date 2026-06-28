@@ -38,6 +38,10 @@
 #include "mixer_us16x08.h"
 #include "helper.h"
 
+#ifdef CONFIG_MACH_ASUS
+static int glb_eu_type;
+#endif
+
 struct std_mono_table {
 	unsigned int unitid, control, cmask;
 	int val_type;
@@ -2800,6 +2804,14 @@ static void snd_dragonfly_quirk_db_scale(struct usb_mixer_interface *mixer,
 	}
 }
 
+#ifdef CONFIG_MACH_ASUS
+void set_asus_eu_type(int eu_type)
+{
+	glb_eu_type = eu_type;
+}
+EXPORT_SYMBOL(set_asus_eu_type);
+#endif
+
 /*
  * Some Plantronics headsets have control names that don't meet ALSA naming
  * standards. This function fixes nonstandard source names. By the time
@@ -2871,4 +2883,3 @@ void snd_usb_mixer_fu_apply_quirk(struct usb_mixer_interface *mixer,
 	    (cval->control == UAC_FU_MUTE || cval->control == UAC_FU_VOLUME))
 		snd_fix_plt_name(mixer->chip, &kctl->id);
 }
-
