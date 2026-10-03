@@ -574,6 +574,15 @@ void class_compat_remove_link(struct class_compat *cls, struct device *dev,
 }
 EXPORT_SYMBOL_GPL(class_compat_remove_link);
 
+#ifdef CONFIG_MACH_ASUS_PICASSO
+/* The Picasso display driver places its panel attributes under /sys/class. */
+struct kobject *asus_class_get_kobj(struct class *cls)
+{
+	return cls ? &cls->p->subsys.kobj : NULL;
+}
+EXPORT_SYMBOL(asus_class_get_kobj);
+#endif
+
 int __init classes_init(void)
 {
 	class_kset = kset_create_and_add("class", NULL, NULL);

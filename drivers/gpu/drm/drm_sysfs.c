@@ -29,6 +29,10 @@
 #include "drm_internal.h"
 #include "drm_crtc_internal.h"
 
+#ifdef CONFIG_MACH_ASUS_PICASSO
+#include <drm/drm_anakin.h>
+#endif
+
 #define to_drm_minor(d) dev_get_drvdata(d)
 #define to_drm_connector(d) dev_get_drvdata(d)
 
@@ -84,6 +88,14 @@ int drm_sysfs_init(void)
 		return err;
 	}
 
+#ifdef CONFIG_MACH_ASUS_PICASSO
+	err = drm_anakin_sysfs_init();
+	if (err) {
+		class_destroy(drm_class);
+		drm_class = NULL;
+		return err;
+	}
+#endif
 	drm_class->devnode = drm_devnode;
 	drm_setup_hdcp_srm(drm_class);
 	return 0;
@@ -98,6 +110,9 @@ void drm_sysfs_destroy(void)
 {
 	if (IS_ERR_OR_NULL(drm_class))
 		return;
+#ifdef CONFIG_MACH_ASUS_PICASSO
+	drm_anakin_sysfs_destroy();
+#endif
 	drm_teardown_hdcp_srm(drm_class);
 	class_remove_file(drm_class, &class_attr_version.attr);
 	class_destroy(drm_class);
