@@ -2,7 +2,27 @@ ifneq ($(CONFIG_ARCH_QTI_VM), y)
 ifeq ($(CONFIG_BUILD_ARM64_DT_OVERLAY),y)
 ifeq ($(CONFIG_MACH_ASUS),y)
 
-ifeq ($(CONFIG_MACH_ASUS_SAKE),y)
+ifeq ($(CONFIG_MACH_ASUS_PICASSO),y)
+dtbo-$(CONFIG_ARCH_LAHAINA) += \
+	PICASSO-EVB-overlay.dtbo \
+	PICASSO-EVB2-overlay.dtbo \
+	PICASSO-SR1-overlay.dtbo \
+	PICASSO-ER1-overlay.dtbo \
+	PICASSO-ER2-overlay.dtbo \
+	PICASSO-PR1-overlay.dtbo \
+	PICASSO-PR2-overlay.dtbo \
+	PICASSO-MP-overlay.dtbo
+
+PICASSO-EVB-overlay.dtbo-base := picasso/lahaina.dtb picasso/lahaina-v2.dtb picasso/lahaina-v2.1.dtb
+PICASSO-EVB2-overlay.dtbo-base := picasso/lahaina.dtb picasso/lahaina-v2.dtb picasso/lahaina-v2.1.dtb
+PICASSO-SR1-overlay.dtbo-base := picasso/lahaina.dtb picasso/lahaina-v2.dtb picasso/lahaina-v2.1.dtb
+PICASSO-ER1-overlay.dtbo-base := picasso/lahaina.dtb picasso/lahaina-v2.dtb picasso/lahaina-v2.1.dtb
+PICASSO-ER2-overlay.dtbo-base := picasso/lahaina.dtb picasso/lahaina-v2.dtb picasso/lahaina-v2.1.dtb
+PICASSO-PR1-overlay.dtbo-base := picasso/lahaina.dtb picasso/lahaina-v2.dtb picasso/lahaina-v2.1.dtb
+PICASSO-PR2-overlay.dtbo-base := picasso/lahaina.dtb picasso/lahaina-v2.dtb picasso/lahaina-v2.1.dtb
+PICASSO-MP-overlay.dtbo-base := picasso/lahaina.dtb picasso/lahaina-v2.dtb picasso/lahaina-v2.1.dtb
+
+else ifeq ($(CONFIG_MACH_ASUS_SAKE),y)
 dtbo-$(CONFIG_ARCH_LAHAINA) += \
 	sake-mp-overlay.dtbo \
 	sake-pr-overlay.dtbo

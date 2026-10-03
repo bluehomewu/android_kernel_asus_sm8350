@@ -1,0 +1,26 @@
+ASUS Picasso camera CCI transaction serialization
+================================================
+
+Picasso uses the Qualcomm camera CCI controller (compatible "qcom,cci")
+with a board-specific serialization requirement retained from its legacy
+camera driver. The remaining properties follow the Qualcomm CCI interface.
+
+Optional property:
+- asus,serialize-i2c: Boolean. Serialize I2C core requests with a mutex
+  shared by both masters of this controller. Synchronous reads and writes
+  hold the mutex for the transfer; asynchronous writes hold it only while
+  submitting work. Worker execution, initialization and release retain
+  their existing locking. If absent, normal CCI concurrency is unchanged.
+
+This property is used on both Picasso CCI controllers. Each controller has
+its own mutex; requests to different controllers are not serialized.
+
+Example:
+
+&cam_cci0 {
+	asus,serialize-i2c;
+};
+
+&cam_cci1 {
+	asus,serialize-i2c;
+};
