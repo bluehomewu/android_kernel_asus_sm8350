@@ -1394,6 +1394,12 @@ void typec_set_pwr_opmode(struct typec_port *port,
 			sysfs_notify(&partner_dev->kobj, NULL,
 				     "supports_usb_power_delivery");
 			kobject_uevent(&partner_dev->kobj, KOBJ_CHANGE);
+		} else if (IS_ENABLED(CONFIG_MACH_ASUS_PICASSO) &&
+			   opmode != TYPEC_PWR_MODE_PD && partner->usb_pd) {
+			partner->usb_pd = 0;
+			sysfs_notify(&partner_dev->kobj, NULL,
+				     "supports_usb_power_delivery");
+			kobject_uevent(&partner_dev->kobj, KOBJ_CHANGE);
 		}
 		put_device(partner_dev);
 	}

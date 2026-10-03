@@ -5,6 +5,12 @@
 
 menu "Misc devices"
 
+config RT_REGMAP
+	bool "Richtek Regmap"
+	default n
+	help
+	  Say Y to enable the Richtek Register Map used by Picasso RT1715.
+
 config SENSORS_LIS3LV02D
 	tristate
 	depends on INPUT

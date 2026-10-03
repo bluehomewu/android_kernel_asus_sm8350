@@ -67,3 +67,4 @@ obj-$(CONFIG_WIGIG_SENSING_SPI)	+= wigig_sensing.o
 obj-$(CONFIG_HISI_HIKEY_USB)	+= hisi_hikey_usb.o
 obj-$(CONFIG_AW8697_HAPTIC) += aw8697_haptic/
 obj-$(CONFIG_LATCH_AK09973) += latch_ak09973/
+obj-$(CONFIG_RT_REGMAP)		+= rt-regmap.o

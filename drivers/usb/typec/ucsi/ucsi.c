@@ -509,7 +509,8 @@ static void ucsi_partner_change(struct ucsi_connector *con)
 		complete(&con->complete);
 
 	/* Only notify USB controller if partner supports USB data */
-	if (!(UCSI_CONSTAT_PARTNER_FLAGS(con->status.flags) & UCSI_CONSTAT_PARTNER_FLAG_USB))
+	if (!IS_ENABLED(CONFIG_MACH_ASUS_PICASSO) &&
+	    !(UCSI_CONSTAT_PARTNER_FLAGS(con->status.flags) & UCSI_CONSTAT_PARTNER_FLAG_USB))
 		u_role = USB_ROLE_NONE;
 
 	ret = usb_role_switch_set_role(ucsi->usb_role_sw, u_role);
@@ -581,11 +582,15 @@ static void ucsi_handle_connector_change(struct work_struct *work)
 
 		if (con->status.flags & UCSI_CONSTAT_CONNECTED)
 			ucsi_register_partner(con);
-		else
+		else {
 			ucsi_unregister_partner(con);
+			if (IS_ENABLED(CONFIG_MACH_ASUS_PICASSO))
+				typec_set_data_role(con->port, TYPEC_DEVICE);
+		}
 
 		/* Only notify USB controller if partner supports USB data */
-		if (!(UCSI_CONSTAT_PARTNER_FLAGS(con->status.flags) &
+		if (!IS_ENABLED(CONFIG_MACH_ASUS_PICASSO) &&
+		    !(UCSI_CONSTAT_PARTNER_FLAGS(con->status.flags) &
 				UCSI_CONSTAT_PARTNER_FLAG_USB))
 			u_role = USB_ROLE_NONE;
 
@@ -913,7 +918,8 @@ static int ucsi_register_port(struct ucsi *ucsi, int index)
 	}
 
 	/* Only notify USB controller if partner supports USB data */
-	if (!(UCSI_CONSTAT_PARTNER_FLAGS(con->status.flags) & UCSI_CONSTAT_PARTNER_FLAG_USB))
+	if (!IS_ENABLED(CONFIG_MACH_ASUS_PICASSO) &&
+	    !(UCSI_CONSTAT_PARTNER_FLAGS(con->status.flags) & UCSI_CONSTAT_PARTNER_FLAG_USB))
 		role = USB_ROLE_NONE;
 
 	ret = usb_role_switch_set_role(ucsi->usb_role_sw, role);
