@@ -1,0 +1,12 @@
+# SPDX-License-Identifier: GPL-2.0-only
+config SLA_STAIC_COLLECT
+	bool "ASUS Picasso SLA statistics collection"
+	depends on MACH_ASUS_PICASSO && NET && INET && NETFILTER && PROC_FS
+	help
+	  Enable the ASUS vendor SLA statistics interface and netfilter hooks.
+
+config SLA
+	tristate "ASUS Picasso SLA module"
+	depends on SLA_STAIC_COLLECT
+	help
+	  Build the vendor SLA statistics collector. Its module name is sla.
