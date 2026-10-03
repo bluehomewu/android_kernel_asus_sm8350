@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2018-2020 The Linux Foundation. All rights reserved.
  * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1631,6 +1632,8 @@ struct fw_scan_channels {
  * vsie in Re(assoc) frame
  * @roam_trigger_bitmap:            Bitmap of roaming triggers.
  * @sta_roam_disable                STA roaming disabled by interfaces
+ * @roam_high_rssi_delta: Delta change in high RSSI at which roam scan is
+ * triggered in 2.4/5 GHz.
  * @early_stop_scan_enable:         Set early stop scan
  * @enable_5g_band_pref:            Enable preference for 5G from INI
  * @ese_enabled:                    Enable ESE feature
@@ -1678,8 +1681,10 @@ struct fw_scan_channels {
  * @roam_preauth_no_ack_timeout:    Configure the no ack timeout period
  * @roam_rssi_diff:                 Enable roam based on rssi
  * @roam_rssi_diff_6ghz: RSSI diff value to be used for roaming to 6 GHz AP.
- * @roam_scan_offload_enabled:      Enable Roam Scan Offload
- * @neighbor_scan_timer_period:     Neighbor scan timer period
+ * @roam_rssi_delta_6ghz_to_non_6ghz: RSSI diff value to be used for
+ * roaming from 6 GHz to Non 6GHz AP.
+ * @roam_scan_offload_enabled: Enable Roam Scan Offload
+ * @neighbor_scan_timer_period: Neighbor scan timer period
  * @neighbor_scan_min_timer_period: Min neighbor scan timer period
  * @neighbor_lookup_rssi_threshold: Neighbor lookup rssi threshold
  * @opportunistic_scan_threshold_diff: Set oppurtunistic threshold diff
@@ -1752,6 +1757,7 @@ struct wlan_mlme_lfr_cfg {
 	bool enable_roam_reason_vsie;
 	uint32_t roam_trigger_bitmap;
 	uint32_t sta_roam_disable;
+	uint8_t roam_high_rssi_delta;
 #endif
 	bool early_stop_scan_enable;
 	bool enable_5g_band_pref;
@@ -1801,6 +1807,7 @@ struct wlan_mlme_lfr_cfg {
 	uint32_t roam_preauth_no_ack_timeout;
 	uint8_t roam_rssi_diff;
 	uint8_t roam_rssi_diff_6ghz;
+	uint8_t roam_rssi_delta_6ghz_to_non_6ghz;
 	uint8_t bg_rssi_threshold;
 	bool roam_scan_offload_enabled;
 	uint32_t neighbor_scan_timer_period;

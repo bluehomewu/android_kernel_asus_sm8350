@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2013-2021 The Linux Foundation. All rights reserved.
- * Copyright (c) 2021-2023 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2021-2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -943,13 +943,13 @@ static void wma_peer_send_phymode(struct wlan_objmgr_vdev *vdev,
 	fw_phymode = wma_host_to_fw_phymode(new_phymode);
 	vdev_id = wlan_vdev_get_id(vdev);
 
-	wma_set_peer_param(wma, peer_mac_addr, WMI_PEER_PHYMODE,
-			   fw_phymode, vdev_id);
-
 	max_ch_width_supported =
 		wmi_get_ch_width_from_phy_mode(wma->wmi_handle, fw_phymode);
 	wma_set_peer_param(wma, peer_mac_addr, WMI_PEER_CHWIDTH,
 			   max_ch_width_supported, vdev_id);
+
+	wma_set_peer_param(wma, peer_mac_addr, WMI_PEER_PHYMODE,
+			   fw_phymode, vdev_id);
 
 	wma_debug("FW phymode %d old phymode %d new phymode %d bw %d macaddr "QDF_MAC_ADDR_FMT,
 		  fw_phymode, old_peer_phymode, new_phymode,
@@ -2213,6 +2213,9 @@ void wma_send_vdev_down(tp_wma_handle wma, struct del_bss_resp *resp)
 		qdf_mem_free(resp);
 		return;
 	}
+
+	wma_debug("Reset roaming_in_progress for vdev %d", vdev_id);
+	wma->interfaces[vdev_id].roaming_in_progress = false;
 
 	if (vdev_stop_type != WMA_DELETE_BSS_HO_FAIL_REQ) {
 		if (wma_send_vdev_down_to_fw(wma, vdev_id) !=

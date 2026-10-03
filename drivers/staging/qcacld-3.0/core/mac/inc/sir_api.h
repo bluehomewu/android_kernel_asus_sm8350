@@ -1,6 +1,6 @@
 /*
  * Copyright (c) 2012-2020 The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022,2024 Qualcomm Innovation Center, Inc. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -786,6 +786,7 @@ struct bss_description {
 #if defined(WLAN_SAE_SINGLE_PMK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 	uint32_t is_single_pmk;
 #endif
+	uint16_t neg_rsn_caps;
 	/* Please keep the structure 4 bytes aligned above the ieFields */
 	uint32_t ieFields[1];
 };
@@ -1048,9 +1049,8 @@ struct join_req {
 	struct supported_channels supportedChannels;
 	bool enable_bcast_probe_rsp;
 	bool sae_pmk_cached;
-	bool same_ctry_code;  /* If AP Country IE has same country code as */
 	/* STA programmed country */
-	uint8_t ap_power_type_6g;  /* AP power type for 6G (LPI, SP, or VLP) */
+	uint8_t best_6g_power_type;  /* AP power type for 6G (LPI, SP, or VLP) */
 	/* Pls make this as last variable in struct */
 	bool force_24ghz_in_ht20;
 	bool force_rsne_override;
@@ -3496,6 +3496,7 @@ struct wifi_interface_info {
 	uint8_t apCountryStr[REG_ALPHA2_LEN + 1];
 	/* country string for this association */
 	uint8_t countryStr[REG_ALPHA2_LEN + 1];
+	uint8_t time_slice_duty_cycle;
 };
 
 /**

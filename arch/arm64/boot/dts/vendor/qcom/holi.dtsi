@@ -30,14 +30,6 @@
 	memory { device_type = "memory"; reg = <0 0 0 0>; };
 	reserved_memory: reserved-memory { };
 
-	mem-offline {
-		compatible = "qcom,mem-offline";
-		offline-sizes = <0x1 0x40000000 0x0 0x40000000>,
-				<0x1 0xc0000000 0x0 0x80000000>,
-				<0x2 0xc0000000 0x1 0x40000000>;
-		granule = <512>;
-	};
-
 	aliases {
 		ufshc1 = &ufshc_mem; /* Embedded  UFS Slot */
 
@@ -1295,7 +1287,7 @@
 		clocks = <&rpmcc RPM_SMD_XO_CLK_SRC>, <&gcc GPLL0>;
 		clock-names = "xo", "alternate";
 		qcom,lut-row-size = <4>;
-		qcom,max-lut-entries = <12>;
+		qcom,lut-max-entries = <12>;
 		qcom,skip-enable-check;
 		qcom,perf-lock-support;
 		interrupts = <GIC_SPI 30 IRQ_TYPE_LEVEL_HIGH>,
@@ -2330,6 +2322,8 @@
 				qcom,intents = <0x800  5
 						0x2000 3
 						0x4400 2>;
+				qcom,non-wake-svc = <0x51
+						0x190>;
 			};
 
 			qcom,adsp_glink_ssr {
@@ -3466,4 +3460,3 @@
 };
 
 #include "msm-rdbg.dtsi"
-

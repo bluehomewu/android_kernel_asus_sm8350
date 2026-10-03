@@ -411,7 +411,7 @@ extern void qti_charge_unregister_notify(struct notifier_block *nb);
 //ASUS_BSP Beryl ---
 #endif
 
-extern struct atomic_notifier_head power_supply_notifier;
+extern struct blocking_notifier_head power_supply_notifier;
 extern int power_supply_reg_notifier(struct notifier_block *nb);
 extern void power_supply_unreg_notifier(struct notifier_block *nb);
 extern struct power_supply *power_supply_get_by_name(const char *name);

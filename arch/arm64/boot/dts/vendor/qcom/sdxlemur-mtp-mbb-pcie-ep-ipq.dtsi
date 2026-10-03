@@ -69,8 +69,3 @@
 &usb {
 	qcom,iommu-dma = "bypass";
 };
-
-&sdx_ext_ipc {
-	ipq807x_attach = <1>;
-	status = "ok";
-};

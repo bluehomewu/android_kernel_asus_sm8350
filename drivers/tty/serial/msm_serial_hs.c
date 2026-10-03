@@ -1849,7 +1849,7 @@ static void msm_hs_sps_tx_callback(struct sps_event_notify *notify)
 		&addr, notify->data.transfer.iovec.size,
 		notify->data.transfer.iovec.flags);
 
-	del_timer(&msm_uport->tx.tx_timeout_timer);
+	del_timer_sync(&msm_uport->tx.tx_timeout_timer);
 	MSM_HS_DBG("%s(): Queue kthread work\n", __func__);
 	kthread_queue_work(&msm_uport->tx.kworker, &msm_uport->tx.kwork);
 }
@@ -2684,7 +2684,7 @@ static int msm_hs_startup(struct uart_port *uport)
 	tx->dma_in_flight = false;
 	MSM_HS_DBG("%s():desc usage flag 0x%lx\n", __func__, rx->queued_flag);
 	timer_setup(&(tx->tx_timeout_timer),
-			tx_timeout_handler, 0);
+			tx_timeout_handler, TIMER_IRQSAFE);
 
 	/* Enable reading the current CTS, no harm even if CTS is ignored */
 	msm_uport->imr_reg |= UARTDM_ISR_CURRENT_CTS_BMSK;

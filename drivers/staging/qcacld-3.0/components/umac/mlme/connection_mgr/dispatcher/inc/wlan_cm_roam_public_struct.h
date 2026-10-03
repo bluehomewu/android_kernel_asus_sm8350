@@ -1,6 +1,7 @@
 /*
  * Copyright (c) 2020-2021, The Linux Foundation. All rights reserved.
- * Copyright (c) 2022 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) 2022-2024 Qualcomm Innovation Center, Inc. All rights reserved.
+ * Copyright (c) Qualcomm Technologies, Inc. and/or its subsidiaries.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -120,12 +121,14 @@
  * @BEACON_RSSI_WEIGHT: Beacon Rssi weight parameter
  * @HI_RSSI_DELAY_BTW_SCANS: High Rssi delay between scans
  * @ROAM_RSSI_DIFF_6GHZ: roam rssi diff for 6 GHz AP
+ * @ROAM_RSSI_DELTA_6GHZ_TO_NON_6GHZ: roam rssi diff for Non 6 GHz AP
  */
 enum roam_cfg_param {
 	RSSI_CHANGE_THRESHOLD,
 	BEACON_RSSI_WEIGHT,
 	HI_RSSI_DELAY_BTW_SCANS,
 	ROAM_RSSI_DIFF_6GHZ,
+	ROAM_RSSI_DELTA_6GHZ_TO_NON_6GHZ,
 };
 
 /**
@@ -202,6 +205,8 @@ struct wlan_cm_roam_vendor_btm_params {
  *                   floor in dB
  * @bg_rssi_threshold: Value of rssi threshold to trigger roaming
  *                     after background scan.
+ * @num_allowed_authmode: Number of allowerd authmode
+ * @allowed_authmode: List of allowed authmode other than connected
  */
 struct ap_profile {
 	uint32_t flags;
@@ -213,6 +218,8 @@ struct ap_profile {
 	uint32_t rsn_mcastmgmtcipherset;
 	uint32_t rssi_abs_thresh;
 	uint8_t bg_rssi_threshold;
+	uint32_t num_allowed_authmode;
+	uint32_t allowed_authmode[WLAN_CRYPTO_AUTH_MAX];
 };
 
 /**
@@ -261,6 +268,14 @@ struct ap_profile {
  * @rssi_scoring: RSSI scoring information.
  * @esp_qbss_scoring: ESP/QBSS scoring percentage information
  * @oce_wan_scoring: OCE WAN metrics percentage information
+ * @security_weightage: Security(WPA/WPA2/WPA3) weightage out of
+ * total score in %
+ * @security_index_score: Security scoring percentage information.
+ *                BITS 0-7 :- It contains scoring percentage of WPA security
+ *                BITS 8-15  :- It contains scoring percentage of WPA2 security
+ *                BITS 16-23 :- It contains scoring percentage of WPA3 security
+ *                BITS 24-31 :- reserved
+ *                The value of each index must be 0-100
  */
 struct scoring_param {
 	uint32_t disable_bitmap;
@@ -288,6 +303,8 @@ struct scoring_param {
 	struct rssi_config_score rssi_scoring;
 	struct per_slot_score esp_qbss_scoring;
 	struct per_slot_score oce_wan_scoring;
+	int32_t security_weightage;
+	uint32_t security_index_score;
 };
 
 /**
@@ -981,6 +998,19 @@ struct wlan_roam_scan_offload_params {
 };
 
 /**
+ * enum wlan_roam_offload_scan_rssi_flags - Flags for roam scan RSSI threshold
+ * params, this enums will be used in flags param of the structure
+ * wlan_roam_offload_scan_rssi_params
+ * @ROAM_SCAN_RSSI_THRESHOLD_INVALID_FLAG: invalid flag
+ * @ROAM_SCAN_RSSI_THRESHOLD_FLAG_ROAM_HI_RSSI_EN_ON_5G: enable high RSSI roam
+ * trigger support to roam from 5 GHz to 6 GHz band
+ */
+enum wlan_roam_offload_scan_rssi_flags {
+	ROAM_SCAN_RSSI_THRESHOLD_INVALID_FLAG,
+	ROAM_SCAN_RSSI_THRESHOLD_FLAG_ROAM_HI_RSSI_EN_ON_5G = BIT(0),
+};
+
+/**
  * struct wlan_roam_offload_scan_rssi_params - structure containing
  *              parameters for roam offload scan based on RSSI
  * @rssi_thresh: rssi threshold
@@ -1015,6 +1045,7 @@ struct wlan_roam_scan_offload_params {
  *                                  roam
  * @roam_data_rssi_threshold: Bad data RSSI threshold to roam
  * @rx_data_inactivity_time: Rx duration to check data RSSI
+ * @flags: Flags for roam scan RSSI threshold params
  */
 struct wlan_roam_offload_scan_rssi_params {
 	int8_t rssi_thresh;
@@ -1046,6 +1077,7 @@ struct wlan_roam_offload_scan_rssi_params {
 	uint32_t roam_data_rssi_threshold_triggers;
 	int32_t roam_data_rssi_threshold;
 	uint32_t rx_data_inactivity_time;
+	uint32_t flags;
 };
 
 /**
@@ -1177,6 +1209,8 @@ enum roam_rt_stats_params {
  * scan only on prior discovery of any 6 GHz support in the environment.
  * @wlan_roam_rssi_diff_6ghz: This value is used as to how better the RSSI of
  * the new/roamable 6GHz AP should be for roaming.
+ * @wlan_roam_rssi_delta_6ghz_to_non_6ghz: This value is used as to how better
+ * the RSSI of the new/roamable non 6GHz AP should be for roaming.
  */
 struct wlan_roam_start_config {
 	struct wlan_roam_offload_scan_rssi_params rssi_params;
@@ -1200,6 +1234,7 @@ struct wlan_roam_start_config {
 	uint8_t wlan_exclude_rm_partial_scan_freq;
 	uint8_t wlan_roam_full_scan_6ghz_on_disc;
 	uint8_t wlan_roam_rssi_diff_6ghz;
+	uint8_t wlan_roam_rssi_delta_6ghz_to_non_6ghz;
 	/* other wmi cmd structures */
 };
 
@@ -1252,6 +1287,8 @@ struct wlan_roam_stop_config {
  * scan only on prior discovery of any 6 GHz support in the environment.
  * @wlan_roam_rssi_diff_6ghz: This value is used as to how better the RSSI of
  * the new/roamable 6GHz AP should be for roaming.
+ * @wlan_roam_rssi_delta_6ghz_to_non_6ghz: This value is used as to how better
+ * the RSSI of the new/roamable non 6GHz AP should be for roaming.
  */
 struct wlan_roam_update_config {
 	struct wlan_roam_beacon_miss_cnt beacon_miss_cnt;
@@ -1270,6 +1307,7 @@ struct wlan_roam_update_config {
 	uint8_t wlan_exclude_rm_partial_scan_freq;
 	uint8_t wlan_roam_full_scan_6ghz_on_disc;
 	uint8_t wlan_roam_rssi_diff_6ghz;
+	uint8_t wlan_roam_rssi_delta_6ghz_to_non_6ghz;
 };
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
@@ -1400,6 +1438,8 @@ struct set_pcl_req {
  * scan that are already scanned as part of partial scan.
  * @send_roam_full_scan_6ghz_on_disc: Include the 6 GHz channels in roam full
  * scan only on prior discovery of any 6 GHz support in the environment.
+ * @send_roam_scan_offload_rssi_params: Set the RSSI parameters for roam
+ * offload scan
  */
 struct wlan_cm_roam_tx_ops {
 	QDF_STATUS (*send_vdev_set_pcl_cmd)(struct wlan_objmgr_vdev *vdev,
@@ -1436,6 +1476,9 @@ struct wlan_cm_roam_tx_ops {
 	QDF_STATUS (*send_roam_full_scan_6ghz_on_disc)(
 						struct wlan_objmgr_vdev *vdev,
 						uint8_t value);
+	QDF_STATUS (*send_roam_scan_offload_rssi_params)(
+		struct wlan_objmgr_vdev *vdev,
+		struct wlan_roam_offload_scan_rssi_params *roam_rssi_params);
 #endif
 };
 
@@ -1488,6 +1531,8 @@ enum roam_fail_params {
  * @roam_invoke_fail_reason: One of reason id from enum
  * wmi_roam_invoke_status_error in case of forced roam
  * @roam_rssi_diff_6ghz: roam rssi diff for 6 GHz AP
+ * @roam_rssi_delta_6ghz_to_non_6ghz: RSSI Delta value to be used for roaming
+ * from 6 GHz to Non 6GHz AP.
  */
 struct wlan_cm_rso_configs {
 	uint8_t rescan_rssi_delta;
@@ -1498,6 +1543,7 @@ struct wlan_cm_rso_configs {
 	uint32_t roam_trigger_reason;
 	uint32_t roam_invoke_fail_reason;
 	uint8_t roam_rssi_diff_6ghz;
+	uint8_t roam_rssi_delta_6ghz_to_non_6ghz;
 };
 
 /**
