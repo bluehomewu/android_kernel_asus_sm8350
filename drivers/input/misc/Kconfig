@@ -914,4 +914,18 @@ config INPUT_STPMIC1_ONKEY
 	  To compile this driver as a module, choose M here: the
 	  module will be called stpmic1_onkey.
 
+config INPUT_SX932X
+	tristate "ASUS Picasso SX932x capacitive sensor"
+	depends on MACH_ASUS_PICASSO && I2C && GPIOLIB && OF && EXTCON
+	help
+	  Enable the primary SX932x capacitive sensor on ASUS Picasso.
+	  If built as a module, it will be called sx932x.
+
+config INPUT_SX932X_2ND
+	tristate "ASUS Picasso secondary SX932x capacitive sensor"
+	depends on MACH_ASUS_PICASSO && I2C && GPIOLIB && OF && EXTCON
+	help
+	  Enable the secondary SX932x capacitive sensor on ASUS Picasso.
+	  If built as a module, it will be called sx932x_2nd.
+
 endif
