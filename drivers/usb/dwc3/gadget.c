@@ -2698,6 +2698,9 @@ static int dwc3_gadget_vbus_session(struct usb_gadget *_gadget, int is_active)
 	struct dwc3 *dwc = gadget_to_dwc(_gadget);
 	unsigned long flags;
 	int ret = 0;
+#ifdef CONFIG_MACH_ASUS_PICASSO
+	char *udc_name[2] = { NULL, NULL };
+#endif
 
 	if (dwc->dr_mode <= USB_DR_MODE_HOST)
 		return -EPERM;
@@ -2709,6 +2712,18 @@ static int dwc3_gadget_vbus_session(struct usb_gadget *_gadget, int is_active)
 	disable_irq(dwc->irq);
 
 	flush_work(&dwc->bh_work);
+
+#ifdef CONFIG_MACH_ASUS_PICASSO
+	/* ASUS userspace selects the active controller on this dual-port board. */
+	if (is_active) {
+		if (!strcmp(dev_name(dwc->dev), "a600000.dwc3"))
+			udc_name[0] = "UDC_NAME=a600000.dwc3";
+		else if (!strcmp(dev_name(dwc->dev), "a800000.dwc3"))
+			udc_name[0] = "UDC_NAME=a800000.dwc3";
+		if (udc_name[0])
+			kobject_uevent_env(&dwc->dev->kobj, KOBJ_CHANGE, udc_name);
+	}
+#endif
 
 	spin_lock_irqsave(&dwc->lock, flags);
 

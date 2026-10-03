@@ -101,6 +101,9 @@ struct ssusb_redriver {
 	int	ucsi_i2c_write_err;
 
 	struct dentry	*debug_root;
+#ifdef CONFIG_MACH_ASUS
+	int testmode;
+#endif
 };
 
 static int ssusb_redriver_channel_update(struct ssusb_redriver *redriver);
@@ -172,6 +175,19 @@ static int ssusb_redriver_gen_dev_set(struct ssusb_redriver *redriver)
 		val |= CHIP_EN;
 		break;
 	case OP_MODE_USB_AND_DP:
+#ifdef CONFIG_MACH_ASUS
+		//CC1 enable A B channel, CC2 enable C D channel
+		if (redriver->typec_orientation
+				== ORIENTATION_CC1) {
+			val |= (CHNA_EN | CHNB_EN);
+			val |= (0x1 << OP_MODE_SHIFT);
+		} else if (redriver->typec_orientation
+				== ORIENTATION_CC2) {
+			val |= (CHNC_EN | CHND_EN);
+			val |= (0x0 << OP_MODE_SHIFT);
+		}
+		val |= CHIP_EN;
+#else
 		/* Enable channel A, B, C and D */
 		val |= (CHNA_EN | CHNB_EN);
 		val |= (CHNC_EN | CHND_EN);
@@ -183,6 +199,7 @@ static int ssusb_redriver_gen_dev_set(struct ssusb_redriver *redriver)
 		else if (redriver->typec_orientation
 				== ORIENTATION_CC2)
 			val |= (0x0 << OP_MODE_SHIFT);
+#endif
 
 		break;
 	default:
@@ -300,6 +317,20 @@ static int ssusb_redriver_channel_update(struct ssusb_redriver *redriver)
 		}
 		break;
 	case OP_MODE_USB_AND_DP:
+#ifdef CONFIG_MACH_ASUS
+		//usb2 only disable usb channel parameters
+		if (redriver->typec_orientation == ORIENTATION_CC1) {
+			redriver->chan_mode[CHNA_INDEX] = CHAN_MODE_DP;
+			redriver->chan_mode[CHNB_INDEX] = CHAN_MODE_DP;
+			redriver->chan_mode[CHNC_INDEX] = CHAN_MODE_DISABLE;
+			redriver->chan_mode[CHND_INDEX] = CHAN_MODE_DISABLE;
+		} else {
+			redriver->chan_mode[CHNA_INDEX] = CHAN_MODE_DISABLE;
+			redriver->chan_mode[CHNB_INDEX] = CHAN_MODE_DISABLE;
+			redriver->chan_mode[CHNC_INDEX] = CHAN_MODE_DP;
+			redriver->chan_mode[CHND_INDEX] = CHAN_MODE_DP;
+		}
+#else
 		if (redriver->typec_orientation == ORIENTATION_CC1) {
 			redriver->chan_mode[CHNA_INDEX] = CHAN_MODE_DP;
 			redriver->chan_mode[CHNB_INDEX] = CHAN_MODE_DP;
@@ -311,6 +342,7 @@ static int ssusb_redriver_channel_update(struct ssusb_redriver *redriver)
 			redriver->chan_mode[CHNC_INDEX] = CHAN_MODE_DP;
 			redriver->chan_mode[CHND_INDEX] = CHAN_MODE_DP;
 		}
+#endif
 		break;
 	case OP_MODE_DP:
 		redriver->chan_mode[CHNA_INDEX] = CHAN_MODE_DP;
@@ -453,6 +485,11 @@ static int ssusb_redriver_ucsi_notifier(struct notifier_block *nb,
 	enum operation_mode op_mode;
 	int ret;
 
+#ifdef CONFIG_MACH_ASUS
+	if (redriver->testmode == 1)
+		return NOTIFY_OK;
+#endif
+
 	if (info->connect && !info->partner_change)
 		return NOTIFY_DONE;
 
@@ -473,7 +510,11 @@ static int ssusb_redriver_ucsi_notifier(struct notifier_block *nb,
 	} else if (info->partner_usb) {
 		if (redriver->op_mode == OP_MODE_DP)
 			return NOTIFY_OK;
+#ifdef CONFIG_MACH_ASUS
+		op_mode = OP_MODE_NONE; //usb2 only don't turn on redriver
+#else
 		op_mode = OP_MODE_USB;
+#endif
 	} else if (info->partner_alternate_mode) {
 		op_mode = OP_MODE_DP;
 	} else
@@ -482,8 +523,13 @@ static int ssusb_redriver_ucsi_notifier(struct notifier_block *nb,
 	if (redriver->op_mode == op_mode)
 		return NOTIFY_OK;
 
+#ifdef CONFIG_MACH_ASUS
+	dev_info(redriver->dev, "op mode %s -> %s\n",
+		OPMODESTR(redriver->op_mode), OPMODESTR(op_mode));
+#else
 	dev_dbg(redriver->dev, "op mode %s -> %s\n",
 		OPMODESTR(redriver->op_mode), OPMODESTR(op_mode));
+#endif
 	redriver->op_mode = op_mode;
 
 	if (redriver->op_mode == OP_MODE_USB ||
@@ -711,7 +757,11 @@ static int redriver_i2c_probe(struct i2c_client *client,
 	if (of_property_read_bool(redriver->dev->of_node, "init-none"))
 		redriver->op_mode = OP_MODE_NONE;
 	else
+#ifdef CONFIG_MACH_ASUS
+		redriver->op_mode = OP_MODE_NONE; // don't inited as usb only mode
+#else
 		redriver->op_mode = OP_MODE_DEFAULT;
+#endif
 	ssusb_redriver_channel_update(redriver); /* a little expensive ??? */
 	ssusb_redriver_gen_dev_set(redriver);
 
@@ -855,6 +905,54 @@ static const struct file_operations eq_ops = {
 	.read	= seq_read,
 	.write	= eq_write,
 };
+
+#ifdef CONFIG_MACH_ASUS
+static int dptest_status(struct seq_file *s, void *p)
+{
+	struct ssusb_redriver *redriver = s->private;
+
+	seq_printf(s, "testmode : %d \n", redriver->testmode);
+	return 0;
+}
+
+static int dptest_status_open(struct inode *inode,
+		struct file *file)
+{
+	return single_open(file, dptest_status, inode->i_private);
+}
+
+static ssize_t dptest_write(struct file *file,
+		const char __user *ubuf, size_t count, loff_t *ppos)
+{
+	struct seq_file *s = file->private_data;
+	struct ssusb_redriver *redriver = s->private;
+	char buf[40];
+
+	if (copy_from_user(&buf, ubuf, min_t(size_t, sizeof(buf) - 1, count)))
+		return -EFAULT;
+
+	if (!strncmp(buf, "1", 1)) {
+		redriver->testmode = 1;
+		redriver->op_mode = OP_MODE_DP;
+		ssusb_redriver_channel_update(redriver);
+		ssusb_redriver_gen_dev_set(redriver);
+
+	} else {
+		redriver->testmode = 0;
+		redriver->op_mode = OP_MODE_NONE;
+		ssusb_redriver_channel_update(redriver);
+		ssusb_redriver_gen_dev_set(redriver);
+	}
+
+	return count;
+}
+
+static const struct file_operations dptest_ops = {
+	.open	= dptest_status_open,
+	.read	= seq_read,
+	.write	= dptest_write,
+};
+#endif
 
 static int flat_gain_status(struct seq_file *s, void *p)
 {
@@ -1000,12 +1098,23 @@ static void ssusb_redriver_debugfs_entries(
 			redriver->debug_root, redriver, &loss_match_ops);
 	if (IS_ERR_OR_NULL(ent))
 		dev_warn(redriver->dev, "Couldn't create loss_match file\n");
+#ifdef CONFIG_MACH_ASUS
+	ent = debugfs_create_file("dptest", 0600,
+			redriver->debug_root, redriver, &dptest_ops);
+	if (IS_ERR_OR_NULL(ent))
+		dev_warn(redriver->dev, "Couldn't create dptest file\n");
+#endif
 }
 
 static int __maybe_unused redriver_i2c_suspend(struct device *dev)
 {
 	struct i2c_client *client = to_i2c_client(dev);
 	struct ssusb_redriver *redriver = i2c_get_clientdata(client);
+
+#ifdef CONFIG_MACH_ASUS
+	if (redriver->testmode == 1)
+		return 0;
+#endif
 
 	dev_dbg(redriver->dev, "%s: SS USB redriver suspend.\n",
 			__func__);

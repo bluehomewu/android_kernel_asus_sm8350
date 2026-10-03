@@ -176,4 +176,6 @@ source "drivers/usb/roles/Kconfig"
 
 source "drivers/usb/pd/Kconfig"
 
+source "drivers/usb/pd_rt1715/Kconfig"
+
 endif # USB_SUPPORT
