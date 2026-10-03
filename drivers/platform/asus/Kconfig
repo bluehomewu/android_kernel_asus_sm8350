@@ -1,0 +1,36 @@
+# SPDX-License-Identifier: GPL-2.0-only
+# ASUS Picasso board integration (without OEM core debug hooks).
+
+config MACH_ASUS
+	bool "Asus device"
+	help
+	  Support for Asus products
+
+config ASUS_HWID
+	tristate "ASUS hardware id driver"
+	depends on MACH_ASUS
+	help
+	 Say yes here to support the ASUS hardware id driver. This driver 
+         provides export functions about the hardware id for other module.
+
+menu "Asus board selection"
+
+config ASUS_PICASSO_QTI_EMBEDDED
+	bool "PICASSO bool config"
+	help
+	  Support for Picasso on GKI driver
+
+config ASUS_PICASSO_GKI
+	bool "PICASSO bool config"
+	help
+	  Picasso module for GKI
+
+config MACH_ASUS_PICASSO
+	bool "PICASSO board"
+	depends on ARCH_LAHAINA
+	select MACH_ASUS
+	select ASUS_PICASSO_QTI_EMBEDDED
+	help
+	  Support for Picasso
+
+endmenu
