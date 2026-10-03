@@ -116,3 +116,4 @@ obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_TCM)	+= synaptics_tcm/
 obj-$(CONFIG_TOUCHSCREEN_SYNAPTICS_DSX) += synaptics_dsx/
 obj-$(CONFIG_TOUCHSCREEN_NT36XXX)	+= nt36xxx/
 obj-$(CONFIG_TOUCHSCREEN_FTS_V3_3)	+= focaltech_touch_v3_3/
+obj-$(CONFIG_TOUCHSCREEN_ROG)	+= ROG5_TP/
