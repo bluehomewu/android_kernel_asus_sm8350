@@ -641,6 +641,10 @@ extern int __must_check __class_register(struct class *class,
 					 struct lock_class_key *key);
 extern void class_unregister(struct class *class);
 
+#ifdef CONFIG_MACH_ASUS_PICASSO
+struct kobject *asus_class_get_kobj(struct class *cls);
+#endif
+
 /* This is a #define to keep the compiler from merging different
  * instances of the __key variable */
 #define class_register(class)			\

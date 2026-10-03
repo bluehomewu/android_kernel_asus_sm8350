@@ -21,6 +21,8 @@
 #include "sde_rm.h"
 #include "sde_vm.h"
 #include <drm/drm_probe_helper.h>
+//ASUS BSP Display +++
+#include "../dsi/dsi_anakin.h"
 
 #define BL_NODE_NAME_SIZE 32
 #define HDR10_PLUS_VSIF_TYPE_CODE      0x81
@@ -877,6 +879,7 @@ struct sde_connector_dyn_hdr_metadata *sde_connector_get_dyn_hdr_meta(
 	return &c_state->dyn_hdr_meta;
 }
 
+#ifndef CONFIG_MACH_ASUS_PICASSO
 static bool sde_connector_fod_dim_layer_status(struct sde_connector *c_conn)
 {
 	if (!c_conn->encoder || !c_conn->encoder->crtc ||
@@ -914,6 +917,7 @@ static void sde_connector_pre_update_fod_hbm(struct sde_connector *c_conn)
 
 	dsi_panel_set_fod_ui(panel, status);
 }
+#endif
 
 int sde_connector_pre_kickoff(struct drm_connector *connector)
 {
@@ -960,8 +964,10 @@ int sde_connector_pre_kickoff(struct drm_connector *connector)
 
 	SDE_EVT32_VERBOSE(connector->base.id);
 
+#ifndef CONFIG_MACH_ASUS_PICASSO
 	if (c_conn->connector_type == DRM_MODE_CONNECTOR_DSI)
 		sde_connector_pre_update_fod_hbm(c_conn);
+#endif
 
 	rc = c_conn->ops.pre_kickoff(connector, c_conn->display, &params);
 
@@ -1083,7 +1089,14 @@ void sde_connector_helper_bridge_enable(struct drm_connector *connector)
 	if (!sde_in_trusted_vm(sde_kms) && c_conn->bl_device) {
 		c_conn->bl_device->props.power = FB_BLANK_UNBLANK;
 		c_conn->bl_device->props.state &= ~BL_CORE_FBBLANK;
+// ASUS BSP Display +++
+#if defined ASUS_ZS673KS_PROJECT || defined ASUS_PICASSO_PROJECT
+		// only set bl in charger mode from sde driver
+		if (anakin_get_charger_mode())
+			backlight_update_status(c_conn->bl_device);
+#else
 		backlight_update_status(c_conn->bl_device);
+#endif
 	}
 	c_conn->panel_dead = false;
 }
@@ -2600,6 +2613,14 @@ static void sde_connector_check_status_work(struct work_struct *work)
 
 	rc = conn->ops.check_status(&conn->base, conn->display, false);
 	mutex_unlock(&conn->lock);
+
+#if defined ASUS_ZS673KS_PROJECT || defined ASUS_PICASSO_PROJECT
+	// ASUS BSP Display  ERR FG
+	if(anakin_get_err_fg_irq_state()){
+		DSI_LOG("err fg irq state is on // call panel dead");
+		_sde_connector_report_panel_dead(conn, false);
+	}
+#endif
 
 	if (rc > 0) {
 		u32 interval;

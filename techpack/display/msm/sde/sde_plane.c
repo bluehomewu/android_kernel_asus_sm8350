@@ -37,6 +37,9 @@
 #include "sde_vbif.h"
 #include "sde_plane.h"
 #include "sde_color_processing.h"
+#if defined(CONFIG_PXLW_IRIS)
+#include "iris/dsi_iris6_api.h"
+#endif
 
 #define SDE_DEBUG_PLANE(pl, fmt, ...) SDE_DEBUG("plane%d " fmt,\
 		(pl) ? (pl)->base.base.id : -1, ##__VA_ARGS__)
@@ -1129,6 +1132,33 @@ static inline void _sde_plane_setup_csc(struct sde_plane *psde)
 		{ 0x40, 0x3ac, 0x40, 0x3c0, 0x40, 0x3c0,},
 		{ 0x00, 0x3ff, 0x00, 0x3ff, 0x00, 0x3ff,},
 	};
+#if defined(CONFIG_PXLW_IRIS)
+	static const struct sde_csc_cfg hdrYUV = {
+		{
+			0x00010000, 0x00000000, 0x00000000,
+			0x00000000, 0x00010000, 0x00000000,
+			0x00000000, 0x00000000, 0x00010000,
+		},
+		{ 0x0, 0x0, 0x0,},
+		{ 0x0, 0x0, 0x0,},
+		{ 0x0, 0x3ff, 0x0, 0x3ff, 0x0, 0x3ff,},
+		{ 0x0, 0x3ff, 0x0, 0x3ff, 0x0, 0x3ff,},
+	};
+	static const struct sde_csc_cfg hdrRGB10 = {
+		/* S15.16 format */
+		{
+			0x00012A15, 0x00000000, 0x0001ADBE,
+			0x00012A15, 0xFFFFD00B, 0xFFFF597E,
+			0x00012A15, 0x0002244B, 0x00000000,
+		},
+		/* signed bias */
+		{ 0xffc0, 0xfe00, 0xfe00,},
+		{ 0x0, 0x0, 0x0,},
+		/* unsigned clamp */
+		{ 0x40, 0x3ac, 0x40, 0x3c0, 0x40, 0x3c0,},
+		{ 0x00, 0x3ff, 0x00, 0x3ff, 0x00, 0x3ff,},
+	};
+#endif
 
 	if (!psde) {
 		SDE_ERROR("invalid plane\n");
@@ -1142,6 +1172,15 @@ static inline void _sde_plane_setup_csc(struct sde_plane *psde)
 		psde->csc_ptr = (struct sde_csc_cfg *)&sde_csc10_YUV2RGB_601L;
 	else
 		psde->csc_ptr = (struct sde_csc_cfg *)&sde_csc_YUV2RGB_601L;
+
+#if defined(CONFIG_PXLW_IRIS)
+	if (iris_is_mp_panel()) {
+		if (iris_hdr_enable_get() == 1)
+			psde->csc_ptr = (struct sde_csc_cfg *)&hdrYUV;
+		else if (iris_hdr_enable_get() == 2)
+			psde->csc_ptr = (struct sde_csc_cfg *)&hdrRGB10;
+	}
+#endif
 
 	SDE_DEBUG_PLANE(psde, "using 0x%X 0x%X 0x%X...\n",
 			psde->csc_ptr->csc_mv[0],
@@ -3750,6 +3789,10 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 	struct sde_kms_info *info;
 	struct sde_plane *psde = to_sde_plane(plane);
 	bool is_master;
+#ifdef CONFIG_MACH_ASUS_PICASSO
+	int zpos_max = 255;
+	int zpos_def = 0;
+#endif
 
 	if (!plane || !psde) {
 		SDE_ERROR("invalid plane\n");
@@ -3772,11 +3815,31 @@ static void _sde_plane_install_properties(struct drm_plane *plane,
 		return;
 	}
 
+#ifdef CONFIG_MACH_ASUS_PICASSO
+	if (sde_is_custom_client()) {
+		if (catalog->mixer_count &&
+				catalog->mixer[0].sblk->maxblendstages) {
+			zpos_max = catalog->mixer[0].sblk->maxblendstages - 1;
+			if (catalog->has_base_layer &&
+					(zpos_max > SDE_STAGE_MAX - 1))
+				zpos_max = SDE_STAGE_MAX - 1;
+			else if (zpos_max > SDE_STAGE_MAX - SDE_STAGE_0 - 1)
+				zpos_max = SDE_STAGE_MAX - SDE_STAGE_0 - 1;
+		}
+	} else if (plane->type != DRM_PLANE_TYPE_PRIMARY) {
+		/* reserve zpos == 0 for primary planes */
+		zpos_def = drm_plane_index(plane) + 1;
+	}
+
+	msm_property_install_range(&psde->property_info, "zpos",
+		0x0, 0, zpos_max, zpos_def, PLANE_PROP_ZPOS);
+#else
 	msm_property_install_range(&psde->property_info, "zpos",
 		0x0, 0, INT_MAX, 0, PLANE_PROP_ZPOS);
 
 	msm_property_install_range(&psde->property_info, "fod",
 		0x0, 0, INT_MAX, 0, PLANE_PROP_FOD);
+#endif
 
 	msm_property_install_range(&psde->property_info, "alpha",
 		0x0, 0, 255, 255, PLANE_PROP_ALPHA);
@@ -4066,6 +4129,7 @@ static int sde_plane_atomic_set_property(struct drm_plane *plane,
 		pstate = to_sde_plane_state(state);
 		idx = msm_property_index(&psde->property_info,
 				property);
+#ifndef CONFIG_MACH_ASUS_PICASSO
 		if (idx == PLANE_PROP_ZPOS) {
 			struct drm_property *fod_property;
 
@@ -4080,6 +4144,7 @@ static int sde_plane_atomic_set_property(struct drm_plane *plane,
 
 			val &= ~FOD_PRESSED_LAYER_ZORDER;
 		}
+#endif
 
 		ret = msm_property_atomic_set(&psde->property_info,
 				&pstate->property_state, property, val);

@@ -72,11 +72,16 @@ struct sde_cdev *backlight_cdev_register(struct device *dev,
 	disp_cdev->thermal_state = 0;
 	disp_cdev->bd = bd;
 
+#if defined ASUS_ZS673KS_PROJECT || defined ASUS_PICASSO_PROJECT
+	/* Preserve the native-brightness thermal state ABI used by ASUS. */
+	disp_cdev->cdev_sf = 1;
+#else
 	if (bd->props.max_brightness > BRIGHTNESS_CDEV_MAX)
 		disp_cdev->cdev_sf = (bd->props.max_brightness /
 						BRIGHTNESS_CDEV_MAX);
 	else
 		disp_cdev->cdev_sf = 1;
+#endif
 
 	disp_cdev->cdev = thermal_of_cooling_device_register(dev->of_node,
 				(char *)dev_name(&bd->dev), disp_cdev,
@@ -85,6 +90,7 @@ struct sde_cdev *backlight_cdev_register(struct device *dev,
 		pr_err("cooling device register failed\n");
 		return (void *)disp_cdev->cdev;
 	}
+
 	BLOCKING_INIT_NOTIFIER_HEAD(&disp_cdev->notifier_head);
 	blocking_notifier_chain_register(&disp_cdev->notifier_head, n);
 
