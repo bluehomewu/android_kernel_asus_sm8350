@@ -897,9 +897,9 @@ static int fts_read_parse_touchdata(struct fts_ts_data *data)
 	report_rate_recovery(data);
 	fts_ex_fun_recovery(data);
 	fts_irq_enable();
-    if (data->extra_reconfig == 2) 
-        set_sub_noise_mode(true);
-	
+        if (data->extra_reconfig == 2)
+            set_sub_noise_mode(true);
+
         return -EIO;
     }
 
