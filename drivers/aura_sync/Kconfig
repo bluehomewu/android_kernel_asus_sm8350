@@ -1,0 +1,8 @@
+# SPDX-License-Identifier: GPL-2.0-only
+config AURALIGHT_MS51_PHONE
+	tristate "ASUS Picasso Nuvoton MS51 phone AuraLight"
+	depends on MACH_ASUS_PICASSO && I2C && GPIOLIB && OF
+	depends on LEDS_CLASS && REGULATOR
+	help
+	  Enable the onboard MS51 AuraLight controller on ASUS Picasso.
+	  If built as a module, it will be called ms51_phone.
