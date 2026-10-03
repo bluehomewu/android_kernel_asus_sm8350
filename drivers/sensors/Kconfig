@@ -1,3 +1,11 @@
+config ASUS_ASH
+	bool "ASUS Picasso ambient light and proximity sensors"
+	depends on MACH_ASUS_PICASSO && I2C && INPUT && GPIOLIB && REGULATOR
+	default y
+	help
+	  Build the single VCNL36866 sensor pipeline used by Picasso.
+	  This also supplies proximityStatus() to the ROG touchscreen.
+
 config SENSORS_ICM206XX
 	tristate "ICM206XX 6-axis gyroscope and acceleromater combo"
 	depends on INPUT && SPI

@@ -230,6 +230,8 @@ source "drivers/interconnect/Kconfig"
 
 source "drivers/counter/Kconfig"
 
+source "drivers/sensors/Kconfig"
+
 source "drivers/aura_sync/Kconfig"
 
 endmenu
