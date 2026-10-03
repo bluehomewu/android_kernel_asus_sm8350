@@ -1,0 +1,9 @@
+# SPDX-License-Identifier: GPL-2.0-only
+config ASUS_ASH
+	bool "ASUS Picasso ambient light and proximity sensors"
+	depends on MACH_ASUS_PICASSO && I2C && INPUT && GPIOLIB && REGULATOR
+	default y
+	help
+	  Build the ASUS Sensor Hub ALS/proximity pipeline for the single
+	  VCNL36866 sensor on Picasso. This also provides proximityStatus()
+	  for the ROG touchscreen's proximity-aware gesture handling.
