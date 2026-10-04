@@ -97,6 +97,7 @@ struct actuator_intf_params {
  * @act_info: Sensor query cap structure
  * @of_node: Node ptr
  * @last_flush_req: Last request to flush
+ * @is_picasso: ASUS actuator with sensor/OIS-owned power rails
  */
 struct cam_actuator_ctrl_t {
 	char device_name[CAM_CTX_DEV_NAME_MAX_LENGTH];
@@ -117,6 +118,7 @@ struct cam_actuator_ctrl_t {
 	uint32_t last_flush_req;
 	uint32_t lens_pos;
 	uint8_t debug_node_created;
+	bool is_picasso;
 };
 
 /**
