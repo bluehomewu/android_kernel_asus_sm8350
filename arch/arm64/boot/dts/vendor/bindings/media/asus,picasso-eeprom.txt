@@ -1,0 +1,13 @@
+ASUS Picasso camera calibration EEPROM
+=====================================
+
+Required property:
+- compatible: "asus,picasso-eeprom", "qcom,eeprom"
+
+These modules return raw calibration through the Qualcomm EEPROM interface.
+The ASUS camera HAL requires a DIT template followed by module-specific raw
+calibration blocks. The driver assembles that layout in memory using an
+allowlisted module ID and read-only factory/golden calibration templates.
+Neither EEPROM contents nor calibration files are modified.
+
+All remaining properties follow the Qualcomm camera EEPROM interface.

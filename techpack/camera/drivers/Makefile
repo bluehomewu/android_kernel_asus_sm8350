@@ -158,6 +158,7 @@ camera-$(CONFIG_SPECTRA_SENSOR) += \
 	cam_sensor_module/cam_csiphy/cam_csiphy_core.o \
 	cam_sensor_module/cam_eeprom/cam_eeprom_dev.o \
 	cam_sensor_module/cam_eeprom/cam_eeprom_core.o  \
+	cam_sensor_module/cam_eeprom/cam_eeprom_picasso.o \
 	cam_sensor_module/cam_eeprom/cam_eeprom_soc.o \
 	cam_sensor_module/cam_ois/cam_ois_dev.o \
 	cam_sensor_module/cam_ois/cam_ois_core.o \

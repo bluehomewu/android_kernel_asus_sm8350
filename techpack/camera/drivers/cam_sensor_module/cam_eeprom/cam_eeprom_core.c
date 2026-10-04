@@ -13,6 +13,7 @@
 #include "cam_debug_util.h"
 #include "cam_common_util.h"
 #include "cam_packet_util.h"
+#include "cam_eeprom_picasso.h"
 
 #define MAX_READ_SIZE  0x7FFFF
 
@@ -1333,7 +1334,15 @@ static int32_t cam_eeprom_pkt_parse(struct cam_eeprom_ctrl_t *e_ctrl, void *arg)
 			goto power_down;
 		}
 
+		rc = cam_eeprom_picasso_prepare(e_ctrl);
+		if (rc) {
+			CAM_ERR(CAM_EEPROM, "Picasso calibration layout failed: %d", rc);
+			goto power_down;
+		}
+
 		rc = cam_eeprom_get_cal_data(e_ctrl, csl_packet);
+		if (rc)
+			goto power_down;
 		rc = cam_eeprom_power_down(e_ctrl);
 		e_ctrl->cam_eeprom_state = CAM_EEPROM_ACQUIRE;
 		vfree(e_ctrl->cal_data.mapdata);
