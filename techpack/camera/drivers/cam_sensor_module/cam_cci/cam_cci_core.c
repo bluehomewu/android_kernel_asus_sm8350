@@ -1871,6 +1871,11 @@ int32_t cam_cci_core_cfg(struct v4l2_subdev *sd,
 	}
 	CAM_DBG(CAM_CCI, "master = %d, cmd = %d", master, cci_ctrl->cmd);
 
+	/*
+	 * Picasso's legacy driver serialized I2C requests across both masters.
+	 * Keep that scope: synchronous transfers run under i2c_mutex, while
+	 * asynchronous writes only hold it during submission, not worker I/O.
+	 */
 	switch (cci_ctrl->cmd) {
 	case MSM_CCI_INIT:
 		mutex_lock(&cci_dev->init_mutex);
@@ -1887,12 +1892,16 @@ int32_t cam_cci_core_cfg(struct v4l2_subdev *sd,
 		 * CCI version 1.2 does not support burst read
 		 * due to the absence of the read threshold register
 		 */
+		if (cci_dev->serialize_i2c)
+			mutex_lock(&cci_dev->i2c_mutex);
 		if (cci_dev->hw_version == CCI_VERSION_1_2_9) {
 			CAM_DBG(CAM_CCI, "cci-v1.2 no burst read");
 			rc = cam_cci_read_bytes_v_1_2(sd, cci_ctrl);
 		} else {
 			rc = cam_cci_read_bytes(sd, cci_ctrl);
 		}
+		if (cci_dev->serialize_i2c)
+			mutex_unlock(&cci_dev->i2c_mutex);
 		break;
 	case MSM_CCI_I2C_WRITE:
 	case MSM_CCI_I2C_WRITE_SEQ:
@@ -1900,7 +1909,11 @@ int32_t cam_cci_core_cfg(struct v4l2_subdev *sd,
 	case MSM_CCI_I2C_WRITE_SYNC:
 	case MSM_CCI_I2C_WRITE_ASYNC:
 	case MSM_CCI_I2C_WRITE_SYNC_BLOCK:
+		if (cci_dev->serialize_i2c)
+			mutex_lock(&cci_dev->i2c_mutex);
 		rc = cam_cci_write(sd, cci_ctrl);
+		if (cci_dev->serialize_i2c)
+			mutex_unlock(&cci_dev->i2c_mutex);
 		break;
 	case MSM_CCI_GPIO_WRITE:
 		break;

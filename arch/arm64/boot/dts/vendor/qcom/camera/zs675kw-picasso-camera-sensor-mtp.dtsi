@@ -130,6 +130,7 @@
 	};
 
 &cam_cci0 {
+	asus,serialize-i2c;
 
 	actuator_rear_sr: qcom,actuator@0 { //for imx686 LC898249
 		cell-index = <0>;
@@ -351,6 +352,7 @@
 };
 
 &cam_cci1 {
+	asus,serialize-i2c;
 
 	actuator_rear2: qcom,actuator@3{
 		cell-index = <3>;

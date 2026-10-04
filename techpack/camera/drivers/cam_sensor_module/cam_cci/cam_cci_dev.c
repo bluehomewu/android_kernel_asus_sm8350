@@ -461,6 +461,9 @@ static int cam_cci_component_bind(struct device *dev,
 		CAM_ERR(CAM_CCI, "Memory allocation failed for cci_dev");
 		return -ENOMEM;
 	}
+	mutex_init(&new_cci_dev->i2c_mutex);
+	new_cci_dev->serialize_i2c = of_property_read_bool(pdev->dev.of_node,
+		"asus,serialize-i2c");
 	soc_info = &new_cci_dev->soc_info;
 
 	new_cci_dev->v4l2_dev_str.pdev = pdev;
