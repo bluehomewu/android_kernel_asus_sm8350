@@ -1,0 +1,18 @@
+ASUS Picasso internal headset detection
+
+Optional property on the Qualcomm sound-card node:
+
+- asus,disable-mbhc: Boolean. Do not start the WCD codec's internal
+  multi-button headset detection on Picasso boards whose hardware does not
+  use it. This prevents spurious analog-headphone insertion reports. The
+  codec and other audio paths remain enabled; USB digital audio and
+  Bluetooth are not controlled by this property.
+
+  Only MBHC start is bypassed. Software initialization and teardown remain
+  balanced, and no MBHC firmware work or USB-C analog notifier is started.
+
+Example:
+
+&lahaina_snd {
+	asus,disable-mbhc;
+};
