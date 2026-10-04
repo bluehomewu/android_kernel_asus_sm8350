@@ -196,6 +196,8 @@ enum cam_cci_state_t {
  * @irqs_disabled:              Mask for IRQs that are disabled
  * @init_mutex:                 Mutex for maintaining refcount for attached
  *                              devices to cci during init/deinit.
+ * @i2c_mutex:                   Optional serialization of I2C core requests
+ * @serialize_i2c:              Enable the Picasso I2C serialization quirk
  * @dump_en:                    To enable the selective dump
  */
 struct cci_device {
@@ -227,6 +229,8 @@ struct cci_device {
 	bool is_burst_read[MASTER_MAX];
 	uint32_t irqs_disabled;
 	struct mutex init_mutex;
+	struct mutex i2c_mutex;
+	bool serialize_i2c;
 	uint64_t  dump_en;
 };
 
