@@ -224,6 +224,31 @@ static int cam_ois_power_down(struct cam_ois_ctrl_t *o_ctrl)
 	return rc;
 }
 
+static int cam_ois_picasso_write_time(struct cam_ois_ctrl_t *o_ctrl)
+{
+	struct cam_sensor_i2c_reg_array regs[2] = { { 0 } };
+	struct cam_sensor_i2c_reg_setting setting = {
+		.reg_setting = regs,
+		.size = ARRAY_SIZE(regs),
+		.addr_type = CAMERA_SENSOR_I2C_TYPE_WORD,
+		.data_type = CAMERA_SENSOR_I2C_TYPE_DWORD,
+	};
+	uint64_t qtime_ns;
+	int rc;
+
+	rc = cam_sensor_util_get_current_qtimer_ns(&qtime_ns);
+	if (rc < 0)
+		return rc;
+
+	/* Picasso's OIS expects the 64-bit time in MSB-first order at F112. */
+	regs[0].reg_addr = 0xF112;
+	regs[0].reg_data = (uint32_t)(qtime_ns >> 32);
+	regs[1].reg_data = (uint32_t)qtime_ns;
+
+	return camera_io_dev_write_continuous(&o_ctrl->io_master_info,
+		&setting, 1);
+}
+
 static int cam_ois_update_time(struct i2c_settings_array *i2c_set)
 {
 	struct i2c_settings_list *i2c_list;
@@ -875,6 +900,14 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 			CAM_ERR(CAM_OIS,
 				"Not in right state to write time to OIS: %d",
 				o_ctrl->cam_ois_state);
+			goto end;
+		}
+		if (IS_ENABLED(CONFIG_MACH_ASUS_PICASSO)) {
+			/* Preserve the board-specific transaction used by its HAL. */
+			rc = cam_ois_picasso_write_time(o_ctrl);
+			if (rc < 0)
+				CAM_ERR(CAM_OIS, "Cannot write Picasso OIS time: %d",
+					rc);
 			goto end;
 		}
 		offset = (uint32_t *)&csl_packet->payload;
