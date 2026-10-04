@@ -24,3 +24,12 @@ config ASUS_PICASSO_ICM206XX
 	help
 	  Build the ICM20690 secondary IMU interfaces used by the sensor HAL.
 	  This driver registers both SPI and I2C drivers and must be built in.
+
+config ASUS_PICASSO_VL53L5
+	bool "ASUS Picasso VL53L5 time-of-flight sensor"
+	depends on MACH_ASUS_PICASSO && SPI_MSM_GENI=y && REGULATOR
+	default y
+	help
+	  Build the Picasso SPI ToF transport and its stmvl53l5 misc device.
+	  The stock camera HAL performs normal sensor firmware and calibration
+	  transfers through this interface; no factory control path is added.
