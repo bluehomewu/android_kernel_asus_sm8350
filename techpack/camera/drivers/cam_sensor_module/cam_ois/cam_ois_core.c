@@ -12,6 +12,7 @@
 #include <cam_sensor_cmn_header.h>
 #include "cam_ois_core.h"
 #include "cam_ois_soc.h"
+#include "cam_ois_picasso.h"
 #include "cam_sensor_util.h"
 #include "cam_debug_util.h"
 #include "cam_res_mgr_api.h"
@@ -112,6 +113,9 @@ static int cam_ois_power_up(struct cam_ois_ctrl_t *o_ctrl)
 		&o_ctrl->soc_info;
 	struct cam_ois_soc_private *soc_private;
 	struct cam_sensor_power_ctrl_t  *power_info;
+
+	o_ctrl->picasso_mode_seen = false;
+	o_ctrl->picasso_calibration_attempted = false;
 
 	soc_private =
 		(struct cam_ois_soc_private *)o_ctrl->soc_info.soc_private;
@@ -341,6 +345,56 @@ static int cam_ois_picasso_write_random(struct cam_ois_ctrl_t *o_ctrl,
 	return 0;
 }
 
+static int cam_ois_picasso_after_random(struct cam_ois_ctrl_t *o_ctrl,
+	struct cam_sensor_i2c_reg_setting *setting)
+{
+	struct cam_sensor_i2c_reg_array gains[2] = { { 0 } };
+	struct cam_sensor_i2c_reg_setting calibration = {
+		.reg_setting = gains,
+		.size = ARRAY_SIZE(gains),
+		.addr_type = CAMERA_SENSOR_I2C_TYPE_WORD,
+		.data_type = CAMERA_SENSOR_I2C_TYPE_DWORD,
+	};
+	uint32_t i;
+	int rc;
+
+	if (!IS_ENABLED(CONFIG_MACH_ASUS_PICASSO) ||
+	    o_ctrl->io_master_info.master_type != CCI_MASTER)
+		return 0;
+
+	/* Apply on the write AFTER the first mode command, as in the ASUS HAL. */
+	if (o_ctrl->picasso_mode_seen &&
+	    !o_ctrl->picasso_calibration_attempted) {
+		o_ctrl->picasso_calibration_attempted = true;
+		rc = cam_ois_picasso_get_gyro_gain(o_ctrl, gains);
+		if (rc < 0) {
+			/* Optional factory data must not prevent opening the camera. */
+			CAM_WARN(CAM_OIS, "Skipping optional gyro gains: %d", rc);
+		} else if (rc > 0) {
+			rc = cam_ois_picasso_write_random(o_ctrl, &calibration);
+			if (rc < 0) {
+				/* A CCI retry must not skip a partially written pair. */
+				o_ctrl->picasso_calibration_attempted = false;
+				return rc;
+			}
+		}
+	}
+
+	if (setting->addr_type != CAMERA_SENSOR_I2C_TYPE_WORD ||
+	    setting->data_type != CAMERA_SENSOR_I2C_TYPE_DWORD)
+		return 0;
+	for (i = 0; i < setting->size; i++) {
+		struct cam_sensor_i2c_reg_array *reg = &setting->reg_setting[i];
+
+		if ((reg->reg_addr == 0xF012 && reg->reg_data == 0) ||
+		    (reg->reg_addr == 0xF013 && reg->reg_data <= 1)) {
+			o_ctrl->picasso_mode_seen = true;
+			break;
+		}
+	}
+	return 0;
+}
+
 static int cam_ois_apply_settings(struct cam_ois_ctrl_t *o_ctrl,
 	struct i2c_settings_array *i2c_set)
 {
@@ -372,6 +426,10 @@ static int cam_ois_apply_settings(struct cam_ois_ctrl_t *o_ctrl,
 					"Failed in Applying i2c wrt settings");
 				return rc;
 			}
+			rc = cam_ois_picasso_after_random(o_ctrl,
+				&i2c_list->i2c_settings);
+			if (rc < 0)
+				return rc;
 		} else if (i2c_list->op_code == CAM_SENSOR_I2C_WRITE_SEQ) {
 			rc = camera_io_dev_write_continuous(
 				&(o_ctrl->io_master_info),

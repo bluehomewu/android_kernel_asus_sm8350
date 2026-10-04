@@ -101,6 +101,8 @@ struct cam_ois_intf_params {
  * @ois_fw_flag     :   flag for firmware download
  * @is_ois_calib    :   flag for Calibration data
  * @opcode          :   ois opcode
+ * @picasso_mode_seen : first successful Picasso OIS mode command was observed
+ * @picasso_calibration_attempted : optional factory gains checked this power cycle
  * @device_name     :   Device name
  *
  */
@@ -124,6 +126,8 @@ struct cam_ois_ctrl_t {
 	uint8_t ois_fw_flag;
 	uint8_t is_ois_calib;
 	struct cam_ois_opcode opcode;
+	bool picasso_mode_seen;
+	bool picasso_calibration_attempted;
 };
 
 /**

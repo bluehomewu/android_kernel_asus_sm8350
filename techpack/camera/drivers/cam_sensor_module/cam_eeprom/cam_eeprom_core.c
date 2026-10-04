@@ -1277,6 +1277,7 @@ static int32_t cam_eeprom_pkt_parse(struct cam_eeprom_ctrl_t *e_ctrl, void *arg)
 
 	switch (csl_packet->header.op_code & 0xFFFFFF) {
 	case CAM_EEPROM_PACKET_OPCODE_INIT:
+		cam_eeprom_picasso_invalidate(e_ctrl);
 		if (e_ctrl->userspace_probe == false) {
 			rc = cam_eeprom_parse_read_memory_map(
 					e_ctrl->soc_info.dev->of_node, e_ctrl);
