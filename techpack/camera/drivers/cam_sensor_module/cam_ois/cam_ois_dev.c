@@ -151,6 +151,15 @@ static struct v4l2_subdev_ops cam_ois_subdev_ops = {
 	.core = &cam_ois_subdev_core_ops,
 };
 
+static void cam_ois_init_ctrl(struct cam_ois_ctrl_t *o_ctrl)
+{
+	INIT_LIST_HEAD(&o_ctrl->i2c_init_data.list_head);
+	INIT_LIST_HEAD(&o_ctrl->i2c_calib_data.list_head);
+	INIT_LIST_HEAD(&o_ctrl->i2c_mode_data.list_head);
+	INIT_LIST_HEAD(&o_ctrl->i2c_time_data.list_head);
+	mutex_init(&o_ctrl->ois_mutex);
+}
+
 static int cam_ois_init_subdev_param(struct cam_ois_ctrl_t *o_ctrl)
 {
 	int rc = 0;
@@ -198,6 +207,7 @@ static int cam_ois_i2c_driver_probe(struct i2c_client *client,
 		goto probe_failure;
 	}
 
+	cam_ois_init_ctrl(o_ctrl);
 	i2c_set_clientdata(client, o_ctrl);
 
 	o_ctrl->soc_info.dev = &client->dev;
@@ -283,6 +293,7 @@ static int cam_ois_component_bind(struct device *dev,
 	if (!o_ctrl)
 		return -ENOMEM;
 
+	cam_ois_init_ctrl(o_ctrl);
 	o_ctrl->soc_info.pdev = pdev;
 	o_ctrl->pdev = pdev;
 	o_ctrl->soc_info.dev = &pdev->dev;
@@ -305,10 +316,6 @@ static int cam_ois_component_bind(struct device *dev,
 	o_ctrl->soc_info.soc_private = soc_private;
 	soc_private->power_info.dev  = &pdev->dev;
 
-	INIT_LIST_HEAD(&(o_ctrl->i2c_init_data.list_head));
-	INIT_LIST_HEAD(&(o_ctrl->i2c_calib_data.list_head));
-	INIT_LIST_HEAD(&(o_ctrl->i2c_mode_data.list_head));
-	mutex_init(&(o_ctrl->ois_mutex));
 	rc = cam_ois_driver_soc_init(o_ctrl);
 	if (rc) {
 		CAM_ERR(CAM_OIS, "failed: soc init rc %d", rc);
