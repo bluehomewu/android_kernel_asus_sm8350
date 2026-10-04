@@ -8,6 +8,7 @@
 #include <linux/firmware.h>
 #include <linux/dma-contiguous.h>
 #include <linux/ktime.h>
+#include <linux/icm206xx.h>
 #include <cam_sensor_cmn_header.h>
 #include "cam_ois_core.h"
 #include "cam_ois_soc.h"
@@ -790,6 +791,17 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 				"Cannot apply Init settings: rc = %d",
 				rc);
 			goto pwr_dwn;
+		}
+
+		if (IS_ENABLED(CONFIG_MACH_ASUS_PICASSO)) {
+			rc = icm_reset_ois_channel();
+			if (rc == -ENODEV) {
+				CAM_WARN(CAM_OIS, "Secondary IMU is not ready");
+				rc = 0;
+			} else if (rc < 0) {
+				CAM_ERR(CAM_OIS, "Secondary IMU reset failed: %d", rc);
+				goto pwr_dwn;
+			}
 		}
 
 		if (o_ctrl->is_ois_calib) {

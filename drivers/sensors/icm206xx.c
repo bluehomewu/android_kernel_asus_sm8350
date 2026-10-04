@@ -34,6 +34,7 @@
 #include <linux/proc_fs.h>
 #include <linux/seq_file.h>
 #include <linux/uaccess.h>
+#include <linux/icm206xx.h>
 #include "icm206xx.h"
 
 static const struct sensor_axis_remap
@@ -110,6 +111,11 @@ static int icm_power_down(struct icm_sensor *);
 static int g_icm206xx_status = 0;
 static bool g_icm_enable_debug = true;		// set if verbose message is needed.
 static struct icm_sensor *g_icm206xx_sensor = NULL;
+/* Serialize camera resets against publication, removal and rail changes. */
+static DEFINE_MUTEX(icm_ois_lock);
+static DEFINE_MUTEX(icm_enable_lock);
+static struct icm_sensor *icm_ois_sensor;
+static bool icm_ois_reset_pending;
 static bool g_icm_debugMode = false;
 static bool g_icm_skip_first_data = false;
 static bool gyro_data_ready = true;
@@ -586,20 +592,41 @@ static irqreturn_t icm_interrupt_routine(int irq, void *data)
 	g_icm_timestamp = ktime_to_timespec(ktime_get_boottime());
 	return IRQ_WAKE_THREAD;
 }
-void icm_reset_ois_channel(void)
+/* Caller holds icm_ois_lock and sensor->op_lock, with the rails enabled. */
+static int icm_reset_ois_channel_locked(struct icm_sensor *sensor)
 {
 	int ret;
-	icm_dbgmsg("E\n");
-	ret = icm_write_byte_data(g_icm206xx_sensor, g_icm206xx_sensor->reg.signal_path_reset, 0x00);
-	if (ret < 0) {
-		icm_errmsg("write signal_path_reset failed.\n");
-	}
+
+	ret = icm_write_byte_data(sensor, sensor->reg.signal_path_reset, 0x00);
+	if (ret < 0)
+		return ret;
 	msleep(50);
-	ret = icm_write_byte_data(g_icm206xx_sensor, g_icm206xx_sensor->reg.signal_path_reset, 0x08);
-	if (ret < 0) {
-		icm_dbgmsg("write signal_path_reset failed.\n");
+	ret = icm_write_byte_data(sensor, sensor->reg.signal_path_reset, 0x08);
+	if (!ret)
+		icm_ois_reset_pending = false;
+	return ret;
+}
+
+int icm_reset_ois_channel(void)
+{
+	struct icm_sensor *sensor;
+	int ret = 0;
+
+	mutex_lock(&icm_ois_lock);
+	sensor = icm_ois_sensor;
+	if (!sensor) {
+		ret = -ENODEV;
+		goto unlock;
 	}
-	icm_dbgmsg("X\n");
+	mutex_lock(&sensor->op_lock);
+	icm_ois_reset_pending = true;
+	/* HAL may start the IMU after OIS init: reset on the next power-up. */
+	if (sensor->power_enabled)
+		ret = icm_reset_ois_channel_locked(sensor);
+	mutex_unlock(&sensor->op_lock);
+unlock:
+	mutex_unlock(&icm_ois_lock);
+	return ret;
 }
 #if defined ASUS_SAKE_PROJECT || defined ASUS_PICASSO_PROJECT
 EXPORT_SYMBOL(icm_reset_ois_channel);
@@ -1274,12 +1301,23 @@ static int icm_gyro_set_enable(struct icm_sensor *sensor, bool enable)
 	int ret = 0;
 	static int l_count = 0;
 
+	mutex_lock(&icm_enable_lock);
+	if (!enable && l_count == 0)
+		goto unlock;
 	icm_dbgmsg("enable = %d, l_count = %d\n", enable ? 1 : 0, l_count);
 	if ((enable && l_count == 0) || (!enable && l_count == 1)) {
 		if (g_icm206xx_sensor && enable) {
-			icm_power_ctl(g_icm206xx_sensor, true);
+			ret = icm_power_ctl(g_icm206xx_sensor, true);
+			if (ret)
+				goto unlock;
 		}
 		ret = icm_gyro_do_enable(sensor, enable);
+		if (ret && enable) {
+			/* do_enable may fail after the engine has been started. */
+			icm_gyro_do_enable(sensor, false);
+			icm_power_ctl(sensor, false);
+			goto unlock;
+		}
 		if (g_icm206xx_sensor && !enable) {
 			icm_power_ctl(g_icm206xx_sensor, false);
 		}
@@ -1290,6 +1328,8 @@ static int icm_gyro_set_enable(struct icm_sensor *sensor, bool enable)
 	} else{
 		l_count--;
 	}
+unlock:
+	mutex_unlock(&icm_enable_lock);
 	return ret;
 }
 /*---ASUS BSP: check if has enabled before.---*/
@@ -1957,12 +1997,23 @@ static int icm_accel_set_enable(struct icm_sensor *sensor, bool enable)
 	int ret = 0;
 	static int l_count = 0;
 
+	mutex_lock(&icm_enable_lock);
+	if (!enable && l_count == 0)
+		goto unlock;
 	icm_dbgmsg("enable = %d, l_count = %d\n", enable ? 1 : 0, l_count);
 	if ((enable && l_count == 0) || (!enable && l_count == 1)) {
 		if (g_icm206xx_sensor && enable) {
-			icm_power_ctl(g_icm206xx_sensor, true);
+			ret = icm_power_ctl(g_icm206xx_sensor, true);
+			if (ret)
+				goto unlock;
 		}
 		ret = icm_accel_do_enable(sensor, enable);
+		if (ret && enable) {
+			/* Keep rollback local; no successful open owns a reference. */
+			icm_accel_do_enable(sensor, false);
+			icm_power_ctl(sensor, false);
+			goto unlock;
+		}
 		if (g_icm206xx_sensor && !enable) {
 			icm_power_ctl(g_icm206xx_sensor, false);
 		}
@@ -1973,6 +2024,8 @@ static int icm_accel_set_enable(struct icm_sensor *sensor, bool enable)
 	} else{
 		l_count--;
 	}
+unlock:
+	mutex_unlock(&icm_enable_lock);
 	return ret;
 }
 /*---ASUS BSP: check if has enabled before.---*/
@@ -2613,9 +2666,6 @@ static int icm206xx_accel_miscOpen(struct inode *inode, struct file *file)
 	}
 	ret = icm_accel_set_enable(g_icm206xx_sensor, true);
 	icm_dbgmsg("ret = %d\n", ret);
-	if (ret < 0) {
-		icm_accel_set_enable(g_icm206xx_sensor, false);
-	}
 	return ret;
 }
 
@@ -2684,9 +2734,6 @@ static int icm206xx_gyro_miscOpen(struct inode *inode, struct file *file)
 	}
 	ret = icm_gyro_set_enable(g_icm206xx_sensor, true);
 	icm_dbgmsg("ret = %d\n", ret);
-	if (ret < 0) {
-		icm_gyro_set_enable(g_icm206xx_sensor, false);
-	}
 	return ret;
 }
 
@@ -2940,6 +2987,11 @@ static void icm_init_status_function(struct icm_sensor *sensor)
 static void icm_deinit(void)
 {
 	struct icm_init_status *l_init_status;
+
+	mutex_lock(&icm_ois_lock);
+	icm_ois_sensor = NULL;
+	icm_ois_reset_pending = false;
+	mutex_unlock(&icm_ois_lock);
 	if (g_icm206xx_sensor) {
 		l_init_status = &g_icm206xx_sensor->init_status;
 
@@ -3297,6 +3349,10 @@ static int icm_probe(struct i2c_client *a_client,
 	(sensor->init_status).misc_inited = true;
 
 	icm_power_down(sensor);
+	mutex_lock(&icm_ois_lock);
+	if (g_icm206xx_status == 1)
+		icm_ois_sensor = sensor;
+	mutex_unlock(&icm_ois_lock);
 	icm_dbgmsg("-\n");
 	return 0;
 
@@ -3507,11 +3563,26 @@ static int icm_power_ctl(struct icm_sensor *sensor, bool enable)
 	int ret = 0;
 	static int l_count = 0;
 
+	mutex_lock(&icm_ois_lock);
+	if (sensor != icm_ois_sensor || !sensor) {
+		ret = -ENODEV;
+		goto unlock;
+	}
 	icm_dbgmsg("enable = %d, l_count = %d\n", enable ? 1 : 0, l_count);
 	if ((enable && l_count == 0) || (!enable && l_count == 1)) {
 		if (enable) {
 			ret = icm_power_up(sensor);
-			ret |= icm_restore_context(g_icm206xx_sensor, false);
+			if (ret)
+				goto unlock;
+			mutex_lock(&sensor->op_lock);
+			ret = icm_restore_context(sensor, false);
+			if (!ret && icm_ois_reset_pending)
+				ret = icm_reset_ois_channel_locked(sensor);
+			mutex_unlock(&sensor->op_lock);
+			if (ret) {
+				icm_power_down(sensor);
+				goto unlock;
+			}
 			/*ASUS_BSP: initial the report time, and continuously print some information when sensor is enabled*/
 			g_icm_next_report_time_s = 2;
 			schedule_delayed_work(&g_icm_work_report, 0);
@@ -3524,9 +3595,11 @@ static int icm_power_ctl(struct icm_sensor *sensor, bool enable)
 
 	if (enable) {
 		l_count++;
-	} else{
+	} else if (l_count > 0) {
 		l_count--;
 	}
+unlock:
+	mutex_unlock(&icm_ois_lock);
 	return ret;
 }
 static int icm_power_up(struct icm_sensor *sensor)
