@@ -2,6 +2,7 @@
 /* Assemble the ASUS userspace calibration layout without changing EEPROM. */
 
 #include <linux/ctype.h>
+#include <linux/compiler.h>
 #include <linux/fs.h>
 #include <linux/module.h>
 #include <linux/of.h>
@@ -18,6 +19,28 @@
 #define PICASSO_MODULE_ID_OFFSET 8
 #define PICASSO_SERIAL_OFFSET 10
 #define PICASSO_SERIAL_BYTES 12
+
+/* Unknown, failed or replaced modules must not receive old gyro calibration. */
+static bool picasso_imx686_factory_allowed;
+
+static bool picasso_is_main_eeprom(struct cam_eeprom_ctrl_t *e_ctrl)
+{
+	return e_ctrl && e_ctrl->soc_info.dev &&
+		e_ctrl->soc_info.index == 0 &&
+		of_device_is_compatible(e_ctrl->soc_info.dev->of_node,
+					"asus,picasso-eeprom");
+}
+
+void cam_eeprom_picasso_invalidate(struct cam_eeprom_ctrl_t *e_ctrl)
+{
+	if (picasso_is_main_eeprom(e_ctrl))
+		WRITE_ONCE(picasso_imx686_factory_allowed, false);
+}
+
+bool cam_eeprom_picasso_ois_calibration_allowed(void)
+{
+	return READ_ONCE(picasso_imx686_factory_allowed);
+}
 
 struct picasso_calibration_layout {
 	u8 module_id;
@@ -184,10 +207,11 @@ int cam_eeprom_picasso_prepare(struct cam_eeprom_ctrl_t *e_ctrl)
 	struct cam_eeprom_memory_block_t *cal = &e_ctrl->cal_data;
 	u8 *assembled;
 	char path[80];
-	bool factory = false;
+	bool factory = false, identity_matches;
 	unsigned int i;
 	int rc;
 
+	cam_eeprom_picasso_invalidate(e_ctrl);
 	if (!of_device_is_compatible(e_ctrl->soc_info.dev->of_node,
 				     "asus,picasso-eeprom"))
 		return 0;
@@ -216,8 +240,9 @@ int cam_eeprom_picasso_prepare(struct cam_eeprom_ctrl_t *e_ctrl)
 	if (!assembled)
 		return -ENOMEM;
 
+	identity_matches = picasso_use_factory(layout, cal->mapdata);
 	rc = -ENOENT;
-	if (picasso_use_factory(layout, cal->mapdata)) {
+	if (identity_matches) {
 		snprintf(path, sizeof(path), "/vendor/factory/dut_%s.bin",
 			 layout->name);
 		rc = picasso_read_file(path, assembled, cal->num_data,
@@ -239,6 +264,8 @@ int cam_eeprom_picasso_prepare(struct cam_eeprom_ctrl_t *e_ctrl)
 	}
 
 	picasso_assemble(layout, cal->mapdata, assembled);
+	if (picasso_is_main_eeprom(e_ctrl) && layout->module_id == 0x6b)
+		WRITE_ONCE(picasso_imx686_factory_allowed, identity_matches);
 	memcpy(cal->mapdata, assembled, cal->num_data);
 	CAM_INFO(CAM_EEPROM, "Picasso module 0x%02x calibration assembled (%s)",
 		 layout->module_id, factory ? "factory" : "golden");

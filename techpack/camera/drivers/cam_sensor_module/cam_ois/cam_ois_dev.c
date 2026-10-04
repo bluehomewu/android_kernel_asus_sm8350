@@ -334,7 +334,8 @@ static int cam_ois_component_bind(struct device *dev,
 
 	platform_set_drvdata(pdev, o_ctrl);
 	o_ctrl->cam_ois_state = CAM_OIS_INIT;
-	asus_ois_init(o_ctrl);
+	if (!IS_ENABLED(CONFIG_MACH_ASUS_PICASSO))
+		asus_ois_init(o_ctrl);
 	CAM_DBG(CAM_OIS, "Component bound successfully");
 	return rc;
 unreg_subdev:

@@ -172,6 +172,7 @@ camera-$(CONFIG_SPECTRA_SENSOR) += \
 	cam_sensor_module/cam_eeprom/cam_eeprom_soc.o \
 	cam_sensor_module/cam_ois/cam_ois_dev.o \
 	cam_sensor_module/cam_ois/cam_ois_core.o \
+	cam_sensor_module/cam_ois/cam_ois_picasso.o \
 	cam_sensor_module/cam_ois/cam_ois_soc.o \
 	cam_sensor_module/cam_sensor/cam_sensor_dev.o \
 	cam_sensor_module/cam_sensor/cam_sensor_core.o \
@@ -183,10 +184,12 @@ camera-$(CONFIG_SPECTRA_SENSOR) += \
 	cam_sensor_module/cam_sensor_utils/cam_sensor_util.o \
 	cam_sensor_module/cam_res_mgr/cam_res_mgr.o
 
+ifneq ($(CONFIG_MACH_ASUS_PICASSO),y)
 camera-$(CONFIG_SPECTRA_SENSOR) += \
 	cam_sensor_module/cam_ois/onsemi_i2c.o \
 	cam_sensor_module/cam_ois/onsemi_interface.o \
-	cam_sensor_module/cam_ois/asus_ois.o \
+	cam_sensor_module/cam_ois/asus_ois.o
+endif
 
 ifeq ($(CONFIG_MACH_ASUS_SAKE),y)
 camera-$(CONFIG_SPECTRA_SENSOR) += \

@@ -364,8 +364,10 @@ int32_t cam_actuator_apply_settings(struct cam_actuator_ctrl_t *a_ctrl,
 		return -EINVAL;
 	}
 
+#if !defined(CONFIG_MACH_ASUS_PICASSO)
 	if (g_vcm_slave_id != 0x48 ||
 	    get_ois_power_state(OIS_CLIENT_OV08A10) == 1)
+#endif
 	list_for_each_entry(i2c_list,
 		&(i2c_set->list_head), list) {
 		rc = cam_actuator_i2c_modes_util(a_ctrl, i2c_list);

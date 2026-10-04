@@ -13,6 +13,7 @@
 #include "cam_ois_soc.h"
 #include "cam_debug_util.h"
 
+#if !defined(CONFIG_MACH_ASUS_PICASSO)
 //ASUS_BSP +++ Zhengwei "read id register when probe"
 void dump_regulator_name(struct cam_ois_ctrl_t *o_ctrl,const char * tag)
 {
@@ -69,6 +70,7 @@ static int cam_ois_get_dt_i2c_info(struct cam_ois_ctrl_t *o_ctrl)
 	return rc;
 }
 //ASUS_BSP --- Zhengwei "read id register when probe"
+#endif
 /**
  * @e_ctrl: ctrl structure
  *
@@ -101,6 +103,7 @@ static int cam_ois_get_dt_data(struct cam_ois_ctrl_t *o_ctrl)
 	if (rc < 0)
 		return rc;
 
+#if !defined(CONFIG_MACH_ASUS_PICASSO)
 	//ASUS_BSP +++ Zhengwei "read id register when probe"
 	power_info->dev = o_ctrl->soc_info.dev;
 	/* Initialize default parameters */
@@ -145,6 +148,7 @@ static int cam_ois_get_dt_data(struct cam_ois_ctrl_t *o_ctrl)
 		return rc;
 	}
 	//ASUS_BSP --- Zhengwei "read id register when probe"
+#endif
 	if (!soc_info->gpio_data) {
 		CAM_INFO(CAM_OIS, "No GPIO found");
 		return 0;

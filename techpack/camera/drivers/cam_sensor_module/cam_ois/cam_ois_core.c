@@ -11,6 +11,7 @@
 #include <cam_sensor_cmn_header.h>
 #include "cam_ois_core.h"
 #include "cam_ois_soc.h"
+#include "cam_ois_picasso.h"
 #include "cam_sensor_util.h"
 #include "cam_debug_util.h"
 #include "cam_res_mgr_api.h"
@@ -119,6 +120,9 @@ static int cam_ois_power_up(struct cam_ois_ctrl_t *o_ctrl)
 	struct cam_ois_soc_private *soc_private;
 	struct cam_sensor_power_ctrl_t  *power_info;
 
+	o_ctrl->picasso_mode_seen = false;
+	o_ctrl->picasso_calibration_attempted = false;
+
 	soc_private =
 		(struct cam_ois_soc_private *)o_ctrl->soc_info.soc_private;
 	power_info = &soc_private->power_info;
@@ -171,7 +175,8 @@ static int cam_ois_power_up(struct cam_ois_ctrl_t *o_ctrl)
 		goto cci_failure;
 	}
 
-	asus_ois_init_config(o_ctrl->soc_info.index);
+	if (!IS_ENABLED(CONFIG_MACH_ASUS_PICASSO))
+		asus_ois_init_config(o_ctrl->soc_info.index);
 
 	return rc;
 cci_failure:
@@ -210,7 +215,8 @@ static int cam_ois_power_down(struct cam_ois_ctrl_t *o_ctrl)
 		return -EINVAL;
 	}
 
-	onsemi_ois_go_off(o_ctrl);
+	if (!IS_ENABLED(CONFIG_MACH_ASUS_PICASSO))
+		onsemi_ois_go_off(o_ctrl);
 
 	rc = cam_sensor_util_power_down(power_info, soc_info);
 	if (rc) {
@@ -220,7 +226,8 @@ static int cam_ois_power_down(struct cam_ois_ctrl_t *o_ctrl)
 
 	camera_io_release(&o_ctrl->io_master_info);
 
-	asus_ois_deinit_config(o_ctrl->soc_info.index);
+	if (!IS_ENABLED(CONFIG_MACH_ASUS_PICASSO))
+		asus_ois_deinit_config(o_ctrl->soc_info.index);
 
 	return rc;
 }
@@ -353,6 +360,56 @@ static int cam_ois_picasso_write_random(struct cam_ois_ctrl_t *o_ctrl,
 	return 0;
 }
 
+static int cam_ois_picasso_after_random(struct cam_ois_ctrl_t *o_ctrl,
+	struct cam_sensor_i2c_reg_setting *setting)
+{
+	struct cam_sensor_i2c_reg_array gains[2] = { { 0 } };
+	struct cam_sensor_i2c_reg_setting calibration = {
+		.reg_setting = gains,
+		.size = ARRAY_SIZE(gains),
+		.addr_type = CAMERA_SENSOR_I2C_TYPE_WORD,
+		.data_type = CAMERA_SENSOR_I2C_TYPE_DWORD,
+	};
+	uint32_t i;
+	int rc;
+
+	if (!IS_ENABLED(CONFIG_MACH_ASUS_PICASSO) ||
+	    o_ctrl->io_master_info.master_type != CCI_MASTER)
+		return 0;
+
+	/* Apply on the write AFTER the first mode command, as in the ASUS HAL. */
+	if (o_ctrl->picasso_mode_seen &&
+	    !o_ctrl->picasso_calibration_attempted) {
+		o_ctrl->picasso_calibration_attempted = true;
+		rc = cam_ois_picasso_get_gyro_gain(o_ctrl, gains);
+		if (rc < 0) {
+			/* Optional factory data must not prevent opening the camera. */
+			CAM_WARN(CAM_OIS, "Skipping optional gyro gains: %d", rc);
+		} else if (rc > 0) {
+			rc = cam_ois_picasso_write_random(o_ctrl, &calibration);
+			if (rc < 0) {
+				/* A CCI retry must not skip a partially written pair. */
+				o_ctrl->picasso_calibration_attempted = false;
+				return rc;
+			}
+		}
+	}
+
+	if (setting->addr_type != CAMERA_SENSOR_I2C_TYPE_WORD ||
+	    setting->data_type != CAMERA_SENSOR_I2C_TYPE_DWORD)
+		return 0;
+	for (i = 0; i < setting->size; i++) {
+		struct cam_sensor_i2c_reg_array *reg = &setting->reg_setting[i];
+
+		if ((reg->reg_addr == 0xF012 && reg->reg_data == 0) ||
+		    (reg->reg_addr == 0xF013 && reg->reg_data <= 1)) {
+			o_ctrl->picasso_mode_seen = true;
+			break;
+		}
+	}
+	return 0;
+}
+
 static int cam_ois_apply_settings(struct cam_ois_ctrl_t *o_ctrl,
 	struct i2c_settings_array *i2c_set)
 {
@@ -370,7 +427,8 @@ static int cam_ois_apply_settings(struct cam_ois_ctrl_t *o_ctrl,
 		return -EINVAL;
 	}
 
-	if (get_ois_status(o_ctrl->soc_info.index) != 1) {
+	if (!IS_ENABLED(CONFIG_MACH_ASUS_PICASSO) &&
+		get_ois_status(o_ctrl->soc_info.index) != 1) {
 		CAM_ERR(CAM_OIS, "Probe failed, not do any i2c r/w");
 		return 0;
 	}
@@ -400,6 +458,10 @@ static int cam_ois_apply_settings(struct cam_ois_ctrl_t *o_ctrl,
 #if defined ASUS_SAKE_PROJECT || defined ASUS_VODKA_PROJECT
 			track_mode_change_from_i2c_write(&(i2c_list->i2c_settings));
 #endif
+			rc = cam_ois_picasso_after_random(o_ctrl,
+				&i2c_list->i2c_settings);
+			if (rc < 0)
+				return rc;
 		} else if (i2c_list->op_code == CAM_SENSOR_I2C_WRITE_SEQ) {
 			rc = camera_io_dev_write_continuous(
 				&(o_ctrl->io_master_info),
@@ -480,7 +542,7 @@ static int cam_ois_slaveInfo_pkt_parser(struct cam_ois_ctrl_t *o_ctrl,
 	return rc;
 }
 
-#if 0
+#if defined(CONFIG_MACH_ASUS_PICASSO)
 static int cam_ois_fw_download(struct cam_ois_ctrl_t *o_ctrl)
 {
 	uint16_t                           total_bytes = 0;
@@ -624,7 +686,7 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 	struct cam_packet              *csl_packet_u = NULL;
 	size_t                          len_of_buff = 0;
 	uint32_t                       *offset = NULL, *cmd_buf;
-#if 0
+#if defined(CONFIG_MACH_ASUS_PICASSO)
 	struct cam_ois_soc_private     *soc_private =
 		(struct cam_ois_soc_private *)o_ctrl->soc_info.soc_private;
 	struct cam_sensor_power_ctrl_t  *power_info = &soc_private->power_info;
@@ -741,7 +803,7 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 			case CAMERA_SENSOR_CMD_TYPE_PWR_DOWN:
 				CAM_DBG(CAM_OIS,
 					"Received power settings buffer");
-#if 0
+#if defined(CONFIG_MACH_ASUS_PICASSO)
 				rc = cam_sensor_update_power_settings(
 					cmd_buf,
 					total_cmd_buf_in_bytes,
@@ -807,7 +869,7 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 			o_ctrl->cam_ois_state = CAM_OIS_CONFIG;
 		}
 
-#if 0
+#if defined(CONFIG_MACH_ASUS_PICASSO)
 		if (o_ctrl->ois_fw_flag) {
 			rc = cam_ois_fw_download(o_ctrl);
 			if (rc) {
@@ -1038,7 +1100,7 @@ put_ref:
 void cam_ois_shutdown(struct cam_ois_ctrl_t *o_ctrl)
 {
 	int rc = 0;
-#if 0
+#if defined(CONFIG_MACH_ASUS_PICASSO)
 	struct cam_ois_soc_private *soc_private =
 		(struct cam_ois_soc_private *)o_ctrl->soc_info.soc_private;
 	struct cam_sensor_power_ctrl_t *power_info = &soc_private->power_info;
@@ -1072,7 +1134,7 @@ void cam_ois_shutdown(struct cam_ois_ctrl_t *o_ctrl)
 	if (o_ctrl->i2c_init_data.is_settings_valid == 1)
 		delete_request(&o_ctrl->i2c_init_data);
 
-#if 0
+#if defined(CONFIG_MACH_ASUS_PICASSO)
 	kfree(power_info->power_setting);
 	kfree(power_info->power_down_setting);
 	power_info->power_setting = NULL;
@@ -1148,6 +1210,7 @@ int cam_ois_driver_cmd(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 		o_ctrl->cam_ois_state = CAM_OIS_START;
 		break;
 	case CAM_CONFIG_DEV:
+#if !defined(CONFIG_MACH_ASUS_PICASSO)
 		#ifdef CAM_FACTORY_CONFIG
 		if(get_ois_power_state(o_ctrl->soc_info.index) == 1)
 		{
@@ -1162,6 +1225,7 @@ int cam_ois_driver_cmd(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 			rc = -EINVAL;
 			goto release_mutex;
 		}
+#endif
 		rc = cam_ois_pkt_parse(o_ctrl, arg);
 		if (rc) {
 			CAM_ERR(CAM_OIS, "Failed in ois pkt Parsing");
@@ -1199,7 +1263,7 @@ int cam_ois_driver_cmd(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 		o_ctrl->bridge_intf.session_hdl = -1;
 		o_ctrl->cam_ois_state = CAM_OIS_INIT;
 
-#if 0
+#if defined(CONFIG_MACH_ASUS_PICASSO)
 		kfree(power_info->power_setting);
 		kfree(power_info->power_down_setting);
 		power_info->power_setting = NULL;
