@@ -16,6 +16,14 @@
 	qcom,board-id = <35 0>;
 };
 
+/* Reuse the ASUS debug reservation after removal of its private logger. */
+&asus_debug_mem {
+	compatible = "ramoops";
+	record-size = <0x100000>;
+	console-size = <0x200000>;
+	pmsg-size = <0x100000>;
+};
+
 /*   ====================================
 *    overlay for display - start
 *    ====================================
