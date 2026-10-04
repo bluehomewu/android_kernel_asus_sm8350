@@ -1152,6 +1152,7 @@ __thermal_cooling_device_register(struct device_node *np,
 	result = device_register(&cdev->device);
 	if (result) {
 		ida_simple_remove(&thermal_cdev_ida, cdev->id);
+		thermal_cooling_device_destroy_sysfs(cdev);
 		put_device(&cdev->device);
 		return ERR_PTR(result);
 	}

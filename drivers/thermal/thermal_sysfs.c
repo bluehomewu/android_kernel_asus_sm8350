@@ -16,6 +16,8 @@
 #include <linux/sysfs.h>
 #include <linux/device.h>
 #include <linux/err.h>
+#include <linux/mm.h>
+#include <linux/overflow.h>
 #include <linux/slab.h>
 #include <linux/string.h>
 #include <linux/jiffies.h>
@@ -989,7 +991,7 @@ void thermal_cooling_device_stats_update(struct thermal_cooling_device *cdev,
 {
 	struct cooling_dev_stats *stats = cdev->stats;
 
-	if (!stats)
+	if (!stats || new_state >= stats->max_states)
 		return;
 
 	spin_lock(&stats->lock);
@@ -1032,7 +1034,7 @@ time_in_state_ms_show(struct device *dev, struct device_attribute *attr,
 	struct thermal_cooling_device *cdev = to_cooling_device(dev);
 	struct cooling_dev_stats *stats = cdev->stats;
 	ssize_t len = 0;
-	int i;
+	int i, ret;
 
 #ifdef CONFIG_QTI_THERMAL
 	if (!stats)
@@ -1043,8 +1045,13 @@ time_in_state_ms_show(struct device *dev, struct device_attribute *attr,
 	update_time_in_state(stats);
 
 	for (i = 0; i < stats->max_states; i++) {
-		len += sprintf(buf + len, "state%u\t%llu\n", i,
-			       ktime_to_ms(stats->time_in_state[i]));
+		ret = snprintf(buf + len, PAGE_SIZE - len, "state%u\t%llu\n",
+			       i, ktime_to_ms(stats->time_in_state[i]));
+		if (ret >= PAGE_SIZE - len) {
+			len = -EFBIG;
+			break;
+		}
+		len += ret;
 	}
 	spin_unlock(&stats->lock);
 
@@ -1057,17 +1064,12 @@ reset_store(struct device *dev, struct device_attribute *attr, const char *buf,
 {
 	struct thermal_cooling_device *cdev = to_cooling_device(dev);
 	struct cooling_dev_stats *stats = cdev->stats;
+	unsigned long i, states;
 #ifdef CONFIG_QTI_THERMAL
-	int i, states;
-
 	if (!stats)
 		return -ENODEV;
-
-	states = stats->max_states;
-#else
-	int i, states = stats->max_states;
-
 #endif
+	states = stats->max_states;
 	spin_lock(&stats->lock);
 
 	stats->total_trans = 0;
@@ -1104,7 +1106,7 @@ static ssize_t trans_table_show(struct device *dev,
 		len += snprintf(buf + len, PAGE_SIZE - len, "state%2u  ", i);
 	}
 	if (len >= PAGE_SIZE)
-		return PAGE_SIZE;
+		goto buf_full;
 
 	len += snprintf(buf + len, PAGE_SIZE - len, "\n");
 
@@ -1125,11 +1127,13 @@ static ssize_t trans_table_show(struct device *dev,
 		len += snprintf(buf + len, PAGE_SIZE - len, "\n");
 	}
 
-	if (len >= PAGE_SIZE) {
-		pr_warn_once("Thermal transition table exceeds PAGE_SIZE. Disabling\n");
-		return -EFBIG;
-	}
+	if (len >= PAGE_SIZE)
+		goto buf_full;
 	return len;
+
+buf_full:
+	pr_warn_once("Thermal transition table exceeds PAGE_SIZE. Disabling\n");
+	return -EFBIG;
 }
 
 static DEVICE_ATTR_RO(total_trans);
@@ -1155,18 +1159,27 @@ static void cooling_device_stats_setup(struct thermal_cooling_device *cdev)
 	const struct attribute_group *stats_attr_group = NULL;
 	struct cooling_dev_stats *stats;
 	unsigned long states;
+	size_t size;
 	int var;
 
 	if (cdev->ops->get_max_state(cdev, &states))
 		goto out;
 
+	/* The sysfs readers use int indices; also prevent states + 1 overflow. */
+	if (states >= INT_MAX)
+		goto out;
+
 	states++; /* Total number of states is highest state + 1 */
 
-	var = sizeof(*stats);
-	var += sizeof(*stats->time_in_state) * states;
-	var += sizeof(*stats->trans_table) * states * states;
+	size = size_add(sizeof(*stats),
+			array_size(sizeof(*stats->time_in_state), states));
+	size = size_add(size,
+			array3_size(sizeof(*stats->trans_table), states, states));
+	if (size == SIZE_MAX)
+		goto out;
 
-	stats = kzalloc(var, GFP_KERNEL);
+	/* Fine-grained cooling devices need not have contiguous statistics. */
+	stats = kvzalloc(size, GFP_KERNEL);
 	if (!stats)
 		goto out;
 
@@ -1188,7 +1201,7 @@ out:
 
 static void cooling_device_stats_destroy(struct thermal_cooling_device *cdev)
 {
-	kfree(cdev->stats);
+	kvfree(cdev->stats);
 	cdev->stats = NULL;
 }
 
