@@ -1667,6 +1667,12 @@ int wcd_mbhc_start(struct wcd_mbhc *mbhc, struct wcd_mbhc_config *mbhc_cfg)
 
 	/* check if USB C analog is defined on device tree */
 	mbhc_cfg->enable_usbc_analog = 0;
+	/* Picasso does not use the codec's internal headset detection. */
+	if (of_property_read_bool(card->dev->of_node, "asus,disable-mbhc")) {
+		dev_info(card->dev, "Internal MBHC disabled by board configuration\n");
+		return 0;
+	}
+
 	if (of_find_property(card->dev->of_node, usb_c_dt, NULL)) {
 		rc = of_property_read_u32(card->dev->of_node, usb_c_dt,
 				&mbhc_cfg->enable_usbc_analog);
