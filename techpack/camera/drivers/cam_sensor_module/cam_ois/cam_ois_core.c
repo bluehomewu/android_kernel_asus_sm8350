@@ -7,6 +7,7 @@
 #include <linux/module.h>
 #include <linux/firmware.h>
 #include <linux/dma-contiguous.h>
+#include <linux/ktime.h>
 #include <cam_sensor_cmn_header.h>
 #include "cam_ois_core.h"
 #include "cam_ois_soc.h"
@@ -279,6 +280,66 @@ static int cam_ois_update_time(struct i2c_settings_array *i2c_set)
 	return rc;
 }
 
+static int cam_ois_picasso_wait_ready(struct cam_ois_ctrl_t *o_ctrl)
+{
+	ktime_t deadline = ktime_add_us(ktime_get(), 500000);
+	uint32_t status;
+	int rc;
+
+	/* The command processor reports its busy state in bit 24 of F100. */
+	for (;;) {
+		rc = camera_io_dev_read(&o_ctrl->io_master_info, 0xF100,
+			&status, CAMERA_SENSOR_I2C_TYPE_WORD,
+			CAMERA_SENSOR_I2C_TYPE_DWORD);
+		if (rc < 0)
+			return rc;
+		if (!(status & BIT(24)))
+			return 0;
+		if (ktime_compare(ktime_get(), deadline) >= 0) {
+			CAM_ERR(CAM_OIS, "Picasso OIS command processor timed out");
+			return -ETIMEDOUT;
+		}
+		usleep_range(1000, 1100);
+	}
+}
+
+static int cam_ois_picasso_write_random(struct cam_ois_ctrl_t *o_ctrl,
+	struct cam_sensor_i2c_reg_setting *setting)
+{
+	struct cam_sensor_i2c_reg_setting single = *setting;
+	uint32_t i;
+	int rc;
+
+	rc = cam_ois_picasso_wait_ready(o_ctrl);
+	if (rc < 0)
+		return rc;
+	if (setting->size <= 1 ||
+	    setting->data_type != CAMERA_SENSOR_I2C_TYPE_DWORD)
+		return camera_io_dev_write(&o_ctrl->io_master_info, setting);
+
+	/* Onsemi commands must finish before the next DWORD is submitted. */
+	single.size = 1;
+	single.addr_type = CAMERA_SENSOR_I2C_TYPE_WORD;
+	single.delay = 0;
+	for (i = 0; i < setting->size; i++) {
+		if (i) {
+			rc = cam_ois_picasso_wait_ready(o_ctrl);
+			if (rc < 0)
+				return rc;
+		}
+		single.reg_setting = &setting->reg_setting[i];
+		rc = camera_io_dev_write(&o_ctrl->io_master_info, &single);
+		if (rc < 0)
+			return rc;
+		if (single.reg_setting->reg_addr == 0xF015) {
+			rc = cam_ois_picasso_wait_ready(o_ctrl);
+			if (rc < 0)
+				return rc;
+		}
+	}
+	return 0;
+}
+
 static int cam_ois_apply_settings(struct cam_ois_ctrl_t *o_ctrl,
 	struct i2c_settings_array *i2c_set)
 {
@@ -299,8 +360,12 @@ static int cam_ois_apply_settings(struct cam_ois_ctrl_t *o_ctrl,
 	list_for_each_entry(i2c_list,
 		&(i2c_set->list_head), list) {
 		if (i2c_list->op_code ==  CAM_SENSOR_I2C_WRITE_RANDOM) {
-			rc = camera_io_dev_write(&(o_ctrl->io_master_info),
-				&(i2c_list->i2c_settings));
+			if (IS_ENABLED(CONFIG_MACH_ASUS_PICASSO))
+				rc = cam_ois_picasso_write_random(o_ctrl,
+					&i2c_list->i2c_settings);
+			else
+				rc = camera_io_dev_write(&o_ctrl->io_master_info,
+					&i2c_list->i2c_settings);
 			if (rc < 0) {
 				CAM_ERR(CAM_OIS,
 					"Failed in Applying i2c wrt settings");
@@ -318,6 +383,11 @@ static int cam_ois_apply_settings(struct cam_ois_ctrl_t *o_ctrl,
 				return rc;
 			}
 		} else if (i2c_list->op_code == CAM_SENSOR_I2C_POLL) {
+			if (IS_ENABLED(CONFIG_MACH_ASUS_PICASSO)) {
+				rc = cam_ois_picasso_wait_ready(o_ctrl);
+				if (rc < 0)
+					return rc;
+			}
 			size = i2c_list->i2c_settings.size;
 			for (i = 0; i < size; i++) {
 				rc = camera_io_dev_poll(
