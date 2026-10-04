@@ -47,7 +47,6 @@ static struct device *g_psensor_dev;
 static void proximity_onoff(struct work_struct *work);
 static	DECLARE_WORK(proximity_onoff_work, proximity_onoff);
 static	int g_psensor_on_flag = false;
-bool g_Psensor_load_cal_status = false;
 
 static ssize_t  ATT_proximity_show_vendor(struct device *dev, 
 	struct device_attribute *attr, char *buf)
@@ -700,8 +699,6 @@ static ssize_t  ATT_proximity_store_load_calibration_data(struct device *dev,
 	
 	if ((kstrtoul(buf, 10, &load_calibration_data) < 0))
 		return -EINVAL;
-	
-	g_Psensor_load_cal_status = (bool)load_calibration_data;
 	
 	log("Proximity store load_calibration_data: %lu\n", load_calibration_data);
 	

@@ -129,10 +129,6 @@ static int proximity_check_minCT(void);
 /* Light sensor average array reset for psensor noise issue */
 static void light_sensor_reset_status(void);
 
-/* CFI failure, can't do this when write 1 to load_cal.
-Therefore, do this function at turn_onoff when load_cal = 1 */
-static int mproximity_store_load_calibration_data(void);
-
 /*Work Queue*/
 static 		DECLARE_WORK(ALSPS_ist_work, ALSPS_ist);
 static 		DECLARE_WORK(proximity_autok_work, proximity_autok);
@@ -1582,7 +1578,6 @@ static bool mproximity_show_switch_onoff(void)
 	return g_ps_data->Device_switch_on;
 }
 
-extern bool g_Psensor_load_cal_status;
 static int mproximity_store_switch_onoff(bool bOn)
 {
 #ifdef CONFIG_TMD2755_FLAG
@@ -1598,11 +1593,7 @@ static int mproximity_store_switch_onoff(bool bOn)
 		if (bOn == true)	{
 			/* Turn on Proxomity */
 			g_ps_data->HAL_switch_on = true;
-			if(g_Psensor_load_cal_status){
-				log("load_cal = %d, load calibration data", g_Psensor_load_cal_status);
-				mproximity_store_load_calibration_data();
-				g_Psensor_load_cal_status = 0;
-			}
+			/* Use the calibration cached by the explicit load_cal request. */
 			proximity_turn_on_check();
 		} else	{
 			/* Turn off Proxomity */
@@ -1836,6 +1827,9 @@ static int mproximity_store_selection(int selection)
 static int mproximity_store_load_calibration_data(void)
 {
 	int ret=0;
+
+	/* Keep factory I/O in the requesting task, not the enable workqueue. */
+	mutex_lock(&g_alsps_lock);
 	log("Enter");
 	ret = psensor_factory_read_inf(PSENSOR_INF_CALIBRATION_FILE);
 	if(ret >= 0) {
@@ -1897,6 +1891,7 @@ static int mproximity_store_load_calibration_data(void)
 #endif
 
 	log("Proximity load factory Calibration done!\n");
+	mutex_unlock(&g_alsps_lock);
 	return ret;
 }
 
