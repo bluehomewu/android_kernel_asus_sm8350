@@ -11,6 +11,7 @@
 #include "include/cam_csiphy_1_2_1_hwreg.h"
 #include "include/cam_csiphy_1_2_2_hwreg.h"
 #include "include/cam_csiphy_1_2_3_hwreg.h"
+#include "include/cam_csiphy_1_2_3_picasso_hwreg.h"
 #include "include/cam_csiphy_1_2_5_hwreg.h"
 #include "include/cam_csiphy_2_0_hwreg.h"
 #include "include/cam_csiphy_2_1_0_hwreg.h"
@@ -408,6 +409,16 @@ int32_t cam_csiphy_parse_dt_info(struct platform_device *pdev,
 		csiphy_dev->clk_lane = 0;
 		csiphy_dev->ctrl_reg->data_rates_settings_table =
 			&data_rate_delta_table_1_2_3;
+		if (IS_ENABLED(CONFIG_MACH_ASUS_PICASSO)) {
+			struct csiphy_ctrl_t *ctrl = csiphy_dev->ctrl_reg;
+
+			ctrl->csiphy_3ph_reg =
+				csiphy_3ph_v1_2_3_picasso_reg;
+			ctrl->csiphy_reg.csiphy_3ph_config_array_size =
+				PICASSO_CSIPHY_3PH_CONFIG_ARRAY_SIZE;
+			ctrl->data_rates_settings_table =
+				&data_rate_delta_table_1_2_3_picasso;
+		}
 	} else if (of_device_is_compatible(soc_info->dev->of_node,
 		"qcom,csiphy-v1.2.4")) {
 		csiphy_dev->ctrl_reg->csiphy_2ph_reg = csiphy_2ph_v1_2_3_reg;
