@@ -63,6 +63,10 @@ static int32_t cam_actuator_power_up(struct cam_actuator_ctrl_t *a_ctrl)
 		(struct cam_actuator_soc_private *)a_ctrl->soc_info.soc_private;
 	power_info = &soc_private->power_info;
 
+	/* Picasso's sensor/OIS owns the actuator rails and their sequencing. */
+	if (a_ctrl->is_picasso)
+		goto init_io;
+
 	if ((power_info->power_setting == NULL) &&
 		(power_info->power_down_setting == NULL)) {
 		CAM_INFO(CAM_ACTUATOR,
@@ -106,6 +110,7 @@ static int32_t cam_actuator_power_up(struct cam_actuator_ctrl_t *a_ctrl)
 		return rc;
 	}
 
+init_io:
 	rc = camera_io_init(&a_ctrl->io_master_info);
 	if (rc < 0) {
 		CAM_ERR(CAM_ACTUATOR, "cci init failed: rc: %d", rc);
@@ -114,7 +119,8 @@ static int32_t cam_actuator_power_up(struct cam_actuator_ctrl_t *a_ctrl)
 
 	return rc;
 cci_failure:
-	if (cam_sensor_util_power_down(power_info, soc_info))
+	if (!a_ctrl->is_picasso &&
+		cam_sensor_util_power_down(power_info, soc_info))
 		CAM_ERR(CAM_ACTUATOR, "Power down failure");
 
 	return rc;
@@ -124,13 +130,17 @@ static int32_t cam_actuator_power_down(struct cam_actuator_ctrl_t *a_ctrl)
 {
 	int32_t rc = 0;
 	struct cam_sensor_power_ctrl_t *power_info;
-	struct cam_hw_soc_info *soc_info = &a_ctrl->soc_info;
+	struct cam_hw_soc_info *soc_info;
 	struct cam_actuator_soc_private  *soc_private;
 
 	if (!a_ctrl) {
 		CAM_ERR(CAM_ACTUATOR, "failed: a_ctrl %pK", a_ctrl);
 		return -EINVAL;
 	}
+
+	/* Do not shut down rails owned by the sensor/OIS on this board. */
+	if (a_ctrl->is_picasso)
+		return camera_io_release(&a_ctrl->io_master_info);
 
 	soc_private =
 		(struct cam_actuator_soc_private *)a_ctrl->soc_info.soc_private;

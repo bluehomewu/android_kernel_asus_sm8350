@@ -1,0 +1,14 @@
+ASUS Picasso camera lens actuators
+=================================
+
+Picasso actuators use the Qualcomm camera actuator interface, but their
+power rails are owned and sequenced by the associated sensor or OIS. The
+actuator driver must only initialize/release its I2C interface, without
+constructing a separate regulator power sequence.
+
+Required property:
+- compatible: "asus,picasso-actuator", "qcom,actuator"
+
+The remaining properties follow the Qualcomm camera actuator interface.
+This compatible must not be used for actuators with independently managed
+power rails.

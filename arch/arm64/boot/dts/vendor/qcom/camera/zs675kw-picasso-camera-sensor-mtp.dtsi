@@ -134,7 +134,7 @@
 	actuator_rear_sr: qcom,actuator@0 { //for imx686 LC898249
 		cell-index = <0>;
 		reg = <0x72>;
-		compatible = "qcom,actuator";
+		compatible = "asus,picasso-actuator", "qcom,actuator";
 		cci-master = <0>;
 		qcom,i2c-freq-mode = <1>;
 		qcom,slave-id = <0x72 0xF0 0x42>;
@@ -159,7 +159,7 @@
 	actuator_rear1: qcom,actuator@2 {
 		cell-index = <2>;
 		reg = <0x72>;
-		compatible = "qcom,actuator";
+		compatible = "asus,picasso-actuator", "qcom,actuator";
 		cci-master = <1>;
 		qcom,i2c-freq-mode = <1>;
 		qcom,slave-id = <0x72 0xF0 0x42>;
@@ -355,7 +355,7 @@
 	actuator_rear2: qcom,actuator@3{
 		cell-index = <3>;
 		reg = <0x24>;
-		compatible = "qcom,actuator";
+		compatible = "asus,picasso-actuator", "qcom,actuator";
 		cci-master = <0>;
 	    qcom,i2c-freq-mode = <1>;
 	    qcom,slave-id = <0x48 0xF01A 0x405>;

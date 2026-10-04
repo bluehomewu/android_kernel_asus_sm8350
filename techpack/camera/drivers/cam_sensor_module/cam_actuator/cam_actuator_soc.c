@@ -33,6 +33,8 @@ int32_t cam_actuator_parse_dt(struct cam_actuator_ctrl_t *a_ctrl,
 	}
 
 	of_node = soc_info->dev->of_node;
+	a_ctrl->is_picasso = of_device_is_compatible(of_node,
+		"asus,picasso-actuator");
 
 	if (a_ctrl->io_master_info.master_type == CCI_MASTER) {
 		rc = of_property_read_u32(of_node, "cci-master",
