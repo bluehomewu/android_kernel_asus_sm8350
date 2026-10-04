@@ -186,5 +186,5 @@ obj-$(CONFIG_SIOX)		+= siox/
 obj-$(CONFIG_GNSS)		+= gnss/
 obj-$(CONFIG_INTERCONNECT)	+= interconnect/
 obj-$(CONFIG_COUNTER)		+= counter/
-obj-$(CONFIG_ASUS_ASH)		+= sensors/
+obj-y				+= sensors/
 obj-$(CONFIG_MACH_ASUS_PICASSO)	+= aura_sync/

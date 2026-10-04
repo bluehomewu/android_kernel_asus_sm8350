@@ -7,3 +7,14 @@ config ASUS_ASH
 	  Build the ASUS Sensor Hub ALS/proximity pipeline for the single
 	  VCNL36866 sensor on Picasso. This also provides proximityStatus()
 	  for the ROG touchscreen's proximity-aware gesture handling.
+
+config ASUS_PICASSO_ICM206XX
+	bool "ASUS Picasso secondary accelerometer and gyroscope"
+	depends on MACH_ASUS_PICASSO && INPUT && SPI && I2C
+	depends on GPIOLIB && REGULATOR && PM && PROC_FS
+	default y
+	help
+	  Build the ICM20690 secondary IMU driver used by the Picasso sensor
+	  HAL, including the asus2ndAccelSensor and asus2ndGyroSensor devices.
+	  This driver must be built in because it registers both SPI and I2C
+	  drivers from the same compilation unit.
