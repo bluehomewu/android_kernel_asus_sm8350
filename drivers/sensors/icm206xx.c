@@ -2883,11 +2883,12 @@ static struct input_dev* icm206xx_input_setup(struct icm_sensor *sensor, int sen
 }
 static int icm206xx_check_probe_status(struct device *dev)
 {
-	if (IS_ERR(regulator_get(dev, "icm206xx"))) {
-		return -EINVAL;
-	} else{
-		return 0;
-	}
+	struct regulator *supply = regulator_get(dev, "icm206xx");
+
+	if (IS_ERR(supply))
+		return PTR_ERR(supply);
+	regulator_put(supply);
+	return 0;
 }
 static int icm206xx_init_regulator(struct icm_sensor *sensor)
 {
@@ -3108,19 +3109,13 @@ static int icm_probe(struct i2c_client *a_client,
 {
 	struct icm_sensor *sensor;
 	struct icm_spi_data *pdata;
-	static int l_retryCount = 0;
 	int ret;
 
 	icm_dbgmsg("+\n");
-	if (icm206xx_check_probe_status(a_dev)) {
-		l_retryCount++;
-		icm_errmsg("icm206xx_check_probe_status failed, defer probe, count = %d\n", l_retryCount);
-		if (l_retryCount < 5) {
-			return -EPROBE_DEFER;
-		} else{
-			return -1;
-		}
-	}
+	/* The PM8008 supply may probe after this built-in SPI driver. */
+	ret = icm206xx_check_probe_status(a_dev);
+	if (ret)
+		return ret;
 	sensor = devm_kzalloc(a_dev, sizeof(struct icm_sensor),
 			GFP_KERNEL);
 	if (!sensor)
