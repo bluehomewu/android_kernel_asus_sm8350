@@ -15,3 +15,12 @@ config SENSORS_ICM206XX
 
 	  To compile this driver as a module, choose M here: the
 	  module will be called ICM206XX.
+
+config ASUS_PICASSO_ICM206XX
+	bool "ASUS Picasso secondary accelerometer and gyroscope"
+	depends on MACH_ASUS_PICASSO && INPUT && SPI && I2C
+	depends on GPIOLIB && REGULATOR && PM && PROC_FS
+	default y
+	help
+	  Build the ICM20690 secondary IMU interfaces used by the sensor HAL.
+	  This driver registers both SPI and I2C drivers and must be built in.
