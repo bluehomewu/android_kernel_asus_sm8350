@@ -162,12 +162,52 @@ static int32_t cam_actuator_power_down(struct cam_actuator_ctrl_t *a_ctrl)
 	return rc;
 }
 
+static void cam_actuator_picasso_encode_dac(
+	struct cam_actuator_ctrl_t *a_ctrl,
+	struct cam_sensor_i2c_reg_setting *setting)
+{
+	struct camera_io_master *io_master_info = &a_ctrl->io_master_info;
+	struct cam_sensor_i2c_reg_array *reg;
+	uint32_t i, dac;
+	uint16_t sid;
+
+	if (!a_ctrl->is_picasso || io_master_info->master_type != CCI_MASTER ||
+		!io_master_info->cci_client)
+		return;
+
+	/* CCI stores the 7-bit address, unlike the HAL's slave address. */
+	sid = io_master_info->cci_client->sid;
+	if (sid != 0x39 && sid != 0x24)
+		return;
+
+	for (i = 0; i < setting->size; i++) {
+		reg = &setting->reg_setting[i];
+		if (sid == 0x39 && reg->reg_addr == 0x84) {
+			dac = reg->reg_data & 0x0fff;
+			reg->reg_data = dac ? dac : 1;
+		} else if (sid == 0x24 && reg->reg_addr == 0xf01a) {
+			dac = reg->reg_data & 0x07ff;
+			if (dac == 0x07ff)
+				dac = 0x07fe;
+			else if (!dac)
+				dac = 1;
+			reg->reg_data = (1U << 16) | dac;
+		}
+	}
+}
+
 static int32_t cam_actuator_i2c_modes_util(
-	struct camera_io_master *io_master_info,
+	struct cam_actuator_ctrl_t *a_ctrl,
 	struct i2c_settings_list *i2c_list)
 {
+	struct camera_io_master *io_master_info = &a_ctrl->io_master_info;
 	int32_t rc = 0;
 	uint32_t i, size;
+
+	if (i2c_list->op_code == CAM_SENSOR_I2C_WRITE_RANDOM ||
+		i2c_list->op_code == CAM_SENSOR_I2C_WRITE_SEQ ||
+		i2c_list->op_code == CAM_SENSOR_I2C_WRITE_BURST)
+		cam_actuator_picasso_encode_dac(a_ctrl, &i2c_list->i2c_settings);
 
 	if (i2c_list->op_code == CAM_SENSOR_I2C_WRITE_RANDOM) {
 		rc = camera_io_dev_write(io_master_info,
@@ -273,9 +313,7 @@ int32_t cam_actuator_apply_settings(struct cam_actuator_ctrl_t *a_ctrl,
 
 	list_for_each_entry(i2c_list,
 		&(i2c_set->list_head), list) {
-		rc = cam_actuator_i2c_modes_util(
-			&(a_ctrl->io_master_info),
-			i2c_list);
+		rc = cam_actuator_i2c_modes_util(a_ctrl, i2c_list);
 		if (rc < 0) {
 			CAM_ERR(CAM_ACTUATOR,
 				"Failed to apply settings: %d",
