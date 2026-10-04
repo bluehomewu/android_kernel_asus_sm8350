@@ -2409,10 +2409,11 @@ int asus_thermal_side(void)
 	}
 
 	rc = iio_read_channel_processed(side_usb_temp_vadc_chan, &adc_temp);
-	if (rc < 0)
+	if (rc < 0) {
 		CHG_DBG_E("%s: iio_read_channel_processed fail\n", __func__);
-	else
-		CHG_DBG("%s: side_adc_temp = %d\n", __func__, adc_temp);
+		return rc;
+	}
+	CHG_DBG("%s: side_adc_temp = %d\n", __func__, adc_temp);
 
 	if (adc_temp > g_temp_THR && !usb_alert_side_flag) {
 		usb_alert_side_flag = 1;
@@ -2436,10 +2437,11 @@ int asus_thermal_btm(void)
 	}
 
 	rc = iio_read_channel_processed(btm_usb_temp_vadc_chan, &adc_temp);
-	if (rc < 0)
+	if (rc < 0) {
 		CHG_DBG_E("%s: iio_read_channel_processed fail\n", __func__);
-	else
-		CHG_DBG("%s: btm_adc_temp = %d\n", __func__, adc_temp);
+		return rc;
+	}
+	CHG_DBG("%s: btm_adc_temp = %d\n", __func__, adc_temp);
 
 	if (adc_temp > g_temp_THR && !usb_alert_btm_flag) {
 		usb_alert_btm_flag = 1;
