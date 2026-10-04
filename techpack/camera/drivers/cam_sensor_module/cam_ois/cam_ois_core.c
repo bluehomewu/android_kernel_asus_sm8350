@@ -828,6 +828,8 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 		break;
 	}
 	case CAM_OIS_PACKET_OPCODE_WRITE_TIME: {
+		int cleanup_rc;
+
 		if (o_ctrl->cam_ois_state < CAM_OIS_CONFIG) {
 			rc = -EINVAL;
 			CAM_ERR(CAM_OIS,
@@ -846,28 +848,28 @@ static int cam_ois_pkt_parse(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 			cmd_desc, 1, NULL);
 		if (rc < 0) {
 			CAM_ERR(CAM_OIS, "OIS pkt parsing failed: %d", rc);
-			goto end;
+			goto delete_time;
 		}
 
 		rc = cam_ois_update_time(i2c_reg_settings);
 		if (rc < 0) {
 			CAM_ERR(CAM_OIS, "Cannot update time");
-			goto end;
+			goto delete_time;
 		}
 
 		rc = cam_ois_apply_settings(o_ctrl, i2c_reg_settings);
-		if (rc < 0) {
-			CAM_ERR(CAM_OIS, "Cannot apply mode settings");
-			goto end;
-		}
+		if (rc < 0)
+			CAM_ERR(CAM_OIS, "Cannot apply time settings");
 
-		rc = delete_request(i2c_reg_settings);
-		if (rc < 0) {
+delete_time:
+		cleanup_rc = delete_request(i2c_reg_settings);
+		if (cleanup_rc < 0) {
 			CAM_ERR(CAM_OIS,
-				"Fail deleting Mode data: rc: %d", rc);
-			goto end;
+				"Fail deleting time data: rc: %d", cleanup_rc);
+			if (!rc)
+				rc = cleanup_rc;
 		}
-		break;
+		goto end;
 	}
 	default:
 		CAM_ERR(CAM_OIS, "Invalid Opcode: %d",
@@ -916,6 +918,9 @@ void cam_ois_shutdown(struct cam_ois_ctrl_t *o_ctrl)
 
 	if (o_ctrl->i2c_mode_data.is_settings_valid == 1)
 		delete_request(&o_ctrl->i2c_mode_data);
+
+	if (o_ctrl->i2c_time_data.is_settings_valid == 1)
+		delete_request(&o_ctrl->i2c_time_data);
 
 	if (o_ctrl->i2c_calib_data.is_settings_valid == 1)
 		delete_request(&o_ctrl->i2c_calib_data);
@@ -1043,6 +1048,9 @@ int cam_ois_driver_cmd(struct cam_ois_ctrl_t *o_ctrl, void *arg)
 
 		if (o_ctrl->i2c_mode_data.is_settings_valid == 1)
 			delete_request(&o_ctrl->i2c_mode_data);
+
+		if (o_ctrl->i2c_time_data.is_settings_valid == 1)
+			delete_request(&o_ctrl->i2c_time_data);
 
 		if (o_ctrl->i2c_calib_data.is_settings_valid == 1)
 			delete_request(&o_ctrl->i2c_calib_data);
