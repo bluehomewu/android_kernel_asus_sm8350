@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2015 ASUSTek Inc.
  *
  * This software is licensed under the terms of the GNU General Public
@@ -16,8 +16,8 @@
 #define __LINUX_IRSENSOR_H
 
 /**
- * @LIGHT_CALVALUE_200LUX_DEFAULT : 
- * @LIGHT_CALVALUE_1000LUX_DEFAULT : The default value of 200/1000 lux calibration, 
+ * @LIGHT_CALVALUE_200LUX_DEFAULT :
+ * @LIGHT_CALVALUE_1000LUX_DEFAULT : The default value of 200/1000 lux calibration,
  * which are independent of platforms and hardware.
  */
 #define LIGHT_CALVALUE_200LUX_DEFAULT	(200)
@@ -42,7 +42,7 @@
 #define LIGHT_MAX_LUX							(20000)
 
 /**
- * @LIGHT_TURNON_DELAY_TIME : After light sensor turn on 250ms, 
+ * @LIGHT_TURNON_DELAY_TIME : After light sensor turn on 250ms,
  * driver will cat first correct adc/lux value.
  */
 #define LIGHT_TURNON_DELAY_TIME			(10)
@@ -53,7 +53,7 @@
 #define LIGHT_POLLING_TIME			(500)
 
 /**
- * LIGHT_LOG_THRESHOLD : We print light sensor log 
+ * LIGHT_LOG_THRESHOLD : We print light sensor log
  * when the current lux value change over 100 lux from the last lux.
  */
 #define LIGHT_LOG_THRESHOLD					(100)
@@ -104,4 +104,3 @@
 #define CS_IT_100MS (1)
 #define CS_IT_50MS (0)
 #endif
-

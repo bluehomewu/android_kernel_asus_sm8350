@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014 ASUSTek Inc.
  *
  * This software is licensed under the terms of the GNU General Public
@@ -124,20 +124,20 @@ static int vcnl36866_proximity_hw_set_config(void)
 	ret = vcnl36866_light_hw_set_cs_standby_config(VCNL36866_CS_STANDBY);
 	if(ret < 0)
 		return ret;
-	
+
 	ret = vcnl36866_light_hw_set_cs_config(VCNL36866_CS_START);
 	if(ret < 0)
 		return ret;
-	
+
 	/*must disable p-sensor interrupt befrore IST create*//*disable PS func*/
 	ret = vcnl36866_proximity_hw_set_ps_disable();
 	if(ret < 0)
 		return ret;
-		
+
 	ret = vcnl36866_proximity_hw_set_ps_start(VCNL36866_PS_START);
 		if (ret < 0)
 			return ret;
-	
+
 	ret = vcnl36866_proximity_hw_set_force_mode(VCNL36866_PS_START2);
 		if (ret < 0)
 			return ret;
@@ -171,7 +171,7 @@ static int vcnl36866_proximity_hw_set_config(void)
 	ret = vcnl36866_proximity_hw_set_ps_mps(VCNL36866_PS_MPS_2);
 	if(ret < 0)
 		return ret;
-	
+
 	ret = vcnl36866_proximity_hw_set_ps_high_gain_mode(VCNL36866_PS_HG_ENABLE);
 	if(ret < 0)
 		return ret;
@@ -181,7 +181,7 @@ static int vcnl36866_proximity_hw_set_config(void)
 static int vcnl36866_light_hw_set_config(void)
 {
 	int ret = 0;
-	
+
 	ret = vcnl36866_light_hw_set_reserved(VCNL36866_CS_START2);
 	if(ret < 0)
 		return ret;
@@ -215,7 +215,7 @@ static int vcnl36866_light_hw_set_config(void)
 	if(ret < 0)
 		return ret;
 	vcnl36866_light_hw_set_ALS_START(0xC);
-	
+
 #endif
 	return 0;
 }
@@ -228,7 +228,7 @@ static int vcnl36866_ALSPS_hw_init(struct i2c_client* client)
 	int ret = 0;
 
 	g_i2c_client = client;
-	
+
 
 	/*Init regulator setting */
 	ret = vcnl36866_regulator_init();
@@ -239,14 +239,14 @@ static int vcnl36866_ALSPS_hw_init(struct i2c_client* client)
 	//vcnl36866_regulator_enable_1v8();
 	vcnl36866_regulator_enable();
 
-	/* Check the Device ID 
+	/* Check the Device ID
 	 * Do Not return when check ID
 	 */
 	ret = vcnl36866_ALSPS_hw_check_ID();
 	if(ret < 0){
 		return ret;
 	}
-	
+
 	/*Set Proximity config */
 	ret = vcnl36866_proximity_hw_set_config();
 	if(ret < 0){
@@ -255,7 +255,7 @@ static int vcnl36866_ALSPS_hw_init(struct i2c_client* client)
 
 	 /*Set Light Sensor config*/
 	ret = vcnl36866_light_hw_set_config();
-	if(ret < 0){		
+	if(ret < 0){
 		return ret;
 	}
 	return 0;
@@ -270,7 +270,7 @@ static int vcnl36866_ALSPS_hw_show_allreg(void)
 	int ret = 0;
 	uint8_t buf[2] = {0};
 	int reg = 0;
-	
+
 	for(reg = 0; reg < ARRAY_SIZE(vcnl36866_regs); reg++){
 		ret = i2c_read_reg_u16(g_i2c_client, vcnl36866_regs[reg].reg, buf);
 		if(ret < 0){
@@ -285,20 +285,20 @@ static int vcnl36866_ALSPS_hw_show_allreg(void)
 #endif
 
 static int vcnl36866_ALSPS_hw_set_register(uint8_t reg, int value)
-{	
+{
 	int ret = 0;
 	uint8_t buf[2] = {0};
 
 	buf[0] = value%256;
 	buf[1] = value/256;
-	
+
 	ret = i2c_write_reg_u16(g_i2c_client, reg, buf);
 	if(ret < 0){
 		err("Set Register Value ERROR. (REG:0x%x)\n", reg);
 		return ret;
 	}
 	log("Set Register Value (0x%X) = 0x%02x%02x\n", reg, buf[1], buf[0]);
-	
+
 	return 0;
 }
 
@@ -307,7 +307,7 @@ static int vcnl36866_ALSPS_hw_get_register(uint8_t reg)
 	int ret = 0;
 	uint8_t buf[2] = {0};
 	int value;
-	
+
 	ret = i2c_read_reg_u16(g_i2c_client, reg, buf);
 	if(ret < 0){
 		err("ALSPS Get Register Value ERROR. (REG:0x%X)\n", reg);
@@ -316,7 +316,7 @@ static int vcnl36866_ALSPS_hw_get_register(uint8_t reg)
 	log("Get Register Value (0x%x) = 0x%02x%02x\n", reg, buf[1], buf[0]);
 
 	value = (buf[1] << 8) + buf[0];
-	
+
 	return value;
 }
 
@@ -353,7 +353,7 @@ static int vcnl36866_ALSPS_hw_get_interrupt(void)
 	if(buf[1]&INT_FLAG_CS_IF_L || buf[1]&INT_FLAG_CS_IF_H){
 		check_flag =true;
 		alsps_int |= ALSPS_INT_ALS;
-	} 
+	}
 
 	/* Interrupt Error */
 	if(check_flag == false){
@@ -379,7 +379,7 @@ static int vcnl36866_regulator_init_1v8(void)
         err("Failed to get regulator vcc_psensor %d\n", ret);
         return ret;
     }
-    
+
     log("vcc_psensor regulator setting init");
     return ret;
 }
@@ -393,25 +393,25 @@ static int vcnl36866_regulator_enable_1v8(void)
         err("Failed to get regulator vcc_psensor_1v8 %d\n", ret);
         return ret;
     }
-    
+
     ret = regulator_set_voltage(reg_1v8, 1800000, 1800000);
     if (ret) {
         err("Failed to set voltage for vcc_psensor_1v8 reg %d\n", ret);
         return -1;
     }
-	
+
     ret = regulator_set_load(reg_1v8, 10000);
     if(ret < 0){
         err("Failed to set load for vcc_psensor_1v8 reg %d\n", ret);
         return ret;
     }
-    
+
     ret = regulator_enable(reg_1v8);
     if(ret){
         err("Failed to enable vcc_psensor_1v8 reg %d\n", ret);
         return -1;
     }
-    
+
     for(idx=0; idx<10; idx++){
         if(regulator_is_enabled(reg_1v8) > 0){
             dbg("vcc_psensor_1v8 regulator is enabled(idx=%d)", idx);
@@ -437,13 +437,13 @@ static int vcnl36866_regulator_disable_1v8(void)
         err("Failed to get regulator vcc_psensor_1v8 %d\n", ret);
         return ret;
     }
-    
+
     ret = regulator_set_voltage(reg_1v8, 0, 1800000);
     if (ret) {
         err("Failed to set voltage for vcc_psensor_1v8 reg %d\n", ret);
         return -1;
     }
-	
+
     ret = regulator_set_load(reg_1v8, 0);
     if(ret < 0){
         err("Failed to set load for vcc_psensor_1v8 reg %d\n", ret);
@@ -457,7 +457,7 @@ static int vcnl36866_regulator_disable_1v8(void)
 	    }
 		enable_1v8_count--;
 	}while(enable_1v8_count > 0);
-    
+
     log("Update vcc_psensor_1v8 to LPM_mode, count=%d", enable_1v8_count);
     return ret;
 }
@@ -474,13 +474,13 @@ static int vcnl36866_regulator_init(void)
         err("Failed to get regulator vcc_psensor %d\n", ret);
         return ret;
     }
-    
+
     ret = regulator_set_voltage(reg, 3300000, 3300000);
     if (ret) {
         err("Failed to set voltage for vcc_psensor reg %d\n", ret);
         return -1;
-   	}
-    
+	}
+
     log("vcc_psensor regulator setting init");
     return ret;
 }
@@ -493,13 +493,13 @@ static int vcnl36866_regulator_enable(void)
         err("Failed to get regulator vcc_psensor %d\n", ret);
         return ret;
     }
-	
+
     ret = regulator_set_load(reg, 10000);
     if(ret < 0){
         err("Failed to set load for vcc_psensor reg %d\n", ret);
         return ret;
     }
-    
+
     if(!enable_3v_count){
 		log("enable_3v_count %d, still disabled\n", enable_3v_count);
 		ret = regulator_enable(reg);
@@ -510,7 +510,7 @@ static int vcnl36866_regulator_enable(void)
 		enable_3v_count++;
 	}else
 		log("enable_3v_count %d, already enabled\n", enable_3v_count);
- 
+
     for(idx=0; idx<10; idx++){
         if(regulator_is_enabled(reg) > 0){
             dbg("vcc_psensor regulator is enabled(idx=%d)", idx);
@@ -538,7 +538,7 @@ static int vcnl36866_regulator_disable(void)
         err("Failed to get regulator vcc_psensor %d\n", ret);
         return ret;
     }
-    
+
     ret = regulator_set_load(reg, 0);
     if(ret < 0){
         err("Failed to set load for vcc_psensor reg %d\n", ret);
@@ -574,7 +574,7 @@ static int vcnl36866_proximity_hw_turn_onoff(bool bOn)
 			return ret;
 		/*Set Proximity config */
 		ret = vcnl36866_proximity_hw_set_config();
-		if(ret < 0){		
+		if(ret < 0){
 			return ret;
 		}
 	}else{
@@ -589,32 +589,32 @@ static int vcnl36866_proximity_hw_turn_onoff(bool bOn)
 	}
 	dbg("Proximity read PS_CONF1 (0x%02x%02x)\n", power_state_data_buf[1], power_state_data_buf[0]);
 	memcpy(power_state_data_origin, power_state_data_buf, sizeof(power_state_data_buf));
-	
+
 	if(bOn == 1){  /* power on */
 		power_state_data_buf[0] &= VCNL36866_PS_SD_MASK;
-		
+
 		ret = i2c_write_reg_u16(g_i2c_client, PS_CONF1, power_state_data_buf);
 		if(ret < 0){
 			err("Proximity power on ERROR (PS_CONF1)\n");
 			return ret;
 		}else{
-			log("Proximity power on (PS_CONF1 : 0x%x -> 0x%x)\n", 
+			log("Proximity power on (PS_CONF1 : 0x%x -> 0x%x)\n",
 				power_state_data_origin[0], power_state_data_buf[0]);
 		}
 	}else{/* power off */
 		power_state_data_buf[0] |= VCNL36866_PS_SD;
-		
+
 		ret = i2c_write_reg_u16(g_i2c_client, PS_CONF1, power_state_data_buf);
 		if(ret < 0){
 			err("Proximity power off ERROR (PS_CONF1)\n");
 			vcnl36866_regulator_enable();
 			return ret;
 		}else{
-			log("Proximity power off (PS_CONF1 : 0x%x -> 0x%x)\n", 
+			log("Proximity power off (PS_CONF1 : 0x%x -> 0x%x)\n",
 				power_state_data_origin[0], power_state_data_buf[0]);
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -632,22 +632,22 @@ static int vcnl36866_proximity_hw_interrupt_onoff(bool bOn)
 	}
 	dbg("Proximity read PS_CONF1 (0x%02x%02x) \n", power_state_data_buf[1], power_state_data_buf[0]);
 	memcpy(power_state_data_origin, power_state_data_buf, sizeof(power_state_data_buf));
-	
+
 	if(bOn == 1){ /* Enable INT */
 		power_state_data_buf[0] &= VCNL36866_PS_INT_MASK;
 		power_state_data_buf[0] |= VCNL36866_PS_INT_IN_AND_OUT;
-		
+
 		ret = i2c_write_reg_u16(g_i2c_client, PS_CONF1, power_state_data_buf);
 		if(ret < 0){
 			err("Proximity Enable INT ERROR (PS_CONF1)\n");
 			return ret;
 		}else{
-			log("Proximity Enable INT (PS_CONF1 : 0x%x -> 0x%x)\n", 
+			log("Proximity Enable INT (PS_CONF1 : 0x%x -> 0x%x)\n",
 				power_state_data_origin[0], power_state_data_buf[0]);
 		}
-	}else{ /* Disable INT */		
+	}else{ /* Disable INT */
 		power_state_data_buf[0] &= VCNL36866_PS_INT_MASK;
-		
+
 		ret = i2c_write_reg_u16(g_i2c_client, PS_CONF1, power_state_data_buf);
 		if(ret < 0){
 			err("Proximity Disable INT ERROR (PS_CONF1)\n");
@@ -657,7 +657,7 @@ static int vcnl36866_proximity_hw_interrupt_onoff(bool bOn)
 				power_state_data_origin[0], power_state_data_buf[0]);
 		}
 	}
-	
+
 	return 0;
 }
 
@@ -673,8 +673,8 @@ static int vcnl36866_proximity_hw_get_adc(void)
 		return ret;
 	}
 	adc = (adc_buf[1] << 8) + adc_buf[0];
-	dbg("Proximity get adc : 0x%02x%02x\n", adc_buf[1], adc_buf[0]); 
-	
+	dbg("Proximity get adc : 0x%02x%02x\n", adc_buf[1], adc_buf[0]);
+
 	return adc;
 }
 
@@ -682,15 +682,15 @@ static int vcnl36866_proximity_hw_set_hi_threshold(int hi_threshold)
 {
 	int ret = 0;
 	uint8_t data_buf[2] = {0, 0};
-	
+
 	/*Set Proximity High Threshold*/
 	data_buf[0] = hi_threshold%256;
 	data_buf[1] = hi_threshold/256;
-	
+
 	ret = i2c_write_reg_u16(g_i2c_client, PS_THDH, data_buf);
 	if(ret < 0){
 		err("Proximity write High Threshold ERROR. (PS_THDH : 0x%02x%02x)\n", data_buf[1], data_buf[0]);
-	    	return ret;
+		return ret;
 	}else{
 	    log("Proximity write High Threshold (PS_THDH : 0x%02x%02x)\n", data_buf[1], data_buf[0]);
 	}
@@ -706,7 +706,7 @@ static int vcnl36866_proximity_hw_set_lo_threshold(int low_threshold)
 	/*Set Proximity Low Threshold*/
 	data_buf[0] = low_threshold%256;
 	data_buf[1] = low_threshold/256;
-	
+
 	ret = i2c_write_reg_u16(g_i2c_client, PS_THDL, data_buf);
 	if(ret < 0){
 		err("Proximity write Low Threshold ERROR. (PS_THDL : 0x%02x%02x)\n", data_buf[1], data_buf[0]);
@@ -736,7 +736,7 @@ static int vcnl36866_light_hw_set_cs_standby_config(uint8_t cs_standby_conf_reg)
 
 	data_buf[0] &= VCNL36866_CS_STANDBY_MASK;
 	data_buf[0] |= cs_standby_conf_reg;
-		
+
 	ret = i2c_write_reg_u16(g_i2c_client, CS_CONF1, data_buf);
 	if(ret < 0){
 		err("Proximity set CS standby (CS_CONF1) ERROR\n");
@@ -831,7 +831,7 @@ static int vcnl36866_proximity_hw_set_led_current(uint8_t led_current_reg)
 	led_current_reg <<= VCNL36866_VCSEL_I_SHIFT;
 	data_buf[1] &= VCNL36866_VCSEL_I_MASK;
 	data_buf[1] |= led_current_reg;
-		
+
 	ret = i2c_write_reg_u16(g_i2c_client, PS_CONF4, data_buf);
 	if(ret < 0){
 		err("Proximity set LED Current (PS_CONF4) ERROR\n");
@@ -868,7 +868,7 @@ static int vcnl36866_proximity_hw_set_led_duty_ratio(uint8_t led_duty_ratio_reg)
 		err("Proximity set LED Duty Ratio (PS_CONF1) ERROR\n");
 		return ret;
 	}else{
-		log("Proximity set LED Duty Ratio (PS_CONF1 : 0x%x -> 0x%x)\n", 
+		log("Proximity set LED Duty Ratio (PS_CONF1 : 0x%x -> 0x%x)\n",
 			data_origin[0], data_buf[0]);
 	}
 
@@ -899,7 +899,7 @@ static int vcnl36866_proximity_hw_set_persistence(uint8_t persistence)
 		err("Proximity set Persistence (PS_CONF1) ERROR\n");
 		return ret;
 	}else{
-		log("Proximity set Persistence (PS_CONF1 : 0x%x -> 0x%x)\n", 
+		log("Proximity set Persistence (PS_CONF1 : 0x%x -> 0x%x)\n",
 			data_origin[0], data_buf[0]);
 	}
 
@@ -930,7 +930,7 @@ static int vcnl36866_proximity_hw_set_integration(uint8_t integration)
 		err("Proximity set Integration (PS_CONF2) ERROR\n");
 		return ret;
 	}else{
-		log("Proximity set Integration (PS_CONF2 : 0x%x -> 0x%x)\n", 
+		log("Proximity set Integration (PS_CONF2 : 0x%x -> 0x%x)\n",
 			data_origin[1], data_buf[1]);
 	}
 
@@ -961,7 +961,7 @@ static int vcnl36866_proximity_hw_set_ps_mps(uint8_t mps)
 		err("Proximity set PS Multi-Pulse setting (PS_CONF2) ERROR\n");
 		return ret;
 	}else{
-		log("Proximity set PS Multi-Pulse setting (PS_CONF2 : 0x%x -> 0x%x)\n", 
+		log("Proximity set PS Multi-Pulse setting (PS_CONF2 : 0x%x -> 0x%x)\n",
 			data_origin[1], data_buf[1]);
 	}
 
@@ -992,7 +992,7 @@ static int vcnl36866_proximity_hw_set_ps_high_gain_mode(uint8_t enable)
 		err("Proximity set PS high gain mode (PS_CONF2) ERROR\n");
 		return ret;
 	}else{
-		log("Proximity set PS high gain mode (PS_CONF2 : 0x%x -> 0x%x)\n", 
+		log("Proximity set PS high gain mode (PS_CONF2 : 0x%x -> 0x%x)\n",
 			data_origin[1], data_buf[1]);
 	}
 
@@ -1013,7 +1013,7 @@ static int vcnl36866_proximity_hw_set_ps_disable(void)
 	}
 	dbg("Proximity read PS_CONF1 (0x%02x%02x)\n", power_state_data_buf[1], power_state_data_buf[0]);
 	memcpy(power_state_data_origin, power_state_data_buf, sizeof(power_state_data_buf));
-		
+
 	power_state_data_buf[0] |= VCNL36866_PS_SD;
 	power_state_data_buf[0] &= VCNL36866_PS_INT_MASK;
 	ret = i2c_write_reg_u16(g_i2c_client, PS_CONF1, power_state_data_buf);
@@ -1021,7 +1021,7 @@ static int vcnl36866_proximity_hw_set_ps_disable(void)
 		err("Disable Proximity interrupt befrore IST create ERROR (PS_CONF1)\n");
 		return ret;
 	}else{
-		log("Disable Proximity interrupt befrore IST create (PS_CONF1: 0x%x -> 0x%x)\n", 
+		log("Disable Proximity interrupt befrore IST create (PS_CONF1: 0x%x -> 0x%x)\n",
 			power_state_data_origin[0], power_state_data_buf[0]);
 	}
 	return 0;
@@ -1051,7 +1051,7 @@ static int vcnl36866_proximity_hw_set_ps_start(uint8_t ps_start)
 		err("Proximity set PS start (PS_CONF2) ERROR\n");
 		return ret;
 	}else{
-		log("Proximity set PS start (PS_CONF2 : 0x%x -> 0x%x)\n", 
+		log("Proximity set PS start (PS_CONF2 : 0x%x -> 0x%x)\n",
 			data_origin[1], data_buf[1]);
 	}
 
@@ -1071,7 +1071,7 @@ static int vcnl36866_proximity_hw_set_autoK(int autok)
 		return ret;
 	}
 	hi_threshold = (data_buf[1] << 8) + data_buf[0];
-	dbg("Proximity get High Threshold : 0x%02x%02x\n", data_buf[1], data_buf[0]); 	
+	dbg("Proximity get High Threshold : 0x%02x%02x\n", data_buf[1], data_buf[0]);
 	vcnl36866_proximity_hw_set_hi_threshold(hi_threshold + autok);
 
 	/*Get Low threshold value and adjust*/
@@ -1081,7 +1081,7 @@ static int vcnl36866_proximity_hw_set_autoK(int autok)
 		return ret;
 	}
 	low_threshold = (data_buf[1] << 8) + data_buf[0];
-	dbg("Proximity get Low Threshold : 0x%02x%02x\n", data_buf[1], data_buf[0]); 
+	dbg("Proximity get Low Threshold : 0x%02x%02x\n", data_buf[1], data_buf[0]);
 	vcnl36866_proximity_hw_set_lo_threshold(low_threshold + autok);
 
 	return 0;
@@ -1120,7 +1120,7 @@ static int vcnl36866_proximity_hw_set_period(int period)
 /***********************/
 static int vcnl36866_light_hw_turn_onoff(bool bOn)
 {
-	int ret = 0;	
+	int ret = 0;
 	uint8_t power_state_data_buf[2] = {0, 0};
 	uint8_t power_state_data_origin[2] = {0, 0};
 
@@ -1133,7 +1133,7 @@ static int vcnl36866_light_hw_turn_onoff(bool bOn)
 		ret = vcnl36866_light_hw_set_config();
 		if(ret < 0)
 			return ret;
-		
+
 		vcnl36866_light_hw_set_ALS_START(0xC);
 		ret = vcnl36866_light_hw_set_cs_standby_config(VCNL36866_CS_STANDBY);
 		if(ret < 0)
@@ -1141,7 +1141,7 @@ static int vcnl36866_light_hw_turn_onoff(bool bOn)
 		ret = vcnl36866_light_hw_set_cs_config(VCNL36866_CS_START);
 		if(ret < 0)
 			return ret;
-	} 
+	}
 	/* read power status */
 	ret = i2c_read_reg_u16(g_i2c_client, CS_CONF1, power_state_data_buf);
 	if(ret < 0){
@@ -1149,7 +1149,7 @@ static int vcnl36866_light_hw_turn_onoff(bool bOn)
 		return ret;
 	}
 	dbg("Light Sensor read CS_CONF1 (0x%02x%02x)\n", power_state_data_buf[1], power_state_data_buf[0]);
-	
+
 	memcpy(power_state_data_origin, power_state_data_buf, sizeof(power_state_data_buf));
 
 	if(bOn == 1){
@@ -1160,18 +1160,18 @@ static int vcnl36866_light_hw_turn_onoff(bool bOn)
 			err("Light Sensor power on ERROR (CS_CONF1)\n");
 			return ret;
 		} else {
-			log("Light Sensor power on (CS_CONF1 : 0x%x -> 0x%x)\n", 
+			log("Light Sensor power on (CS_CONF1 : 0x%x -> 0x%x)\n",
 				power_state_data_origin[0], power_state_data_buf[0]);
-		}		
+		}
 	}else{ /* power off */
 		power_state_data_buf[0] |= VCNL36866_CS_SD;
-		
+
 		ret = i2c_write_reg_u16(g_i2c_client, CS_CONF1, power_state_data_buf);
 		if(ret < 0){
 			err("Light Sensor power off ERROR (CS_CONF1) \n");
 			return ret;
 		}else{
-			log("Light Sensor power off (CS_CONF1 : 0x%x -> 0x%x)\n", 
+			log("Light Sensor power off (CS_CONF1 : 0x%x -> 0x%x)\n",
 				power_state_data_origin[0], power_state_data_buf[0]);
 		}
 	}
@@ -1192,7 +1192,7 @@ static int vcnl36866_light_hw_interrupt_onoff(bool bOn)
 		return ret;
 	}
 	dbg("Light Sensor read CS_CONF2 (0x%02x%02x)\n", power_state_data_buf[1], power_state_data_buf[0]);
-	
+
 	memcpy(power_state_data_origin, power_state_data_buf, sizeof(power_state_data_buf));
 
 	if(bOn == 1){ /* Enable INT */
@@ -1203,12 +1203,12 @@ static int vcnl36866_light_hw_interrupt_onoff(bool bOn)
 			err("Light Sensor Enable INT ERROR (CS_CONF2)\n");
 			return ret;
 		}else{
-			log("Light Sensor Enable INT (CS_CONF2 : 0x%x -> 0x%x)\n", 
+			log("Light Sensor Enable INT (CS_CONF2 : 0x%x -> 0x%x)\n",
 				power_state_data_origin[1], power_state_data_buf[1]);
-		}		
-	}else{ /* Disable INT */	
+		}
+	}else{ /* Disable INT */
 		power_state_data_buf[1] &= VCNL36866_CS_INT_MASK;
-		
+
 		ret = i2c_write_reg_u16(g_i2c_client, CS_CONF2, power_state_data_buf);
 		if(ret < 0){
 			err("Light Sensor Disable INT ERROR (CS_CONF2)\n");
@@ -1248,7 +1248,7 @@ static int vcnl36866_light_hw_set_hi_threshold(int hi_threshold)
 	/*Set Light Sensor High Threshold*/
 	data_buf[0] = hi_threshold%256;
 	data_buf[1] = hi_threshold/256;
-	
+
 	ret = i2c_write_reg_u16(g_i2c_client, CS_THDH, data_buf);
 	if(ret < 0){
 		err("[i2c] Light Sensor write High Threshold ERROR. (CS_THDH : 0x%02x%02x)\n", data_buf[1], data_buf[0]);
@@ -1268,7 +1268,7 @@ static int vcnl36866_light_hw_set_lo_threshold(int low_threshold)
 	/*Set Light Sensor Low Threshold*/
 	data_buf[0] = low_threshold%256;
 	data_buf[1] = low_threshold/256;
-	
+
 	ret = i2c_write_reg_u16(g_i2c_client, CS_THDL, data_buf);
 	if(ret < 0){
 		err("[i2c] Light Sensor write Low Threshold ERROR. (CS_THDL : 0x%02x%02x)\n", data_buf[1], data_buf[0]);
@@ -1305,7 +1305,7 @@ static int vcnl36866LighHwSetReservedLow(uint8_t cs_rsv)
 		err("Light Sensor set Reserve (CS_CONF1) ERROR\n");
 		return ret;
 	}else{
-		log("Light Sensor set Reserve (CS_CONF1 : 0x%x -> 0x%x)\n", 
+		log("Light Sensor set Reserve (CS_CONF1 : 0x%x -> 0x%x)\n",
 			data_origin[1], data_buf[1]);
 	}
 
@@ -1380,7 +1380,7 @@ static int vcnl36866_light_hw_set_ALS_START(uint8_t value)
 	int ret = 0;
 	uint8_t data_origin[2] = {0, 0};
 	uint8_t data_buf[2] = {0, 0};
-	
+
 	ret = i2c_read_reg_u16(g_i2c_client, CS_CONF1, data_buf);
 	if(ret < 0){
 		err("Light Sensor read CS_CONF1 ERROR\n");
@@ -1388,7 +1388,7 @@ static int vcnl36866_light_hw_set_ALS_START(uint8_t value)
 	}
 	//log("CCCCLAY Light Sensor read CS_CONF1 (0x%02x%02x),%x, %x\n", data_buf[1], data_buf[0], value, value << 5);
 	memcpy(data_origin, data_buf, sizeof(data_buf));
-	
+
 	//value = (value << 4);
 	data_buf[0] = data_buf[0] | 0xC0;
 	//log("Light sensor 0x%02x\n",data_buf[0]);
@@ -1400,7 +1400,7 @@ static int vcnl36866_light_hw_set_ALS_START(uint8_t value)
 		log("Light Sensor set ALS_START (CS_CONF1 : 0x%x -> 0x%x)\n",
 			data_origin[0], data_buf[0]);
 	}
-	return 0;	
+	return 0;
 }
 #if defined LONG_LENGTH_LOGN_IT_NON_PERF || defined LONG_LENGTH_LOGN_IT_PERF
 static int vcnl36866_light_hw_set_ALS_HS(uint8_t value)
@@ -1417,10 +1417,10 @@ static int vcnl36866_light_hw_set_ALS_HS(uint8_t value)
 	}
 	log("Light Sensor read CS_CONF2 (0x%02x%02x),%x, %x\n", data_buf[1], data_buf[0], value, value << 5);
 	memcpy(data_origin, data_buf, sizeof(data_buf));
-	
+
 	value = (value << 4);
 	data_buf[1] = data_buf[1] | value;
-	
+
 	ret = i2c_write_reg_u16(g_i2c_client, CS_CONF2, data_buf);
 	if(ret < 0){
 		err("Light Sensor set ALS_HD (CS_CONF2) ERROR\n");
@@ -1447,10 +1447,10 @@ static int vcnl36866_light_hw_set_ALS_HD(uint8_t value)
 	}
 	log("Light Sensor read CS_CONF2 (0x%02x%02x),%x, %x\n", data_buf[1], data_buf[0], value, value << 5);
 	memcpy(data_origin, data_buf, sizeof(data_buf));
-	
+
 	value = (value << 6);
 	data_buf[1] = data_buf[1] | value;
-	
+
 	ret = i2c_write_reg_u16(g_i2c_client, CS_CONF2, data_buf);
 	if(ret < 0){
 		err("Light Sensor set ALS_HD (CS_CONF2) ERROR\n");
@@ -1519,7 +1519,7 @@ static int vcnl36866_light_hw_dynamic_check(int lux)
 	switch (ALS_dynamic_status){
 		case 0:
 		case 1:
-			if(vcnl36866_dynamic_array[ALS_dynamic_status].IT_TIME == 
+			if(vcnl36866_dynamic_array[ALS_dynamic_status].IT_TIME ==
 				vcnl36866_dynamic_array[(ALS_dynamic_status+1)].IT_TIME){
 				/* when use same it time, return */
 				return 0;
@@ -1528,20 +1528,20 @@ static int vcnl36866_light_hw_dynamic_check(int lux)
 					ALS_dynamic_status = 2;
 				else
 					ALS_dynamic_status = 1;
-				
-				log("update IT time, it=%d, status=%d", 
+
+				log("update IT time, it=%d, status=%d",
 					vcnl36866_dynamic_array[ALS_dynamic_status].IT_TIME,
 					ALS_dynamic_status);
 				return 1;
 			}
 			break;
 		case 2:
-			if(vcnl36866_dynamic_array[ALS_dynamic_status].IT_TIME == 
+			if(vcnl36866_dynamic_array[ALS_dynamic_status].IT_TIME ==
 				vcnl36866_dynamic_array[(ALS_dynamic_status-1)].IT_TIME){
 				return 0;
 			}else{
 				ALS_dynamic_status--;
-				log("update IT time, it=%d, status=%d", 
+				log("update IT time, it=%d, status=%d",
 					vcnl36866_dynamic_array[ALS_dynamic_status].IT_TIME,
 					ALS_dynamic_status);
 				return 1;
@@ -1567,7 +1567,7 @@ static u64 vcnl36866_light_hw_get_evt_skip_time_ns(void)
 }
 
 static void vcnl36866_light_hw_reset_ALS_dynamic_status(void)
-{	
+{
 	log("Light Sensor: reset current status %d to default", ALS_dynamic_status);
 	ALS_dynamic_status = 0;
 }
@@ -1578,7 +1578,7 @@ static struct psensor_hw psensor_hw_vcnl36866 = {
 	.proximity_crosstalk_default = VCNL36866_PROXIMITY_INF_DEFAULT,
 	.proximity_autok_min = VCNL36866_PROXIMITY_AUTOK_MIN,
 	.proximity_autok_max = VCNL36866_PROXIMITY_AUTOK_MAX,
-	
+
 	.proximity_hw_turn_onoff = vcnl36866_proximity_hw_turn_onoff,
 	.proximity_hw_interrupt_onoff = vcnl36866_proximity_hw_interrupt_onoff,
 	.proximity_hw_get_adc = vcnl36866_proximity_hw_get_adc,
@@ -1591,7 +1591,7 @@ static struct psensor_hw psensor_hw_vcnl36866 = {
 static struct lsensor_hw lsensor_hw_vcnl36866 = {
 	.light_max_threshold = VCNL36866_LIGHT_MAX_THRESHOLD,
 	.light_calibration_default = VCNL36866_LIGHT_CALIBRATION_DEFAULT,
-		
+
 	.light_hw_turn_onoff = vcnl36866_light_hw_turn_onoff,
 	.light_hw_interrupt_onoff = vcnl36866_light_hw_interrupt_onoff,
 	.light_hw_get_adc = vcnl36866_light_hw_get_adc,
@@ -1606,7 +1606,7 @@ static struct lsensor_hw lsensor_hw_vcnl36866 = {
 	.light_hw_reset_ALS_dynamic_status = vcnl36866_light_hw_reset_ALS_dynamic_status
 };
 
-static struct ALSPS_hw ALSPS_hw_vcnl36866 = {	
+static struct ALSPS_hw ALSPS_hw_vcnl36866 = {
 	.vendor = "Capella",
 	.module_number = "vcnl36866",
 

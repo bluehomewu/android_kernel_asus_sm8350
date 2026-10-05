@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2015 ASUSTek Inc.
  *
  * This software is licensed under the terms of the GNU General Public
@@ -26,7 +26,7 @@
 #define ALSPS_QCOM_NAME 	"qcom,alsps-gpio"
 #define ALSPS_IRQ_NAME		"ALSPS_SENSOR_IRQ"
 #define ALSPS_INT_NAME		"ALSPS_SENSOR_INT"
- 
+
 static int ALSPS_SENSOR_GPIO;
 static ALSPSsensor_GPIO * mALSPSsensor_GPIO;
 
@@ -66,7 +66,7 @@ static void set_pinctrl(struct i2c_client *client)
 	int ret;
 	struct pinctrl *key_pinctrl;
 	struct pinctrl_state *set_state;
-	
+
 	key_pinctrl = devm_pinctrl_get(&client->dev);
 	set_state = pinctrl_lookup_state(key_pinctrl, GPIO_LOOKUP_STATE);
 	ret = pinctrl_select_state(key_pinctrl, set_state);
@@ -92,7 +92,7 @@ static int init_irq (void)
 		log("gpio_to_irq IRQ %d successed on GPIO:%d\n", irq, ALSPS_SENSOR_GPIO);
 	}
 
-	/*Request IRQ*/	
+	/*Request IRQ*/
 	#ifdef GPIO_INTEL
 	ret = request_irq(irq,ALSPSsensor_irq_handler, IRQF_TRIGGER_LOW, ALSPS_INT_NAME, NULL);
 	#endif
@@ -109,7 +109,7 @@ static int init_irq (void)
 	if (ret < 0) {
 		err("%s: 1request_irq/request_threaded_irq ERROR(%d).\n", __FUNCTION__, ret);
 	}
-	
+
 	ret = devm_request_threaded_irq(&g_i2c_client->dev, g_i2c_client->irq, NULL, &ALSPSsensor_irq_handler, default_irq_trigger | IRQF_SHARED | IRQF_ONESHOT,
 					dev_name(&g_i2c_client->dev), NULL);
 	if (ret) {
@@ -123,7 +123,7 @@ static int init_irq (void)
 	if (ret < 0) {
 		err("%s: request_irq/request_threaded_irq ERROR(%d).\n", __FUNCTION__, ret);
 		return ret;
-	}else {		
+	}else {
 		dbg("Disable irq !! \n");
 		disable_irq(irq);
 	}
@@ -145,13 +145,13 @@ int ALSPSsensor_gpio_register(struct i2c_client *client, ALSPSsensor_GPIO *gpio_
 	g_i2c_client = client;
 
 	mALSPSsensor_GPIO = gpio_ist;
-	
+
 	/* GPIO */
 	#ifdef GPIO_INTEL
 	log("Intel GPIO \n");
 	ALSPS_SENSOR_GPIO = get_gpio_by_name(ALSPS_INTEL_NAME);
 	#endif
-	
+
 	#ifdef GPIO_QCOM
 #ifdef CONFIG_TMD2755_FLAG
 #else
@@ -167,8 +167,8 @@ int ALSPSsensor_gpio_register(struct i2c_client *client, ALSPSsensor_GPIO *gpio_
 //	ALSPS_SENSOR_GPIO = of_get_named_gpio_flags(client->dev.of_node, ALSPS_QCOM_NAME, 0, NULL);
 	ALSPS_SENSOR_GPIO = of_get_named_gpio(client->dev.of_node, ALSPS_QCOM_NAME, 0);
 	#endif
-		
-	log("[GPIO] GPIO =%d(%d)\n", ALSPS_SENSOR_GPIO, gpio_get_value(ALSPS_SENSOR_GPIO));	
+
+	log("[GPIO] GPIO =%d(%d)\n", ALSPS_SENSOR_GPIO, gpio_get_value(ALSPS_SENSOR_GPIO));
 	/* GPIO Request */
 	ret = gpio_request(ALSPS_SENSOR_GPIO, ALSPS_IRQ_NAME);
 	if (ret) {

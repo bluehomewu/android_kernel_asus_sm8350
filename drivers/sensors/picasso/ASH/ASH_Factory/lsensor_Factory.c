@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2015 ASUSTek Inc.
  *
  * This software is licensed under the terms of the GNU General Public
@@ -45,7 +45,7 @@ int lsensor_factory_read_200lux(const char *str)
 	loff_t pos_lsts = 0;
 	char buf[16];
 	int cal_val = 0, readlen = 0;
-	mm_segment_t old_fs;	
+	mm_segment_t old_fs;
 
 	fp = filp_open(str, O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
 	if (IS_ERR_OR_NULL(fp)) {
@@ -70,14 +70,14 @@ int lsensor_factory_read_200lux(const char *str)
 	set_fs(old_fs);
 	filp_close(fp, NULL);
 
-	sscanf(buf, "%d", &cal_val);	
+	sscanf(buf, "%d", &cal_val);
 	if(cal_val < 0) {
 		err("Light Sensor read 200lux Calibration is FAIL. (%d)\n", cal_val);
 		return -EINVAL;	/*Invalid argument*/
 	} else {
 		dbg("Light Sensor read 200lux Calibration: Cal: %d\n", cal_val);
-	}	
-	
+	}
+
 	return cal_val;
 }
 EXPORT_SYMBOL(lsensor_factory_read_200lux);
@@ -87,10 +87,10 @@ bool lsensor_factory_write_200lux(int calvalue, const char *str)
 	struct file *fp = NULL;
 	mm_segment_t old_fs;
 	loff_t pos_lsts = 0;
-	char buf[8];	
+	char buf[8];
 
 	sprintf(buf, "%d", calvalue);
-	
+
 	fp = filp_open(str, O_RDWR | O_CREAT | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
 	if (IS_ERR_OR_NULL(fp)) {
 		err("Light Sensor write 200lux Calibration open (%s) fail\n", str);
@@ -103,7 +103,7 @@ bool lsensor_factory_write_200lux(int calvalue, const char *str)
 
 	if (fp->f_op != NULL) {
 		pos_lsts = 0;
-		vfs_write(fp, buf, strlen(buf), &fp->f_pos);				
+		vfs_write(fp, buf, strlen(buf), &fp->f_pos);
 	} else {
 		err("Light Sensor write 200lux Calibration strlen: f_op=NULL or op->write=NULL\n");
 		set_fs(old_fs);
@@ -112,9 +112,9 @@ bool lsensor_factory_write_200lux(int calvalue, const char *str)
 	}
 	set_fs(old_fs);
 	filp_close(fp, NULL);
-	
+
 	log("Light Sensor write 200lux Calibration : %s\n", buf);
-	
+
 	return true;
 }
 EXPORT_SYMBOL(lsensor_factory_write_200lux);
@@ -125,7 +125,7 @@ int lsensor_factory_read_1000lux(const char *str)
 	loff_t pos_lsts = 0;
 	char buf[16];
 	int cal_val = 0, readlen = 0;
-	mm_segment_t old_fs;	
+	mm_segment_t old_fs;
 
 	fp = filp_open(str, O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
 	if (IS_ERR_OR_NULL(fp)) {
@@ -150,14 +150,14 @@ int lsensor_factory_read_1000lux(const char *str)
 	set_fs(old_fs);
 	filp_close(fp, NULL);
 
-	sscanf(buf, "%d", &cal_val);	
+	sscanf(buf, "%d", &cal_val);
 	if(cal_val < 0) {
 		err("Light Sensor read 1000lux Calibration is FAIL. (%d)\n", cal_val);
 		return -EINVAL;	/*Invalid argument*/
 	} else {
 		dbg("Light Sensor read 1000lux Calibration: Cal: %d\n", cal_val);
-	}	
-	
+	}
+
 	return cal_val;
 }
 EXPORT_SYMBOL(lsensor_factory_read_1000lux);
@@ -167,10 +167,10 @@ bool lsensor_factory_write_1000lux(int calvalue, const char *str)
 	struct file *fp = NULL;
 	mm_segment_t old_fs;
 	loff_t pos_lsts = 0;
-	char buf[8];	
+	char buf[8];
 
 	sprintf(buf, "%d", calvalue);
-	
+
 	fp = filp_open(str, O_RDWR | O_CREAT | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
 	if (IS_ERR_OR_NULL(fp)) {
 		err("Light Sensor write 1000lux Calibration open (%s) fail\n", str);
@@ -183,7 +183,7 @@ bool lsensor_factory_write_1000lux(int calvalue, const char *str)
 
 	if (fp->f_op != NULL) {
 		pos_lsts = 0;
-		vfs_write(fp, buf, strlen(buf), &fp->f_pos);				
+		vfs_write(fp, buf, strlen(buf), &fp->f_pos);
 	} else {
 		err("Light Sensor write 1000lux Calibration strlen: f_op=NULL or op->write=NULL\n");
 		set_fs(old_fs);
@@ -192,9 +192,9 @@ bool lsensor_factory_write_1000lux(int calvalue, const char *str)
 	}
 	set_fs(old_fs);
 	filp_close(fp, NULL);
-	
+
 	log("Light Sensor write 1000lux Calibration : %s\n", buf);
-	
+
 	return true;
 }
 EXPORT_SYMBOL(lsensor_factory_write_1000lux);
@@ -205,7 +205,7 @@ int lsensor_factory_read(const char *str)
 	loff_t pos_lsts = 0;
 	char buf[16];
 	int cal_val = 0, readlen = 0;
-	mm_segment_t old_fs;	
+	mm_segment_t old_fs;
 
 	fp = filp_open(str, O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
 	if (IS_ERR_OR_NULL(fp)) {
@@ -230,14 +230,14 @@ int lsensor_factory_read(const char *str)
 	set_fs(old_fs);
 	filp_close(fp, NULL);
 
-	sscanf(buf, "%d", &cal_val);	
+	sscanf(buf, "%d", &cal_val);
 	if(cal_val < 0) {
 		err("Light Sensor read Calibration is FAIL. (%d)\n", cal_val);
 		return -EINVAL;	/*Invalid argument*/
 	} else {
 		dbg("Light Sensor read Calibration: Cal: %d\n", cal_val);
-	}	
-	
+	}
+
 	return cal_val;
 }
 EXPORT_SYMBOL(lsensor_factory_read);
@@ -247,10 +247,10 @@ bool lsensor_factory_write(int calvalue, const char *str)
 	struct file *fp = NULL;
 	mm_segment_t old_fs;
 	loff_t pos_lsts = 0;
-	char buf[8];	
+	char buf[8];
 
 	sprintf(buf, "%d", calvalue);
-	
+
 	fp = filp_open(str, O_RDWR | O_CREAT | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
 	if (IS_ERR_OR_NULL(fp)) {
 		err("Light Sensor write Calibration open (%s) fail\n", str);
@@ -263,7 +263,7 @@ bool lsensor_factory_write(int calvalue, const char *str)
 
 	if (fp->f_op != NULL) {
 		pos_lsts = 0;
-		vfs_write(fp, buf, strlen(buf), &fp->f_pos);				
+		vfs_write(fp, buf, strlen(buf), &fp->f_pos);
 	} else {
 		err("Light Sensor write Calibration strlen: f_op=NULL or op->write=NULL\n");
 		set_fs(old_fs);
@@ -272,9 +272,9 @@ bool lsensor_factory_write(int calvalue, const char *str)
 	}
 	set_fs(old_fs);
 	filp_close(fp, NULL);
-	
+
 	log("Light Sensor write Calibration : %s\n", buf);
-	
+
 	return true;
 }
 EXPORT_SYMBOL(lsensor_factory_write);
@@ -286,7 +286,7 @@ int lsensor_factory_read_50ms(const char *str)
 	loff_t pos_lsts = 0;
 	char buf[16];
 	int cal_val = 0, readlen = 0;
-	mm_segment_t old_fs;	
+	mm_segment_t old_fs;
 
 	fp = filp_open(str, O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
 	if (IS_ERR_OR_NULL(fp)) {
@@ -311,14 +311,14 @@ int lsensor_factory_read_50ms(const char *str)
 	set_fs(old_fs);
 	filp_close(fp, NULL);
 
-	sscanf(buf, "%d", &cal_val);	
+	sscanf(buf, "%d", &cal_val);
 	if(cal_val < 0) {
 		err("Light Sensor read 50MS Calibration is FAIL. (%d)\n", cal_val);
 		return -EINVAL;	/*Invalid argument*/
 	} else {
 		dbg("Light Sensor read 50MS Calibration: Cal: %d\n", cal_val);
-	}	
-	
+	}
+
 	return cal_val;
 }
 EXPORT_SYMBOL(lsensor_factory_read_50ms);
@@ -328,10 +328,10 @@ bool lsensor_factory_write_50ms(int calvalue, const char *str)
 	struct file *fp = NULL;
 	mm_segment_t old_fs;
 	loff_t pos_lsts = 0;
-	char buf[8];	
+	char buf[8];
 
 	sprintf(buf, "%d", calvalue);
-	
+
 	fp = filp_open(str, O_RDWR | O_CREAT | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
 	if (IS_ERR_OR_NULL(fp)) {
 		err("Light Sensor write 50MS Calibration open (%s) fail\n", str);
@@ -344,7 +344,7 @@ bool lsensor_factory_write_50ms(int calvalue, const char *str)
 
 	if (fp->f_op != NULL) {
 		pos_lsts = 0;
-		vfs_write(fp, buf, strlen(buf), &fp->f_pos);				
+		vfs_write(fp, buf, strlen(buf), &fp->f_pos);
 	} else {
 		err("Light Sensor write 50MS Calibration strlen: f_op=NULL or op->write=NULL\n");
 		set_fs(old_fs);
@@ -353,9 +353,9 @@ bool lsensor_factory_write_50ms(int calvalue, const char *str)
 	}
 	set_fs(old_fs);
 	filp_close(fp, NULL);
-	
+
 	log("Light Sensor write 50MS Calibration : %s\n", buf);
-	
+
 	return true;
 }
 EXPORT_SYMBOL(lsensor_factory_write_50ms);
@@ -366,7 +366,7 @@ int lsensor_factory_read_100ms(const char *str)
 	loff_t pos_lsts = 0;
 	char buf[16];
 	int cal_val = 0, readlen = 0;
-	mm_segment_t old_fs;	
+	mm_segment_t old_fs;
 
 	fp = filp_open(str, O_RDONLY, S_IRWXU | S_IRWXG | S_IRWXO);
 	if (IS_ERR_OR_NULL(fp)) {
@@ -391,14 +391,14 @@ int lsensor_factory_read_100ms(const char *str)
 	set_fs(old_fs);
 	filp_close(fp, NULL);
 
-	sscanf(buf, "%d", &cal_val);	
+	sscanf(buf, "%d", &cal_val);
 	if(cal_val < 0) {
 		err("Light Sensor read 100MS Calibration is FAIL. (%d)\n", cal_val);
 		return -EINVAL;	/*Invalid argument*/
 	} else {
 		dbg("Light Sensor read 100MS Calibration: Cal: %d\n", cal_val);
-	}	
-	
+	}
+
 	return cal_val;
 }
 EXPORT_SYMBOL(lsensor_factory_read_100ms);
@@ -408,10 +408,10 @@ bool lsensor_factory_write_100ms(int calvalue, const char *str)
 	struct file *fp = NULL;
 	mm_segment_t old_fs;
 	loff_t pos_lsts = 0;
-	char buf[8];	
+	char buf[8];
 
 	sprintf(buf, "%d", calvalue);
-	
+
 	fp = filp_open(str, O_RDWR | O_CREAT | O_TRUNC, S_IRWXU | S_IRWXG | S_IRWXO);
 	if (IS_ERR_OR_NULL(fp)) {
 		err("Light Sensor write 100MS Calibration open (%s) fail\n", str);
@@ -424,7 +424,7 @@ bool lsensor_factory_write_100ms(int calvalue, const char *str)
 
 	if (fp->f_op != NULL) {
 		pos_lsts = 0;
-		vfs_write(fp, buf, strlen(buf), &fp->f_pos);				
+		vfs_write(fp, buf, strlen(buf), &fp->f_pos);
 	} else {
 		err("Light Sensor write 100MS Calibration strlen: f_op=NULL or op->write=NULL\n");
 		set_fs(old_fs);
@@ -433,9 +433,9 @@ bool lsensor_factory_write_100ms(int calvalue, const char *str)
 	}
 	set_fs(old_fs);
 	filp_close(fp, NULL);
-	
+
 	log("Light Sensor write 100MS Calibration : %s\n", buf);
-	
+
 	return true;
 }
 EXPORT_SYMBOL(lsensor_factory_write_100ms);

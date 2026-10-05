@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2015 ASUSTek Inc.
  *
  * This software is licensed under the terms of the GNU General Public
@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  *
  */
- 
+
 #ifndef __LINUX_ASH_PICASSO_H
 #define __LINUX_ASH_PICASSO_H
 
@@ -44,7 +44,7 @@ extern struct device *ASH_ATTR_device_create(ASH_type type);
 extern void ASH_ATTR_device_remove(ASH_type type);
 
 /**
- * HALLsensor_ATTR - for attributes  
+ * HALLsensor_ATTR - for attributes
  * @show_action_status : show the hall sensor status.
  * @show_hall_sensor_enable : true - HW on ; false - HW off.
  * @store_hall_sensor_enable : true - HW turn on ; false - HW turn off.
@@ -99,16 +99,16 @@ typedef struct{
 /**
  * psensor_ATTR_Calibration - attributes for psensor calibration.
  */
-typedef struct{	
+typedef struct{
 	int (*proximity_show_calibration_hi)(void);
 	int (*proximity_store_calibration_hi)(int calvalue);
 	int (*proximity_show_calibration_lo)(void);
 	int (*proximity_store_calibration_lo)(int calvalue);
 	int (*proximity_show_calibration_inf)(void);
-	int (*proximity_store_calibration_inf)(int calvalue); 
+	int (*proximity_store_calibration_inf)(int calvalue);
 #ifdef CONFIG_TMD2755_FLAG
 	int (*proximity_show_calibration_offset)(void);
-	int (*proximity_store_calibration_offset)(int calvalue); 
+	int (*proximity_store_calibration_offset)(int calvalue);
 #endif
 	int (*proximity_show_adc)(void);
 }psensor_ATTR_Calibration;
@@ -116,8 +116,8 @@ typedef struct{
 /**
  * psensor_ATTR_BMMI - attributes for psensor BMMI.
  */
-typedef struct{	
-	bool (*proximity_show_atd_test)(void); 
+typedef struct{
+	bool (*proximity_show_atd_test)(void);
 }psensor_ATTR_BMMI;
 
 /**
@@ -126,13 +126,13 @@ typedef struct{
 typedef struct{
 	uint8_t show_reg_addr;
 	int (*proximity_show_reg)(uint8_t addr);
-	int (*proximity_store_reg)(uint8_t addr, int value);	
+	int (*proximity_store_reg)(uint8_t addr, int value);
 }psensor_ATTR_Hardware;
 
 /**
  * psensor_ATTR_HAL - attributes for psensor HAL function.
  */
-typedef struct{	
+typedef struct{
 	bool (*proximity_show_switch_onoff)(void);
 	int (*proximity_store_switch_onoff)(bool bOn);
 	bool (*proximity_show_status)(void);
@@ -154,7 +154,7 @@ typedef struct{
 	/*switch ON/OFF proximity polling adc*/
 	bool (*proximity_show_polling_mode)(void);
 	int (*proximity_store_polling_mode)(bool bOn);
-	
+
 	/*Switch ON/OFF proximity auto calibration*/
 	bool (*proximity_show_autok)(void);
 	int (*proximity_store_autok)(bool bOn);
@@ -175,14 +175,14 @@ typedef struct{
 	/*For transition period from 3/5 to 2/4*/
 	int (*proximity_show_selection)(void);
 	int (*proximity_store_selection)(int selection);
-	
+
 	/*For power key turn on screen and enable touch*/
 	int (*proximity_show_touch_enable)(void);
 	int (*proximity_store_touch_enable)(bool enable);
-	
+
 	/*For load calibration data*/
 	int (*proximity_store_load_calibration_data)(void);
-	
+
 	/*For enable anti-oil workaround*/
 	int (*proximity_show_anti_oil_enable)(void);
 	int (*proximity_store_anti_oil_enable)(bool enable);
@@ -192,7 +192,7 @@ typedef struct{
  * psensor_ATTR - attributes for ALSPSsensor.
  */
 typedef struct{
-	psensor_info_type 			*info_type;	
+	psensor_info_type 			*info_type;
 	psensor_ATTR_Calibration 	*ATTR_Calibration;
 	psensor_ATTR_BMMI 		*ATTR_BMMI;
 	psensor_ATTR_Hardware 	*ATTR_Hardware;
@@ -219,8 +219,8 @@ extern int psensor_ATTR_unregister_2nd(void);
  * @mpsensor_attr : the pointer of device_attribute, which you want to create attribute.
  */
 #include <linux/device.h>
-extern int psensor_ATTR_create(struct device_attribute *mpsensor_attr); 
-extern int psensor_ATTR_create_2nd(struct device_attribute *mpsensor_attr); 
+extern int psensor_ATTR_create(struct device_attribute *mpsensor_attr);
+extern int psensor_ATTR_create_2nd(struct device_attribute *mpsensor_attr);
 
 /**
  * lsensor_info_type - define the lsensor information.
@@ -242,17 +242,17 @@ typedef struct{
 /**
  * lsensor_ATTR_Calibration - attributes for lsensor calibration.
  */
-typedef struct{	
+typedef struct{
 	int (*light_show_calibration)(void);
 	int (*light_store_calibration)(int calvalue);
 	int (*light_show_gain)(void);
-	int (*light_show_adc)(void); 
+	int (*light_show_adc)(void);
 }lsensor_ATTR_Calibration;
 
 /**
  * lsensor_ATTR_BMMI - attributes for lsensor BMMI.
  */
-typedef struct{ 
+typedef struct{
 	bool (*light_show_atd_test)(void);
 }lsensor_ATTR_BMMI;
 
@@ -262,7 +262,7 @@ typedef struct{
 typedef struct{
 	uint8_t show_reg_addr;
 	int (*light_show_reg)(uint8_t addr);
-	int (*light_store_reg)(uint8_t addr, int value);	
+	int (*light_store_reg)(uint8_t addr, int value);
 }lsensor_ATTR_Hardware;
 
 /**
@@ -271,7 +271,7 @@ typedef struct{
 typedef struct{
 	bool (*light_show_switch_onoff)(void);
 	int (*light_store_switch_onoff)(bool bOn);
-	int (*light_show_lux)(void);		
+	int (*light_show_lux)(void);
 }lsensor_ATTR_HAL;
 
 /**
@@ -307,7 +307,7 @@ typedef struct{
  * lsensor_ATTR - attributes for lsensor.
  */
 typedef struct{
-	lsensor_info_type 			*info_type;	
+	lsensor_info_type 			*info_type;
 	lsensor_ATTR_Calibration 	*ATTR_Calibration;
 	lsensor_ATTR_BMMI 		*ATTR_BMMI;
 	lsensor_ATTR_Hardware   	*ATTR_Hardware;
@@ -352,16 +352,16 @@ typedef struct{
  * FRGBsensor_ATTR_Calibration - attributes for FRGBsensor calibration.
  */
 typedef struct{
-	int (*FRGB_show_red)(void); 
-	int (*FRGB_show_green)(void); 
-	int (*FRGB_show_blue)(void); 
-	int (*FRGB_show_ir)(void); 
+	int (*FRGB_show_red)(void);
+	int (*FRGB_show_green)(void);
+	int (*FRGB_show_blue)(void);
+	int (*FRGB_show_ir)(void);
 }FRGBsensor_ATTR_Calibration;
 
 /**
  * FRGBsensor_ATTR_BMMI - attributes for FRGBsensor BMMI.
  */
-typedef struct{ 
+typedef struct{
 	bool (*FRGB_show_atd_test)(void);
 }FRGBsensor_ATTR_BMMI;
 
@@ -371,7 +371,7 @@ typedef struct{
 typedef struct{
 	uint8_t show_reg_addr;
 	int (*FRGB_show_reg)(uint8_t addr);
-	int (*FRGB_store_reg)(uint8_t addr, int value);	
+	int (*FRGB_store_reg)(uint8_t addr, int value);
 }FRGBsensor_ATTR_Hardware;
 
 /**
@@ -379,13 +379,13 @@ typedef struct{
  */
 typedef struct{
 	bool (*FRGB_show_switch_onoff)(void);
-	int (*FRGB_store_switch_onoff)(bool bOn);	
+	int (*FRGB_store_switch_onoff)(bool bOn);
 }FRGBsensor_ATTR_HAL;
 
 /**
  * FRGBsensor_ATTR_Extension - attributes for FRGBsensor extensive functions.
  */
-typedef struct{	
+typedef struct{
 	bool (*FRGB_show_allreg)(void);
 
 	/*change the frequence of log for the light sensor*/
@@ -400,7 +400,7 @@ typedef struct{
  * FRGBsensor_ATTR - attributes for lsensor.
  */
 typedef struct{
-	FRGBsensor_info_type 			*info_type;	
+	FRGBsensor_info_type 			*info_type;
 	FRGBsensor_ATTR_Calibration 	*ATTR_Calibration;
 	FRGBsensor_ATTR_BMMI 		*ATTR_BMMI;
 	FRGBsensor_ATTR_Hardware   	*ATTR_Hardware;
@@ -433,11 +433,11 @@ extern int FRGBsensor_ATTR_create(struct device_attribute *mFRGBsensor_attr);
  */
 #define PSENSOR_REPORT_PS_POCKET            (0)
 #define PSENSOR_REPORT_PS_CLOSE 			(2)
-#define PSENSOR_REPORT_PS_AWAY     			(10) 
+#define PSENSOR_REPORT_PS_AWAY     			(10)
 
 #define PSENSOR_2ND_REPORT_PS_POCKET            (1)
 #define PSENSOR_2ND_REPORT_PS_CLOSE (3)
-#define PSENSOR_2ND_REPORT_PS_AWAY     (11) 
+#define PSENSOR_2ND_REPORT_PS_AWAY     (11)
 /**
  * psensor_report_register - before report psensor event
  * you need to register first. This will create input device for psensor.
@@ -486,7 +486,7 @@ extern void FRGBsensor_report_unregister(void);
 /**
  * FRGBsensor_report_raw - report the FRGB sensor raw data.
  */
-extern void FRGBsensor_report_raw(int *data, int size); 
+extern void FRGBsensor_report_raw(int *data, int size);
 
 /**
  * Define the hall sensor report event values.
@@ -494,7 +494,7 @@ extern void FRGBsensor_report_raw(int *data, int size);
  * @HALLSENSOR_REPORT_LID_CLOSE : report close event.
  */
 #define HALLSENSOR_REPORT_LID_OPEN 			(0)
-#define HALLSENSOR_REPORT_LID_CLOSE    		(1) 
+#define HALLSENSOR_REPORT_LID_CLOSE    		(1)
 
 /**
  * HALLsensor_report_register - before report hall sensor event
@@ -581,7 +581,7 @@ extern void hallsensor_report_lid(int lid);
 /**
  * psensor_factory_read_high
  * psensor_factory_read_low - kernel space read high/low calibration data.
- * 
+ *
  * Return value is NOT negative (>=0) if it is success reading from file(.nv)
  */
 extern int 	psensor_factory_read_high(const char *str);
@@ -622,7 +622,7 @@ extern bool psensor_factory_write_1cm(int calvalue, const char *str);
 
 /**
  * lsensor_factory_read_200lux
- * lsensor_factory_write_200lux - kernel space read/write 200lux calibration data. 
+ * lsensor_factory_write_200lux - kernel space read/write 200lux calibration data.
  *
  * Return value is NOT negative (>=0) if it is success reading from file(.nv)
  * Return value is TRUE if it is success writing value to file(.nv)
@@ -642,7 +642,7 @@ extern bool lsensor_factory_write_1000lux(int calvalue, const char *str);
 
 /**
  * lsensor_factory_read
- * lsensor_factory_write - kernel space read/write calibration data. 
+ * lsensor_factory_write - kernel space read/write calibration data.
  *
  * Return value is NOT negative (>=0) if it is success reading from file(.nv)
  * Return value is TRUE if it is success writing value to file(.nv)
@@ -660,7 +660,7 @@ extern bool lsensor_factory_write_100ms(int calvalue, const char *str);
 
 /**
  * FRGBsensor_factory_read_light1
- * FRGBsensor_factory_write_light1 - kernel space read/write light1 calibration data. 
+ * FRGBsensor_factory_write_light1 - kernel space read/write light1 calibration data.
  *
  * Return value is NOT negative (>=0) if it is success reading from file(.nv)
  * Return value is TRUE if it is success writing value to file(.nv)
@@ -670,7 +670,7 @@ extern bool FRGBsensor_factory_write_light1(int calvalue);
 
 /**
  * FRGBsensor_factory_read_light2
- * FRGBsensor_factory_write_light2 - kernel space read/write light2 calibration data. 
+ * FRGBsensor_factory_write_light2 - kernel space read/write light2 calibration data.
  *
  * Return value is NOT negative (>=0) if it is success reading from file(.nv)
  * Return value is TRUE if it is success writing value to file(.nv)
@@ -680,7 +680,7 @@ extern bool FRGBsensor_factory_write_light2(int calvalue);
 
 /**
  * FRGBsensor_factory_read_light3
- * FRGBsensor_factory_write_light3 - kernel space read/write light3 calibration data. 
+ * FRGBsensor_factory_write_light3 - kernel space read/write light3 calibration data.
  *
  * Return value is NOT negative (>=0) if it is success reading from file(.nv)
  * Return value is TRUE if it is success writing value to file(.nv)
@@ -779,14 +779,14 @@ extern int HALLsensor_gpio_unregister(int irq);
 extern int HALLsensor_gpio_value(void);
 
 /**
- * i2c_read_reg_u8 - 
+ * i2c_read_reg_u8 -
  * i2c_write_reg_u8 - read/write i2c for 1 Byte (8bits). These are functions for i2c read/write.
  */
 extern uint8_t i2c_read_reg_u8(struct i2c_client* client, u8 reg);
 extern int 		i2c_write_reg_u8(struct i2c_client* client, u8 reg, uint8_t data);
 
 /**
- * i2c_read_reg_u16 - 
+ * i2c_read_reg_u16 -
  * i2c_write_reg_u16 - read/write i2c for 2 Byte (16bits). These are functions for i2c read/write.
  */
 extern int i2c_read_reg_u16(struct i2c_client* client, u8 reg, uint8_t* data);
@@ -805,7 +805,7 @@ typedef struct ALSPS_I2C {
 	void (*ALSPS_remove)(void);
 	void (*ALSPS_shutdown)(void);
 	void (*ALSPS_suspend)(void);
-	void (*ALSPS_resume)(void);	
+	void (*ALSPS_resume)(void);
 }ALSPS_I2C;
 
 /**
@@ -821,7 +821,7 @@ typedef struct psensor_I2C {
 	void (*psensor_remove)(void);
 	void (*psensor_shutdown)(void);
 	void (*psensor_suspend)(void);
-	void (*psensor_resume)(void);	
+	void (*psensor_resume)(void);
 }psensor_I2C;
 
 /**
@@ -837,7 +837,7 @@ typedef struct lsensor_I2C {
 	void (*lsensor_remove)(void);
 	void (*lsensor_shutdown)(void);
 	void (*lsensor_suspend)(void);
-	void (*lsensor_resume)(void);	
+	void (*lsensor_resume)(void);
 }lsensor_I2C;
 
 /**
@@ -853,7 +853,7 @@ typedef struct ALSPS_FRGB_I2C {
 	void (*ALSPS_FRGB_remove)(void);
 	void (*ALSPS_FRGB_shutdown)(void);
 	void (*ALSPS_FRGB_suspend)(void);
-	void (*ALSPS_FRGB_resume)(void);	
+	void (*ALSPS_FRGB_resume)(void);
 }ALSPS_FRGB_I2C;
 
 /**
@@ -906,7 +906,7 @@ extern int ALSPS_FRGB_i2c_unregister(void);
 typedef struct HALLsensor_Platform {
 	void (*HALLsensor_probe)(struct platform_device *pdev);
 	void (*HALLsensor_suspend)(void);
-	void (*HALLsensor_resume)(void);	
+	void (*HALLsensor_resume)(void);
 }HALLsensor_Platform;
 
 /**
@@ -928,7 +928,7 @@ extern int HALLsensor_platform_unregister(void);
  * @ALSPS_INT_PS_POCKET : [3] (1)
  */
 #define ALSPS_INT_PS_CLOSE 				(1)
-#define ALSPS_INT_PS_AWAY     			(2) 
+#define ALSPS_INT_PS_AWAY     			(2)
 #define ALSPS_INT_PS_INIT 				-1
 #define ALSPS_INT_PS_MASK				(3<< 0)
 #define ALSPS_INT_ALS           				(4)
@@ -938,7 +938,7 @@ extern int HALLsensor_platform_unregister(void);
 
 /**
  * psensor_hw - the i2c control functions for proximity sensor.
- * @proximity_low_threshold_default : 
+ * @proximity_low_threshold_default :
  * @proximity_hi_threshold_default : depends on each hardware situation, which impact on the CSC SMMI.
  * @proximity_hw_turn_onoff : Turn on the proximity sensor.
  * @proximity_hw_get_adc : get the count of proximity sensor.
@@ -950,8 +950,8 @@ typedef struct psensor_hw {
 	char vendor[NAME_SIZE];
 	char module_number[NAME_SIZE];
 	/*For psensor only ---*/
-	
-	int proximity_low_threshold_default;	
+
+	int proximity_low_threshold_default;
 	int proximity_hi_threshold_default;
 	int proximity_crosstalk_default;
 #ifdef CONFIG_TMD2755_FLAG
@@ -961,14 +961,14 @@ typedef struct psensor_hw {
 	int proximity_autok_max;
 
 	/*For psensor only +++*/
-	int (*proximity_hw_check_ID)(void);	
+	int (*proximity_hw_check_ID)(void);
 	int (*proximity_hw_init)(struct i2c_client* client);
-	int (*proximity_hw_get_interrupt)(void);	
-	int (*proximity_hw_show_allreg)(void);	
+	int (*proximity_hw_get_interrupt)(void);
+	int (*proximity_hw_show_allreg)(void);
 	int (*proximity_hw_set_register)(uint8_t reg, int value);
-	int (*proximity_hw_get_register)(uint8_t reg);	
+	int (*proximity_hw_get_register)(uint8_t reg);
 	/*For psensor only ---*/
-	
+
 	int (*proximity_hw_turn_onoff)(bool bOn);
 	int (*proximity_hw_interrupt_onoff)(bool bOn);
 	int (*proximity_hw_get_adc)(void);
@@ -976,7 +976,7 @@ typedef struct psensor_hw {
 	int (*proximity_hw_set_lo_threshold)(int low_threshold);
 	int (*proximity_hw_set_autoK)(int autoK);
 	int (*proximity_hw_set_period)(int period);
-	
+
 #ifdef CONFIG_TMD2755_FLAG
 	int (*proximity_hw_chip_cal)(void);
 #endif
@@ -987,7 +987,7 @@ typedef struct psensor_hw {
  * @light_max_threshold : the maximum count of light sensor.
  * @light_hw_turn_onoff : Turn on the light sensor.
  * @light_hw_get_adc : get the count of light sensor.
- * @light_hw_set_hi_threshold : 
+ * @light_hw_set_hi_threshold :
  * @light_hw_set_lo_threshold : set light sensor threshold which will trigger the interrupt.
  */
 typedef struct lsensor_hw {
@@ -995,19 +995,19 @@ typedef struct lsensor_hw {
 	char vendor[NAME_SIZE];
 	char module_number[NAME_SIZE];
 	/*For lsensor only ---*/
-	
+
 	int light_max_threshold;
 	int light_calibration_default;
 
 	/*For lsensor only +++*/
-	int (*light_hw_check_ID)(void);	
+	int (*light_hw_check_ID)(void);
 	int (*light_hw_init)(struct i2c_client* client);
-	int (*light_hw_get_interrupt)(void);	
-	int (*light_hw_show_allreg)(void);	
+	int (*light_hw_get_interrupt)(void);
+	int (*light_hw_show_allreg)(void);
 	int (*light_hw_set_register)(uint8_t reg, int value);
-	int (*light_hw_get_register)(uint8_t reg);	
+	int (*light_hw_get_register)(uint8_t reg);
 	/*For lsensor only ---*/
-	
+
 	int (*light_hw_turn_onoff)(bool bOn);
 	int (*light_hw_interrupt_onoff)(bool bOn);
 	int (*light_hw_get_adc)(void);
@@ -1024,7 +1024,7 @@ typedef struct lsensor_hw {
 	uint8_t (*light_hw_get_current_IT)(void);
 	u64 (*light_hw_get_evt_skip_time_ns)(void);
 	void (*light_hw_reset_ALS_dynamic_status)(void);
-	
+
 }lsensor_hw;
 
 /**
@@ -1035,8 +1035,8 @@ typedef struct lsensor_hw {
  * @frgb_hw_turn_onoff : Turn on the FRGB sensor.
  * @frgb_hw_get_red : get the count of RED CHANNEL.
  * @frgb_hw_get_green : get the count of GREEN CHANNEL.
- * @frgb_hw_get_blue : get the count of BLUE CHANNEL. 
- * @frgb_hw_get_ir : get the count of IR CHANNEL.  
+ * @frgb_hw_get_blue : get the count of BLUE CHANNEL.
+ * @frgb_hw_get_ir : get the count of IR CHANNEL.
  */
 typedef struct FRGB_hw {
 	/*For FRGB only +++*/
@@ -1045,14 +1045,14 @@ typedef struct FRGB_hw {
 	/*For FRGB only ---*/
 
 	/*For FRGB only +++*/
-	int (*frgb_hw_check_ID)(void);	
+	int (*frgb_hw_check_ID)(void);
 	int (*frgb_hw_init)(struct i2c_client* client);
-	int (*frgb_hw_get_interrupt)(void);	
-	int (*frgb_hw_show_allreg)(void);	
+	int (*frgb_hw_get_interrupt)(void);
+	int (*frgb_hw_show_allreg)(void);
 	int (*frgb_hw_set_register)(uint8_t reg, int value);
-	int (*frgb_hw_get_register)(uint8_t reg);	
+	int (*frgb_hw_get_register)(uint8_t reg);
 	/*For FRGB only ---*/
-	
+
 	int (*frgb_hw_turn_onoff)(bool bOn);
 	int (*frgb_hw_get_red)(void);
 	int (*frgb_hw_get_green)(void);
@@ -1064,7 +1064,7 @@ typedef struct FRGB_hw {
  * ALSPSsensor_hw - the i2c control functions for ALSPS sensor including psensor and lsensor.
  */
  #include <linux/i2c.h>
-typedef struct ALSPS_hw {	
+typedef struct ALSPS_hw {
 	char vendor[NAME_SIZE];
 	char module_number[NAME_SIZE];
 
@@ -1088,16 +1088,16 @@ typedef struct ALSPS_hw {
  * ALSPS_FRGB_hw - the i2c control functions for ALSPS FRGB sensor including psensor and lsensor.
  */
  #include <linux/i2c.h>
-typedef struct ALSPS_FRGB_hw {	
+typedef struct ALSPS_FRGB_hw {
 	char vendor[NAME_SIZE];
 	char module_number[NAME_SIZE];
 
-	int (*ALSPS_FRGB_hw_check_ID)(void);	
+	int (*ALSPS_FRGB_hw_check_ID)(void);
 	int (*ALSPS_FRGB_hw_init)(struct i2c_client* client);
-	int (*ALSPS_FRGB_hw_get_interrupt)(void);	
-	int (*ALSPS_FRGB_hw_show_allreg)(void);	
+	int (*ALSPS_FRGB_hw_get_interrupt)(void);
+	int (*ALSPS_FRGB_hw_show_allreg)(void);
 	int (*ALSPS_FRGB_hw_set_register)(uint8_t reg, int value);
-	int (*ALSPS_FRGB_hw_get_register)(uint8_t reg);	
+	int (*ALSPS_FRGB_hw_get_register)(uint8_t reg);
 
 	psensor_hw	*mpsensor_hw;
 	lsensor_hw	*mlsensor_hw;

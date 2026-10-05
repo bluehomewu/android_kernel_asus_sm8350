@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2015 ASUSTek Inc.
  *
  * This software is licensed under the terms of the GNU General Public
@@ -11,7 +11,7 @@
  * GNU General Public License for more details.
  *
  */
- 
+
  /******************************/
 /* Asus Sensor Hub Attribute */
 /*****************************/
@@ -58,7 +58,7 @@ static int create_ASH_chrdev(void)
 		err("%s: could not get major number\n", __FUNCTION__);
 		return g_devMajor;
 	}
-	
+
 	return 0;
 }
 
@@ -70,7 +70,7 @@ static int create_ASH_class(void)
 		err("%s: class_create ERROR.\n", __FUNCTION__);
 		return PTR_ERR(g_property_class);
 	}
-	
+
 	return 0;
 }
 
@@ -78,7 +78,7 @@ static int create_ASH_class(void)
  Return NULL for error handling
 */
 struct device *ASH_ATTR_device_create(ASH_type type)
-{	
+{
 	int ret = 0;
 	dev_t dev;
 	struct device *sensor_dev=NULL;
@@ -88,7 +88,7 @@ struct device *ASH_ATTR_device_create(ASH_type type)
 		ret=create_ASH_chrdev();
 		if(ret < 0)
 			return NULL;
-	}	
+	}
 
 	/*prepare sys/class file node and return for error handling*/
 	if(g_property_class == NULL || IS_ERR(g_property_class) ){
@@ -130,13 +130,13 @@ struct device *ASH_ATTR_device_create(ASH_type type)
 			err("%s: Type ERROR.(%d)\n", __FUNCTION__, type);
 
 	}
-	
+
 	if (IS_ERR(sensor_dev)) {
 		ret = PTR_ERR(sensor_dev);
-		err("%s: sensor_dev pointer is ERROR(%d). \n", __FUNCTION__, ret);		
+		err("%s: sensor_dev pointer is ERROR(%d). \n", __FUNCTION__, ret);
 		return NULL;
-	}	
-	
+	}
+
 	return sensor_dev;
 }
 EXPORT_SYMBOL(ASH_ATTR_device_create);
@@ -144,7 +144,7 @@ EXPORT_SYMBOL(ASH_ATTR_device_create);
 void ASH_ATTR_device_remove(ASH_type type)
 {
 	dev_t dev;
-	
+
 	switch(type){
 		case psensor:
 			dev = MKDEV(g_devMajor, psensor);

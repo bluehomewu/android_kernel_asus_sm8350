@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2015 ASUSTek Inc.
  *
  * This software is licensed under the terms of the GNU General Public
@@ -44,47 +44,47 @@ static struct device *g_lsensor_dev;
 #define log(fmt, args...) printk(KERN_INFO "[%s][%s][%s]"fmt,MODULE_NAME,SENSOR_TYPE_NAME,__func__,##args)
 #define err(fmt, args...) printk(KERN_ERR "[%s][%s]"fmt,MODULE_NAME,SENSOR_TYPE_NAME,##args)
 
-static ssize_t  ATT_light_show_vendor(struct device *dev, 
+static ssize_t  ATT_light_show_vendor(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	if(strcmp(g_light_ATTR->info_type->vendor, "") == 0) {
 		err("Show vendor NOT SUPPORT. \n");
 		return sprintf(buf, "NOT SUPPORT\n");
 	}
-	
+
 	return sprintf(buf, "%s\n", g_light_ATTR->info_type->vendor);
 }
 
-static ssize_t  ATT_light_show_module_number(struct device *dev, 
+static ssize_t  ATT_light_show_module_number(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	if(strcmp(g_light_ATTR->info_type->module_number, "") == 0) {
 		err("Show module number NOT SUPPORT. \n");
 		return sprintf(buf, "NOT SUPPORT\n");
 	}
-	
+
 	return sprintf(buf, "%s\n", g_light_ATTR->info_type->module_number);
 }
 
 /**************************/
 /*Calibration Function*/
 /************************/
-static ssize_t ATT_light_show_calibration(struct device *dev, 
+static ssize_t ATT_light_show_calibration(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	int calvalue;
-	
+
 	if(g_light_ATTR->ATTR_Calibration->light_show_calibration == NULL) {
 		err("light_show_calibration NOT SUPPORT. \n");
 		return sprintf(buf, "NOT SUPPORT\n");
 	}
-	
+
 	calvalue = g_light_ATTR->ATTR_Calibration->light_show_calibration();
 	dbg("Light Sensor show Calibration: %d\n", calvalue);
 	return sprintf(buf, "%d\n", calvalue);
-}	
+}
 
-static ssize_t ATT_light_store_calibration(struct device *dev, 
+static ssize_t ATT_light_store_calibration(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count)
 {
 	unsigned long calvalue;
@@ -93,7 +93,7 @@ static ssize_t ATT_light_store_calibration(struct device *dev,
 		err("light_store_calibration NOT SUPPORT. \n");
 		return count;
 	}
-	
+
 	if ((kstrtoul(buf, 10, &calvalue) < 0))
 		return -EINVAL;
 	if(calvalue < 0) {
@@ -101,14 +101,14 @@ static ssize_t ATT_light_store_calibration(struct device *dev,
 		return -EINVAL;
 	}
 
-	log("Light Sensor store Calibration: %lu\n", calvalue);	
+	log("Light Sensor store Calibration: %lu\n", calvalue);
 	if(g_light_ATTR->ATTR_Calibration->light_store_calibration(calvalue) < 0)
-		return -EINVAL;	
-			
+		return -EINVAL;
+
 	return count;
 }
 
-static ssize_t  ATT_light_show_gain(struct device *dev, 
+static ssize_t  ATT_light_show_gain(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	int gainvalue = 0;
@@ -117,7 +117,7 @@ static ssize_t  ATT_light_show_gain(struct device *dev,
 		return sprintf(buf, "NOT SUPPORT\n");
 	}
 	gainvalue = g_light_ATTR->ATTR_Calibration->light_show_gain();
-	return sprintf(buf, "%d.%05d\n", 
+	return sprintf(buf, "%d.%05d\n",
 		gainvalue/LIGHT_GAIN_ACCURACY_CALVALUE, gainvalue%LIGHT_GAIN_ACCURACY_CALVALUE);
 }
 
@@ -143,16 +143,16 @@ static ssize_t  ATT_light_show_atd_test(struct device *dev, struct device_attrib
 		return sprintf(buf, "%d\n", atd_test);
 	}
 	atd_test = g_light_ATTR->ATTR_BMMI->light_show_atd_test();
-	return sprintf(buf, "%d\n", atd_test);	
+	return sprintf(buf, "%d\n", atd_test);
 }
 
 /************************/
 /*Hardware Function*/
 /***********************/
 static ssize_t  ATT_light_show_read_reg(struct device *dev, struct device_attribute *attr, char *buf)
-{	
+{
 	int i2c_reg_addr = 0, i2c_reg_value = 0;
-	
+
 	if(g_light_ATTR->ATTR_Hardware->light_show_reg== NULL) {
 		err("IRsensor_store_reg NOT SUPPORT. \n");
 		return sprintf(buf, "NOT SUPPORT\n");
@@ -160,15 +160,15 @@ static ssize_t  ATT_light_show_read_reg(struct device *dev, struct device_attrib
 
 	i2c_reg_addr = g_light_ATTR->ATTR_Hardware->show_reg_addr;
 	i2c_reg_value = g_light_ATTR->ATTR_Hardware->light_show_reg(i2c_reg_addr);
-	
+
 	return sprintf(buf, "%d\n", i2c_reg_value);
 }
 
-static ssize_t  ATT_light_store_read_reg(struct device *dev, 
+static ssize_t  ATT_light_store_read_reg(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count)
 {
 	int i2c_reg_addr = 0;
-	
+
 	if(g_light_ATTR->ATTR_Hardware->light_show_reg== NULL) {
 		err("IRsensor_store_reg NOT SUPPORT. \n");
 		return count;
@@ -176,32 +176,32 @@ static ssize_t  ATT_light_store_read_reg(struct device *dev,
 
 	sscanf(buf, "%x", &i2c_reg_addr);
 	g_light_ATTR->ATTR_Hardware->show_reg_addr=i2c_reg_addr;
-	
+
 	return count;
 }
-static ssize_t  ATT_light_store_write_reg(struct device *dev, 
+static ssize_t  ATT_light_store_write_reg(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count)
 {
 	int i2c_reg_addr = 0, i2c_reg_value = 0;
-	
+
 	if(g_light_ATTR->ATTR_Hardware->light_store_reg== NULL) {
 		err("IRsensor_store_reg NOT SUPPORT. \n");
 		return count;
 	}
-	
+
 	sscanf(buf, "%x %d", &i2c_reg_addr, &i2c_reg_value);
 
 	log("IRsensor_store_reg, addr=%02X, value=%02X\n", i2c_reg_addr, i2c_reg_value);
 	if(g_light_ATTR->ATTR_Hardware->light_store_reg(i2c_reg_addr, i2c_reg_value) < 0)
-		return -EINVAL;		
-	
+		return -EINVAL;
+
 	return count;
 }
 
 /******************/
 /*HAL Function*/
 /*****************/
-static ssize_t  ATT_light_show_switch_onoff(struct device *dev, 
+static ssize_t  ATT_light_show_switch_onoff(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	bool bOn;
@@ -213,10 +213,10 @@ static ssize_t  ATT_light_show_switch_onoff(struct device *dev,
 	if(bOn)
 		return sprintf(buf, "on\n");
 	else
-		return sprintf(buf, "off\n");	
+		return sprintf(buf, "off\n");
 }
 
-static ssize_t  ATT_light_store_switch_onoff(struct device *dev, 
+static ssize_t  ATT_light_store_switch_onoff(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count)
 {
 	bool bOn;
@@ -225,23 +225,23 @@ static ssize_t  ATT_light_store_switch_onoff(struct device *dev,
 		err("light_store_switch_onoff NOT SUPPORT. \n");
 		return count;
 	}
-	
+
 	/*check input character*/
 	if (0 == strncmp(buf, "off", 3))
 		bOn = false;
-	else if (0 == strncmp(buf, "on", 2)) 
+	else if (0 == strncmp(buf, "on", 2))
 		bOn = true;
 	else
 		return -EINVAL;
 
 	log("Light Sensor switch %s\n", bOn?"on":"off");
 	if(g_light_ATTR->ATTR_HAL->light_store_switch_onoff(bOn) < 0)
-		return -EINVAL;		
-	
+		return -EINVAL;
+
 	return count;
 }
 
-static ssize_t ATT_light_show_lux(struct device *dev, 
+static ssize_t ATT_light_show_lux(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	int lux;
@@ -256,7 +256,7 @@ static ssize_t ATT_light_show_lux(struct device *dev,
 /************************/
 /*Extension Function*/
 /***********************/
-static ssize_t  ATT_light_show_allreg(struct device *dev, 
+static ssize_t  ATT_light_show_allreg(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	if(g_light_ATTR->ATTR_Extension->light_show_allreg== NULL) {
@@ -271,7 +271,7 @@ static ssize_t  ATT_light_show_allreg(struct device *dev,
 #endif
 }
 
-static ssize_t  ATT_light_show_sensitivity(struct device *dev, 
+static ssize_t  ATT_light_show_sensitivity(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	int sensitivity = 0;
@@ -279,21 +279,21 @@ static ssize_t  ATT_light_show_sensitivity(struct device *dev,
 		err("light_show_sensitivity NOT SUPPORT. \n");
 		return sprintf(buf, "NOT SUPPORT\n");
 	}
-	
+
 	sensitivity = g_light_ATTR->ATTR_Extension->light_show_sensitivity();
 	return sprintf(buf, "%d\n", sensitivity);
 }
 
-static ssize_t  ATT_light_store_sensitivity(struct device *dev, 
+static ssize_t  ATT_light_store_sensitivity(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count)
 {
-	unsigned long sensitivity;	
+	unsigned long sensitivity;
 
 	if(g_light_ATTR->ATTR_Extension->light_store_sensitivity == NULL) {
 		err("light_store_sensitivity NOT SUPPORT. \n");
 		return count;
 	}
-	
+
 	if ((kstrtoul(buf, 10, &sensitivity) < 0))
 		return -EINVAL;
 	if(sensitivity < 0) {
@@ -303,12 +303,12 @@ static ssize_t  ATT_light_store_sensitivity(struct device *dev,
 
 	log("Light Sensor store Sensitivity: %lu\n", sensitivity);
 	if(g_light_ATTR->ATTR_Extension->light_store_sensitivity(sensitivity) < 0)
-		return -EINVAL;	
-	
+		return -EINVAL;
+
 	return count;
 }
 
-static ssize_t  ATT_light_show_log_threshold(struct device *dev, 
+static ssize_t  ATT_light_show_log_threshold(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	int log_threshold = 0;
@@ -316,21 +316,21 @@ static ssize_t  ATT_light_show_log_threshold(struct device *dev,
 		err("light_show_log_threshold NOT SUPPORT. \n");
 		return sprintf(buf, "NOT SUPPORT\n");
 	}
-	
+
 	log_threshold = g_light_ATTR->ATTR_Extension->light_show_log_threshold();
 	return sprintf(buf, "%d\n", log_threshold);
 }
 
-static ssize_t  ATT_light_store_log_threshold(struct device *dev, 
+static ssize_t  ATT_light_store_log_threshold(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count)
 {
-	unsigned long log_threshold;	
+	unsigned long log_threshold;
 
 	if(g_light_ATTR->ATTR_Extension->light_store_log_threshold == NULL) {
 		err("light_store_log_threshold NOT SUPPORT. \n");
 		return count;
 	}
-	
+
 	if ((kstrtoul(buf, 10, &log_threshold) < 0))
 		return -EINVAL;
 	if(log_threshold < 0) {
@@ -340,59 +340,59 @@ static ssize_t  ATT_light_store_log_threshold(struct device *dev,
 
 	log("Light Sensor store Log Threshold: %lu\n", log_threshold);
 	if(g_light_ATTR->ATTR_Extension->light_store_log_threshold(log_threshold) < 0)
-		return -EINVAL;	
-	
+		return -EINVAL;
+
 	return count;
 }
 
 /* +++ For stress test debug +++ */
-static ssize_t  ATT_light_show_int_count(struct device *dev, 
+static ssize_t  ATT_light_show_int_count(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	int l_int_counter=0;
-	
+
 	if(g_light_ATTR->ATTR_Extension->light_show_int_count == NULL) {
 		err("light_show_int_count NOT SUPPORT. \n");
 		return sprintf(buf, "NOT SUPPORT\n");
 	}
-	
+
 	l_int_counter = g_light_ATTR->ATTR_Extension->light_show_int_count();
 	return sprintf(buf, "%d\n", l_int_counter);
 }
 
-static ssize_t  ATT_light_show_event_count(struct device *dev, 
+static ssize_t  ATT_light_show_event_count(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	int l_event_counter=0;
-	
+
 	if(g_light_ATTR->ATTR_Extension->light_show_event_count == NULL) {
 		err("light_show_event_count NOT SUPPORT. \n");
 		return sprintf(buf, "NOT SUPPORT\n");
 	}
-	
+
 	l_event_counter = g_light_ATTR->ATTR_Extension->light_show_event_count();
 	return sprintf(buf, "%d\n", l_event_counter);
 }
 
-static ssize_t  ATT_light_show_error_mesg(struct device *dev, 
+static ssize_t  ATT_light_show_error_mesg(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	int ret;
-	char* error_mesg=kzalloc(sizeof(char [ERROR_MESG_SIZE]), GFP_KERNEL);	
-	
+	char* error_mesg=kzalloc(sizeof(char [ERROR_MESG_SIZE]), GFP_KERNEL);
+
 	if(g_light_ATTR->ATTR_Extension->light_show_error_mesg== NULL) {
 		err("IRsensor_show_error_mesg NOT SUPPORT. \n");
 		return sprintf(buf, "NOT SUPPORT\n");
 	}
 
 	ret = g_light_ATTR->ATTR_Extension->light_show_error_mesg(error_mesg);
-	
+
 	return sprintf(buf, "%s\n", error_mesg);
 }
 /* --- For stress test debug --- */
 
 /*For transition period from 3/5 to 2/4*/
-static ssize_t  ATT_light_show_selection(struct device *dev, 
+static ssize_t  ATT_light_show_selection(struct device *dev,
 	struct device_attribute *attr, char *buf)
 {
 	int selection = 0;
@@ -400,21 +400,21 @@ static ssize_t  ATT_light_show_selection(struct device *dev,
 		err("light_show_selection NOT SUPPORT. \n");
 		return sprintf(buf, "NOT SUPPORT\n");
 	}
-	
+
 	selection = g_light_ATTR->ATTR_Extension->light_show_selection();
 	return sprintf(buf, "%d\n", selection);
 }
 
-static ssize_t  ATT_light_store_selection(struct device *dev, 
+static ssize_t  ATT_light_store_selection(struct device *dev,
 	struct device_attribute *attr, const char *buf, size_t count)
 {
-	unsigned long selection;	
+	unsigned long selection;
 
 	if(g_light_ATTR->ATTR_Extension->light_store_selection == NULL) {
 		err("light_store_selection NOT SUPPORT. \n");
 		return count;
 	}
-	
+
 	if ((kstrtoul(buf, 10, &selection) < 0))
 		return -EINVAL;
 	if(selection < 0) {
@@ -424,8 +424,8 @@ static ssize_t  ATT_light_store_selection(struct device *dev,
 
 	log("Light Sensor store selection: %lu\n", selection);
 	if(g_light_ATTR->ATTR_Extension->light_store_selection(selection) < 0)
-		return -EINVAL;	
-	
+		return -EINVAL;
+
 	return count;
 }
 
@@ -433,7 +433,7 @@ static struct device_attribute light_property_attrs[] = {
 	/*read only*/
 	__ATTR(vendor, 0444, ATT_light_show_vendor, NULL),
 	__ATTR(module_number, 0444, ATT_light_show_module_number, NULL),
-	__ATTR(adc, 0444, ATT_light_show_adc, NULL),	
+	__ATTR(adc, 0444, ATT_light_show_adc, NULL),
 	__ATTR(gain, 0444, ATT_light_show_gain, NULL),
 	__ATTR(atd_status, 0444, ATT_light_show_atd_test, NULL),
 	__ATTR(lux, 0444, ATT_light_show_lux, NULL),
@@ -459,9 +459,9 @@ int lsensor_ATTR_register(lsensor_ATTR *mATTR)
 {
 	int ret = 0;
 	int ATTR_index;
-	
+
 	g_light_ATTR=mATTR;
-	
+
 	/*lsensor device*/
 	g_lsensor_dev = ASH_ATTR_device_create(lsensor);
 	if (IS_ERR(g_lsensor_dev) || g_lsensor_dev == NULL) {
@@ -475,7 +475,7 @@ int lsensor_ATTR_register(lsensor_ATTR *mATTR)
 			return ret;
 		}
 	}
-	
+
 	return 0;
 }
 EXPORT_SYMBOL(lsensor_ATTR_register);
@@ -495,7 +495,7 @@ int lsensor_ATTR_create(struct device_attribute *mlsensor_attr)
 		return -EINVAL;
 	}
 	ret = device_create_file(g_lsensor_dev, mlsensor_attr);
-	if (ret){		
+	if (ret){
 		err("%s: device_create_file ERROR(%d). \n", __FUNCTION__, ret);
 		return ret;
 	}
@@ -503,4 +503,3 @@ int lsensor_ATTR_create(struct device_attribute *mlsensor_attr)
 	return ret;
 }
 EXPORT_SYMBOL(lsensor_ATTR_create);
-

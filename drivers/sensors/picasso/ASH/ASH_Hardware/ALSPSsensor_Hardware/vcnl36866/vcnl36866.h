@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2014 ASUSTek Inc.
  *
  * This software is licensed under the terms of the GNU General Public
@@ -74,7 +74,7 @@ struct vcnl36866_reg {
 };
 
 static struct vcnl36866_reg vcnl36866_regs[] = {
-	{.reg = CS_CONF1,  },  // 0x00 
+	{.reg = CS_CONF1,  },  // 0x00
 	{.reg = CS_THDH,   },  // 0x01
 	{.reg = CS_THDL,   },  // 0x02
 	{.reg = PS_CONF1,  },  // 0x03
@@ -94,7 +94,7 @@ static struct vcnl36866_reg vcnl36866_regs[] = {
 /**
  * for ALS CONF command
  **/
- 
+
 /*** CS CONF1 ***/
 //PS start
 #define VCNL36866_CS_START_MASK  0x7F
@@ -142,7 +142,7 @@ static struct vcnl36866_reg vcnl36866_regs[] = {
 /**
  * for PS CONF command
  **/
- 
+
 /*** PS CONF1 ***/
 //LED Duty Ratio
 #define VCNL36866_PS_DR_MAX    (3)

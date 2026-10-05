@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2015 ASUSTek Inc.
  *
  * This software is licensed under the terms of the GNU General Public
@@ -41,4 +41,3 @@ extern ALSPS_hw* ALSPS_hw_ap3045_getHardware(void);
 extern ALSPS_hw* ALSPS_hw_tmd2755_getHardware(void);
 
 #endif
-

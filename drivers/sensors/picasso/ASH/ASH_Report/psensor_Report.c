@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2015 ASUSTek Inc.
  *
  * This software is licensed under the terms of the GNU General Public
@@ -45,17 +45,17 @@ static bool g_input_dev_reg_status = false;
 int psensor_report_register(void)
 {
 	int ret = 0;
-	
+
 	if(true == g_input_dev_reg_status){
-		err("%s: psensor input_register_device has been registered(%d). \n", 
+		err("%s: psensor input_register_device has been registered(%d). \n",
 __FUNCTION__);
 		return 0;
 	}
-	
+
 	/* Proximity Input event allocate */
 	input_dev_ps = input_allocate_device();
-	if (!input_dev_ps) {		
-		err("%s: psensor input_allocate_device is return NULL Pointer. \n", 
+	if (!input_dev_ps) {
+		err("%s: psensor input_allocate_device is return NULL Pointer. \n",
 __FUNCTION__);
 		return -ENOMEM;
 	}
@@ -120,4 +120,3 @@ void psensor_report_abs(int abs)
 	input_sync(input_dev_ps);
 }
 EXPORT_SYMBOL(psensor_report_abs);
-

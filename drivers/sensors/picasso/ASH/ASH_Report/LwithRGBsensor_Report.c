@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2015 ASUSTek Inc.
  *
  * This software is licensed under the terms of the GNU General Public
@@ -97,7 +97,7 @@ int lsensor_report_register(void)
 EXPORT_SYMBOL(lsensor_report_register);
 
 void lsensor_report_unregister(void)
-{	
+{
 	input_unregister_device(input_dev_als);
 	input_free_device(input_dev_als);
 }
@@ -130,4 +130,3 @@ void lrgbsensor_report_lux(void)
 	input_event(input_dev_als, EV_SYN, SYN_REPORT, 5);
 	input_sync(input_dev_als);
 }
-

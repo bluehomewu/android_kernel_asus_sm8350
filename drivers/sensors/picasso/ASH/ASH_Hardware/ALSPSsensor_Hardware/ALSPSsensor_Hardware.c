@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2015 ASUSTek Inc.
  *
  * This software is licensed under the terms of the GNU General Public
@@ -50,12 +50,12 @@ static int mALSPS_probe(struct i2c_client *client, const struct i2c_device_id *i
 		err("ALSPS_probe NOT implement. \n");
 		return -EINVAL;
 	}
-	
+
 	/* We use Probe function to get i2c client */
 	g_i2c_client = client;
-	
+
 	g_ALSPS_I2C->ALSPS_probe(client);
-	
+
 	return 0;
 }
 
@@ -65,7 +65,7 @@ static int mALSPS_remove(struct i2c_client *client)
 		err("ALSPS_remove NOT implement. \n");
 		return -EINVAL;
 	}
-	
+
 	g_ALSPS_I2C->ALSPS_remove();
 	return 0;
 }
@@ -75,7 +75,7 @@ static void mALSPS_shutdown(struct i2c_client *client)
 	if(g_ALSPS_I2C->ALSPS_shutdown == NULL){
 		err("ALSPS_shutdown NOT implement. \n");
 	}
-	
+
 	g_ALSPS_I2C->ALSPS_shutdown();
 }
 
@@ -85,7 +85,7 @@ static int mALSPS_suspend(struct device *client)
 		err("ALSPS_suspend NOT implement. \n");
 		return -EINVAL;
 	}
-	
+
 	g_ALSPS_I2C->ALSPS_suspend();
 	return 0;
 }
@@ -96,7 +96,7 @@ static int mALSPS_resume(struct device *client)
 		err("ALSPS_resume NOT implement. \n");
 		return -EINVAL;
 	}
-	
+
 	g_ALSPS_I2C->ALSPS_resume();
 	return 0;
 }
@@ -119,7 +119,7 @@ int ALSPS_i2c_register(ALSPS_I2C *alsps_i2c)
 		err("%s : ALSPS_I2C is NULL pointer. \n", __FUNCTION__);
 		return -EINVAL;
 	}
-	
+
 	g_ALSPS_I2C = alsps_i2c;
 	return 0;
 }
@@ -157,7 +157,7 @@ static struct of_device_id vcnl36866_match_table[] = {
 	{},
 };
 #endif
-static int ALSPS_hw_setI2cDriver(struct i2c_driver* i2c_driver_client, 
+static int ALSPS_hw_setI2cDriver(struct i2c_driver* i2c_driver_client,
 	int hardware_source)
 {
 	switch(hardware_source) {
@@ -189,7 +189,7 @@ static int ALSPS_hw_setI2cDriver(struct i2c_driver* i2c_driver_client,
 static ALSPS_hw* ALSPS_hw_getHardwareClient(int hardware_source)
 {
 	ALSPS_hw* ALSPS_hw_client = NULL;
-		
+
 	switch(hardware_source) {
 #ifdef CONFIG_TMD2755_FLAG
 		case ALSPS_hw_source_tmd2755:
@@ -221,14 +221,14 @@ int ALSPS_i2c_add_driver(void)
 	}
 
 	/* i2c Registration */
-	for (ALSPS_sensor_source = 0; ALSPS_sensor_source < ALSPS_hw_source_max; 
+	for (ALSPS_sensor_source = 0; ALSPS_sensor_source < ALSPS_hw_source_max;
 			ALSPS_sensor_source++) {
-				
+
 		/* i2c Registration and g_client will get i2c client */
 		ALSPS_hw_setI2cDriver(&ALSPS_i2c_driver_client, ALSPS_sensor_source);
 		ret = i2c_add_driver(&ALSPS_i2c_driver_client);
 		if ( ret != 0 ) {
-			err("%s: i2c_add_driver ERROR(%d). \n", __FUNCTION__, ret);	
+			err("%s: i2c_add_driver ERROR(%d). \n", __FUNCTION__, ret);
 			return -1;
 		}else{
 			log("%s %s add_driver Success. \n", __FUNCTION__, ALSPS_i2c_driver_client.driver.name);
@@ -245,13 +245,13 @@ int ALSPS_i2c_add_driver(void)
 			}
 		}
 
-		// get hardware client and check the i2c status 
+		// get hardware client and check the i2c status
 		ALSPS_hw_client = ALSPS_hw_getHardwareClient(ALSPS_sensor_source);
 		if(ALSPS_hw_client == NULL){
 			err("ALSPS_hw_client is NULL pointer. \n");
 			return NULL;
 		}
-			
+
 		if(ALSPS_hw_client->ALSPS_hw_init == NULL){
 			err("ALSPS_hw_init is NULL pointer. \n");
 			return NULL;
@@ -287,21 +287,21 @@ ALSPS_hw* ALSPS_hw_getHardware(void)
 	}
 
 	/* i2c Registration */
-	for (ALSPS_sensor_source = 0; ALSPS_sensor_source < ALSPS_hw_source_max; 
+	for (ALSPS_sensor_source = 0; ALSPS_sensor_source < ALSPS_hw_source_max;
 			ALSPS_sensor_source++) {
-		
+
 		if(g_i2c_client == NULL){
 			err("%s: g_i2c_client is NULL pointer. \n", __FUNCTION__);
 			return NULL;
 		}
 
-		// get hardware client and check the i2c status 
+		// get hardware client and check the i2c status
 		ALSPS_hw_client = ALSPS_hw_getHardwareClient(ALSPS_sensor_source);
 		if(ALSPS_hw_client == NULL){
 			err("ALSPS_hw_client is NULL pointer. \n");
 			return NULL;
 		}
-			
+
 		if(ALSPS_hw_client->ALSPS_hw_init == NULL){
 			err("ALSPS_hw_init is NULL pointer. \n");
 			return NULL;

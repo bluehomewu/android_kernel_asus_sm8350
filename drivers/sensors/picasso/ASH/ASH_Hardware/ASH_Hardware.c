@@ -1,4 +1,4 @@
-/* 
+/*
  * Copyright (C) 2015 ASUSTek Inc.
  *
  * This software is licensed under the terms of the GNU General Public
@@ -40,17 +40,17 @@
 uint8_t i2c_read_reg_u8(struct i2c_client* client, u8 reg)
 {
 	uint8_t data =0 ;
-	
+
 	if(client == NULL) {
 		err("%s: i2c client is NULL.\n", __FUNCTION__);
 		return -1;
 	}
-	
+
 	data = i2c_smbus_read_byte_data(client, reg);
 	if (data < 0) {
 		err("%s: i2c_smbus_read_byte_data ERROR(0x%02X). \n", __FUNCTION__, reg);
 	}
-	
+
 	return data;
 }
 EXPORT_SYMBOL(i2c_read_reg_u8);
@@ -63,20 +63,20 @@ int i2c_write_reg_u8(struct i2c_client* client, u8 reg, uint8_t data)
 		err("%s: i2c client is NULL.\n", __FUNCTION__);
 		return -1;
 	}
-	
+
 	ret = i2c_smbus_write_byte_data(client, reg, data);
 	if (ret < 0) {
-		err("%s: i2c_smbus_write_byte_data ERROR(0x%02X). \n", __FUNCTION__, reg);		
+		err("%s: i2c_smbus_write_byte_data ERROR(0x%02X). \n", __FUNCTION__, reg);
 		return ret;
 	}
-	
+
 	return 0;
 }
 EXPORT_SYMBOL(i2c_write_reg_u8);
 
 int i2c_read_reg_u16(struct i2c_client* client, u8 reg, uint8_t* data)
 {
-	int ret = 0;	
+	int ret = 0;
 	struct i2c_msg msg[] = {
 		{
 		    .addr = client->addr,
@@ -96,27 +96,27 @@ int i2c_read_reg_u16(struct i2c_client* client, u8 reg, uint8_t* data)
 		err("%s: i2c client is NULL.\n", __FUNCTION__);
 		return -1;
 	}
-	
+
 	if (!client->adapter) {
 	    return -ENODEV;
 	}
 	memset(&data, 0, sizeof(data));
-	
+
 	ret = i2c_transfer(client->adapter, msg, ARRAY_SIZE(msg));
-	
+
 	/*return 2 is expected.*/
 	if (ret != ARRAY_SIZE(msg)) {
 		err("%s: i2c_transfer ERROR(0x%0X). \n", __FUNCTION__, reg);
 		return -1;
 	}
 
-	return 0; 
+	return 0;
 }
 EXPORT_SYMBOL(i2c_read_reg_u16);
 
 int i2c_write_reg_u16(struct i2c_client* client, u8 reg, uint8_t* data)
 {
-	int ret = 0;	
+	int ret = 0;
 	int len = 3;
 	//uint8_t buf[len];
         uint8_t buf[3];
@@ -130,8 +130,8 @@ int i2c_write_reg_u16(struct i2c_client* client, u8 reg, uint8_t* data)
 	if(data == NULL) {
 		err("%s: data is NULL.\n", __FUNCTION__);
 		return -1;
-	}	
-	
+	}
+
 	msg.addr = client->addr;
 	msg.flags = 0; /*write*/
 	msg.len = len;
@@ -149,11 +149,11 @@ int i2c_write_reg_u16(struct i2c_client* client, u8 reg, uint8_t* data)
 
 	/*return postive is expected.*/
 	if(ret < 0){
-		err("%s: i2c_transfer ERROR. (reg=0x%x, data_l=%d, data_h=%d, err = 0x%x)\n", 
+		err("%s: i2c_transfer ERROR. (reg=0x%x, data_l=%d, data_h=%d, err = 0x%x)\n",
 			__FUNCTION__, reg, data[0], data[1], ret);
 		return ret;
 	}
 
-    return 0; 
+    return 0;
 }
 EXPORT_SYMBOL(i2c_write_reg_u16);

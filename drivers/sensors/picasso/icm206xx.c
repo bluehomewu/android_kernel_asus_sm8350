@@ -342,7 +342,7 @@ static s32 icm_do_write_byte_data(struct icm_sensor *sensor, u8 reg, u8 data)
 static s32 icm_mask_write_byte_data(struct icm_sensor *sensor, u8 command, u8 mask, u8 value)
 {
 	s32 rc = -1, read_data;
- 	u8 write_data;
+	u8 write_data;
 
 	read_data = icm_read_byte_data(sensor, command);
 	if (read_data < 0) {
@@ -649,7 +649,7 @@ static irqreturn_t icm_interrupt_thread(int irq, void *data)
 		g_icm_next_retry_time_ms = 100;
 		schedule_delayed_work(&g_icm_data_retry_work, HZ * g_icm_next_retry_time_ms / 1000);
 	}
-	
+
 
 exit:
 	mutex_unlock(&sensor->op_lock);
@@ -1049,19 +1049,19 @@ static int icm_restore_context(struct icm_sensor *sensor, bool isInit)
 		return ret;
 	}
 	/*ASUS BSP: write FCHOICE_OIS_B to 1*/
- 	ret = icm_write_byte_data(sensor, reg->signal_path_reset, 0x08);
+	ret = icm_write_byte_data(sensor, reg->signal_path_reset, 0x08);
 	if (ret < 0) {
 		icm_errmsg("write signal_path_reset failed.\n");
 		return ret;
 	}
 	/*ASUS BSP: write ACCEL_FCHOICE_OIS_B to 1*/
- 	ret = icm_write_byte_data(sensor, reg->mot_ctrl, 0x10);
+	ret = icm_write_byte_data(sensor, reg->mot_ctrl, 0x10);
 	if (ret < 0) {
 		icm_errmsg("write mot_ctrl failed.\n");
 		return ret;
 	}
 	/*ASUS BSP: write OIS_ENABLE to 1*/
- 	ret = icm_write_byte_data(sensor, reg->ois_enable, 0x02);
+	ret = icm_write_byte_data(sensor, reg->ois_enable, 0x02);
 	if (ret < 0) {
 		icm_errmsg("write ois_enable failed.\n");
 		return ret;
@@ -1402,7 +1402,7 @@ static int icm_set_motion_det(struct icm_sensor *sensor, bool on)
 				sensor->reg.mot_ctrl, 0x00);
 		if (ret < 0)
 			goto err_exit;
-        
+
     }
 
 	ret = icm_set_interrupt(sensor, BIT_WOM_X_INT_EN|BIT_WOM_Y_INT_EN|BIT_WOM_Z_INT_EN, on);
@@ -2120,7 +2120,7 @@ static ssize_t icm_accel_attr_get_enable(struct device *dev,
 			struct device_attribute *attr, char *buf)
 {
 	struct icm_sensor *sensor = dev_get_drvdata(dev);
-	
+
 	return snprintf(buf, 4, "%d\n", sensor->cfg.accel_enable);
 }
 
@@ -2411,7 +2411,7 @@ static int icm_dt_get_place(struct device *dev,
 	}
 
 	icm_dbgmsg("place_name=[%s]\n", place_name);
-	
+
 	for (i = 0; i < ICM_AXIS_REMAP_TAB_SZ; i++) {
 		if (!strcmp(place_name, icm_place_name2num[i].name)) {
 			pdata->place = icm_place_name2num[i].place;
@@ -2877,7 +2877,7 @@ static struct input_dev* icm206xx_input_setup(struct icm_sensor *sensor, int sen
 
 	l_dev->id.bustype = BUS_SPI;
 	l_dev->dev.parent = sensor->dev;
-	
+
 	input_set_capability(l_dev, EV_ABS, ABS_WHEEL); //sec
 	input_set_capability(l_dev, EV_ABS, ABS_GAS); //nsec
 	input_set_capability(l_dev, EV_ABS, ABS_MISC);
@@ -2907,7 +2907,7 @@ static struct input_dev* icm206xx_input_setup(struct icm_sensor *sensor, int sen
 			ICM_GYRO_MIN_VALUE, ICM_GYRO_MAX_VALUE,
 			0, 0);
 	}
-	
+
 	ret = input_register_device(l_dev);
 	if (ret) {
 		icm_errmsg("Failed to register input device\n");
@@ -3543,7 +3543,7 @@ exit:
 static int icm_resume(struct device *dev)
 {
 	struct icm_sensor *sensor = dev_get_drvdata(dev);
-	
+
 	mutex_lock(&sensor->op_lock);
 
 	if (sensor->cfg.gyro_enable || sensor->cfg.accel_enable) {
