@@ -1454,8 +1454,9 @@ static int wcd_mbhc_initialise(struct wcd_mbhc *mbhc)
 		/* Insertion debounce set to 48ms */
 		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_INSREM_DBNC, 4);
 	} else {
-		/* Insertion debounce set to 96ms */ //ASUS_BSP +++ change to 512ms
-		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_INSREM_DBNC, 0xB);
+		/* Preserve Picasso's 96ms and Sake/Vodka's 512ms debounce. */
+		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_INSREM_DBNC,
+			IS_ENABLED(CONFIG_MACH_ASUS_PICASSO) ? 6 : 0xB);
 	}
 
 	/* Button Debounce set to 16ms */
