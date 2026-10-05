@@ -2894,8 +2894,8 @@ static irqreturn_t dsi_ctrl_isr(int irq, void *ptr)
 			atomic_set(&dsi_ctrl->cmd_success_line, (reg & 0xFFFF));
 			atomic_set(&dsi_ctrl->cmd_success_frame, ((reg >> 16) & 0xFFFF));
 			SDE_EVT32(dsi_ctrl->cell_index,	SDE_EVTLOG_FUNC_CASE1,
-					dsi_ctrl->cmd_success_line,
-					dsi_ctrl->cmd_success_frame);
+					atomic_read(&dsi_ctrl->cmd_success_line),
+					atomic_read(&dsi_ctrl->cmd_success_frame));
 		}
 
 		atomic_set(&dsi_ctrl->dma_irq_trig, 1);
