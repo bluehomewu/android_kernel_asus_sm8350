@@ -341,7 +341,9 @@ static u32 mi2s_ebit_clk[MI2S_MAX] = {
 	Q6AFE_LPASS_CLK_ID_PRI_MI2S_EBIT,
 	Q6AFE_LPASS_CLK_ID_SEC_MI2S_EBIT,
 	Q6AFE_LPASS_CLK_ID_TER_MI2S_EBIT,
+#ifndef CONFIG_MACH_ASUS_PICASSO
 	Q6AFE_LPASS_CLK_ID_QUAD_MI2S_EBIT,//Austin+++
+#endif
 };
 
 static struct mi2s_conf mi2s_intf_conf[MI2S_MAX];
@@ -494,12 +496,20 @@ static struct dev_config aux_pcm_tx_cfg[] = {
 
 /* Default configuration of MI2S channels */
 static struct dev_config mi2s_rx_cfg[] = {
+#ifdef CONFIG_MACH_ASUS_PICASSO
+	[PRIM_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+#else
 	[PRIM_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S24_LE, 2}, /* Austin+++ *//* mei+++for vodka tfa9874 */
+#endif
 	[SEC_MI2S]  = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 	[TERT_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 	[QUAT_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 	[QUIN_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+#ifdef CONFIG_MACH_ASUS_PICASSO
+	[SEN_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+#else
 	[SEN_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S24_LE, 2}, /* ASUS_BSP Paul +++ */
+#endif
 };
 
 static struct dev_config mi2s_tx_cfg[] = {
@@ -512,7 +522,11 @@ static struct dev_config mi2s_tx_cfg[] = {
 	[TERT_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
 	[QUAT_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* Austin +++ */
 	[QUIN_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
+#ifdef CONFIG_MACH_ASUS_PICASSO
+	[SEN_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
+#else
 	[SEN_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S24_LE, 2}, /* ASUS_BSP Paul +++ */
+#endif
 };
 
 static struct tdm_dev_config pri_tdm_dev_config[MAX_PATH][TDM_PORT_MAX] = {
