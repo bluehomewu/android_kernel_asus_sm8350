@@ -26778,10 +26778,12 @@ static const struct snd_kcontrol_new mmul10_mixer_controls[] = {
 	MSM_FRONTEND_DAI_MULTIMEDIA10, 1, 0, msm_routing_get_audio_mixer,
 	msm_routing_put_audio_mixer),
 	/* ASUS_BSP Paul +++ */
+#ifndef CONFIG_MACH_ASUS_PICASSO
 	SOC_DOUBLE_EXT("QUAT_MI2S_TX", SND_SOC_NOPM,
 	MSM_BACKEND_DAI_QUATERNARY_MI2S_TX,
 	MSM_FRONTEND_DAI_MULTIMEDIA10, 1, 0, msm_routing_get_audio_mixer,
 	msm_routing_put_audio_mixer),
+#endif
 	/* ASUS_BSP Paul --- */
 	SOC_DOUBLE_EXT("INT2_MI2S_TX", SND_SOC_NOPM,
 	MSM_BACKEND_DAI_INT2_MI2S_TX,
@@ -41641,11 +41643,15 @@ static const struct snd_soc_dapm_route intercon_mi2s[] = {
 	{"MultiMedia16 Mixer", "MI2S_TX", "MI2S_TX"},
 	{"MultiMedia1 Mixer", "QUAT_MI2S_TX", "QUAT_MI2S_TX"},
 	{"MultiMedia2 Mixer", "QUAT_MI2S_TX", "QUAT_MI2S_TX"},
+#ifndef CONFIG_MACH_ASUS_PICASSO
 	{"MultiMedia5 Mixer", "QUAT_MI2S_TX", "QUAT_MI2S_TX"}, /* ASUS_BSP Paul +++ */
+#endif
 	{"MultiMedia6 Mixer", "QUAT_MI2S_TX", "QUAT_MI2S_TX"},
+#ifndef CONFIG_MACH_ASUS_PICASSO
 	{"MultiMedia8 Mixer", "QUAT_MI2S_TX", "QUAT_MI2S_TX"}, /* ASUS_BSP Paul +++ */
 	{"MultiMedia10 Mixer", "QUAT_MI2S_TX", "QUAT_MI2S_TX"}, /* ASUS_BSP Paul +++ */
 	{"MultiMedia16 Mixer", "QUAT_MI2S_TX", "QUAT_MI2S_TX"}, /* ASUS_BSP Paul +++ */
+#endif
 	{"MultiMedia1 Mixer", "QUIN_MI2S_TX", "QUIN_MI2S_TX"},
 	{"MultiMedia2 Mixer", "QUIN_MI2S_TX", "QUIN_MI2S_TX"},
 	{"MultiMedia1 Mixer", "SENARY_MI2S_TX", "SENARY_MI2S_TX"},
