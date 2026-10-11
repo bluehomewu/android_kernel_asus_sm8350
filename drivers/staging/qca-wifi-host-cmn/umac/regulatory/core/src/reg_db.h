@@ -215,7 +215,7 @@ QDF_STATUS reg_get_default_country(uint16_t *default_country);
 bool reg_etsi13_regdmn(uint8_t reg_dmn);
 
 /**
- * reg_fcc_regdmn () - Checks if the reg domain is FCC3/FCC8/FCC15/FCC16 or not
+ * reg_fcc_regdmn () - Check for an FCC domain with 5.9 GHz restrictions
  * @reg_dmn: reg domain
  *
  * Return: true or false

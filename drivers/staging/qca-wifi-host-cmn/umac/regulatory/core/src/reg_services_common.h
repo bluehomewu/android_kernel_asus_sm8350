@@ -1312,8 +1312,7 @@ bool reg_is_6ghz_supported(struct wlan_objmgr_psoc *psoc);
 bool reg_is_5dot9_ghz_supported(struct wlan_objmgr_psoc *psoc);
 
 /**
- * reg_is_fcc_regdmn () - Checks if the current reg domain is FCC3/FCC8/FCC15/
- * FCC16 or not
+ * reg_is_fcc_regdmn () - Check for an FCC domain with 5.9 GHz restrictions
  * @pdev: pdev ptr
  *
  * Return: true or false

@@ -257,6 +257,7 @@ enum reg_domain {
 	FCC15_FCCA = 0xEA,
 	FCC16_FCCA = 0xE8,
 #endif
+	FCC17_FCCA = 0xE9,
 	ETSI1_WORLD = 0x37,
 	ETSI3_WORLD = 0x36,
 	ETSI4_WORLD = 0x30,
@@ -969,6 +970,7 @@ enum reg_domains_5g {
 	FCC15,
 	FCC16,
 #endif
+	FCC17,
 	ETSI1,
 	ETSI3,
 	ETSI4,
@@ -1038,6 +1040,7 @@ const struct reg_domain_pair g_reg_dmn_pairs[] = {
 	{FCC15_FCCA, FCC15, FCCA},
 	{FCC16_FCCA, FCC16, FCCA},
 #endif
+	{FCC17_FCCA, FCC17, FCCA},
 	{ETSI1_WORLD, ETSI1, WORLD},
 	{ETSI3_WORLD, ETSI3, WORLD},
 	{ETSI4_WORLD, ETSI4, WORLD},
@@ -1409,6 +1412,11 @@ const struct regdomain regdomains_5g[] = {
 							   CHAN_5735_5895_1,
 							   CHAN_5945_7125_2} },
 #endif
+	[FCC17] = {CTL_FCC, DFS_FCC_REGION, 2, 160, 6, 4, {CHAN_5170_5250_5,
+							   CHAN_5250_5330_7,
+							   CHAN_5490_5730_1,
+							   CHAN_5735_5835_2} },
+
 	[ETSI1] = {CTL_ETSI, DFS_ETSI_REGION, 2, 160, 0, 3, {CHAN_5170_5250_8,
 							     CHAN_5250_5330_12,
 							     CHAN_5490_5710_1}
@@ -1824,12 +1832,13 @@ bool reg_fcc_regdmn(uint8_t reg_dmn)
 	return ((reg_dmn == FCC3) ||
 		(reg_dmn == FCC8) ||
 		(reg_dmn == FCC15) ||
-		(reg_dmn == FCC16));
+		(reg_dmn == FCC16) ||
+		(reg_dmn == FCC17));
 }
 #else
 bool reg_fcc_regdmn(uint8_t reg_dmn)
 {
-	return (reg_dmn == FCC3 || reg_dmn == FCC8);
+	return (reg_dmn == FCC3 || reg_dmn == FCC8 || reg_dmn == FCC17);
 }
 #endif
 
